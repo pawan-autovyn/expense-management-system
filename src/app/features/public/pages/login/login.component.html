@@ -1,0 +1,95 @@
+<section class="login-page">
+  <!-- Background image moved to CSS -->
+
+  <div class="login-page__content">
+    <div class="login-hero" aria-hidden="true">
+      <h1>COREWORK EMS</h1>
+      <h3>STRATEGIC EXPENSE FLOW</h3>
+    </div>
+
+    <article class="login-card glass-card">
+      <button
+        type="button"
+        class="icon-button icon-button--plain login-theme-toggle"
+        [attr.aria-label]="themeService.isDarkMode() ? 'Switch to light theme' : 'Switch to dark theme'"
+        (click)="themeService.toggleTheme()"
+      >
+        <app-icon [name]="themeService.isDarkMode() ? 'sun' : 'moon'" [size]="18" />
+      </button>
+
+      <h3>Welcome Back!</h3>
+
+      <div class="login-credential-switcher" aria-label="Demo credentials">
+        <button
+          type="button"
+          class="credential-chip"
+          [class.is-active]="selectedRole() === Role.Admin"
+          (click)="selectCredential(Role.Admin)"
+        >
+          Admin
+        </button>
+        <button
+          type="button"
+          class="credential-chip"
+          [class.is-active]="selectedRole() === Role.OperationManager"
+          (click)="selectCredential(Role.OperationManager)"
+        >
+          Operation Manager
+        </button>
+      </div>
+
+      <p class="login-credential-note">Select a role to auto-fill the demo login credentials.</p>
+
+      @if (loginError()) {
+        <p class="login-error">{{ loginError() }}</p>
+      }
+
+      <form class="login-form" (submit)="login(); $event.preventDefault()">
+        <label class="login-field">
+          <span class="login-field__icon">
+            <app-icon name="mail" [size]="20" />
+          </span>
+          <input
+            type="email"
+            name="email"
+            [value]="email()"
+            (input)="updateEmail(emailInput.value)"
+            #emailInput
+            placeholder="Email"
+            autocomplete="email"
+          />
+        </label>
+
+        <label class="login-field">
+          <span class="login-field__icon">
+            <app-icon name="lock" [size]="20" />
+          </span>
+          <input
+            type="password"
+            name="password"
+            [value]="password()"
+            (input)="updatePassword(passwordInput.value)"
+            #passwordInput
+            placeholder="Password"
+            autocomplete="current-password"
+          />
+        </label>
+
+        <div class="login-form__row">
+          <label class="login-check">
+            <input type="checkbox" [checked]="rememberMe()" (change)="updateRememberMe(rememberMeInput.checked)" #rememberMeInput />
+            <span>Remember me</span>
+          </label>
+          <button type="button" class="login-link">Forgot Password?</button>
+        </div>
+
+        <button type="submit" class="button button--primary login-submit">Login</button>
+      </form>
+
+      <p class="login-card__footer">
+        Don't have an account?
+        <button type="button" class="login-link login-link--strong">Sign Up</button>
+      </p>
+    </article>
+  </div>
+</section>

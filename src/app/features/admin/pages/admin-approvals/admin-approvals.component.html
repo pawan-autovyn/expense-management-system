@@ -1,0 +1,152 @@
+    <section class="page-hero">
+      <div>
+        <h1>Approval Queue</h1>
+        <p>Review pending, approved, and rejected expense submissions</p>
+      </div>
+    </section>
+
+    <section class="approval-tabs">
+      @for (tab of approvalTabs(); track tab.label) {
+        <button
+          type="button"
+          class="chip-button approval-tab"
+          [class.is-active]="selectedTab() === tab.value"
+          (click)="selectedTab.set(tab.value)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </section>
+
+    <div class="page-toolbar">
+      <p class="muted">{{ filteredRows().length }} approvals visible in the current queue</p>
+      <div class="page-toolbar__actions">
+        <button type="button" class="button button--secondary" (click)="exportVisibleRows()">
+          <app-icon name="download" [size]="16" />
+          <span>Export CSV</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="ref-approval-layout">
+      <section class="glass-card approval-queue">
+        <div class="approval-queue__header">
+          <h3>Expense Queue ({{ filteredRows().length }})</h3>
+        </div>
+
+        <div class="approval-queue__list">
+          @for (expense of filteredRows(); track expense.id) {
+            <button
+              type="button"
+              class="approval-queue__item"
+              [class.is-selected]="selectedRowId() === expense.id"
+              (click)="selectedId.set(expense.id)"
+            >
+              <div>
+                <span>{{ expense.expenseCode }}</span>
+                <strong>{{ expense.title }}</strong>
+                <p>{{ expense.manager }}</p>
+              </div>
+              <div class="approval-queue__meta">
+                <span class="approval-level-chip">{{ expense.level }}</span>
+                <strong>{{ expense.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+              </div>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="glass-card approval-detail">
+        @if (selectedExpense(); as expense) {
+          @if (selectedRow(); as row) {
+            <div class="approval-detail__header">
+              <div>
+                <div class="approval-detail__meta-line">
+                  <span>{{ row.expenseCode }}</span>
+                  <span class="approval-level-chip">{{ row.level }}</span>
+                </div>
+                <h2>{{ expense.title }}</h2>
+                <p>
+                  Submitted by {{ row.manager }} on {{ expense.date | date: 'yyyy-MM-dd' }}
+                </p>
+              </div>
+              <strong class="approval-detail__amount">{{
+                expense.amount | currency: 'INR' : 'symbol' : '1.0-0'
+              }}</strong>
+            </div>
+
+            <div class="approval-metrics-grid">
+              <article class="approval-metric-card">
+                <span>Category</span>
+                <strong>{{ row.category }}</strong>
+              </article>
+              <article class="approval-metric-card">
+                <span>Date</span>
+                <strong>{{ expense.date | date: 'yyyy-MM-dd' }}</strong>
+              </article>
+              <article class="approval-metric-card">
+                <span>Level</span>
+                <strong>{{ row.level }}</strong>
+              </article>
+              <article class="approval-metric-card">
+                <span>Vendor</span>
+                <strong>{{ row.vendor }}</strong>
+              </article>
+            </div>
+
+            <section class="approval-preview-card">
+              <div class="section-heading">
+                <h3>Bill Preview</h3>
+              </div>
+
+              <button
+                type="button"
+                class="approval-preview-card__placeholder"
+                [disabled]="!expense.receipt"
+                (click)="expense.receipt && selectedReceipt.set(expense.receipt)"
+              >
+                <app-icon name="eye" [size]="28" />
+                <span>Click to view full receipt</span>
+              </button>
+            </section>
+
+            <section class="approval-timeline-card">
+              <h3>Approval Timeline</h3>
+              <div class="approval-timeline-list">
+                @for (step of timelineSteps(); track step.label) {
+                  <article class="approval-timeline-item">
+                    <div class="approval-timeline-item__left">
+                      <span class="approval-timeline-item__dot" [class.is-active]="step.active"></span>
+                      <strong>{{ step.label }}</strong>
+                    </div>
+                    <div class="approval-timeline-item__right">
+                      <span>{{ step.owner }}</span>
+                      <b>{{ step.state }}</b>
+                    </div>
+                  </article>
+                }
+              </div>
+            </section>
+
+            <section class="approval-actions-card">
+              <textarea
+                class="textarea"
+                [(ngModel)]="reviewNote"
+                placeholder="Add review note or rejection remark"
+              ></textarea>
+
+              <div class="button-row">
+                <button type="button" class="button button--primary" (click)="approve()">Approve</button>
+                <button type="button" class="button button--danger" (click)="reject()">Reject</button>
+                <button type="button" class="button button--ghost" (click)="reopen()">Re-open</button>
+              </div>
+            </section>
+          }
+        }
+      </section>
+    </div>
+
+    <app-receipt-preview-modal
+      [attachment]="selectedReceipt()"
+      (closeRequested)="selectedReceipt.set(null)"
+    />

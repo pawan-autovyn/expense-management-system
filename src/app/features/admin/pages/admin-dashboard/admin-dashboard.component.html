@@ -1,0 +1,179 @@
+    <section class="page-hero">
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p>Enterprise operational control center with approvals, budgets, and live receipt visibility</p>
+      </div>
+      <section class="smart-banner glass-card smart-banner--hero">
+        <app-icon name="alert" [size]="18" />
+        <div>
+          <strong>{{ overBudgetCategories().length }} categories need intervention</strong>
+          <span>Overspend and near-limit alerts are highlighted for today’s review round.</span>
+        </div>
+      </section>
+    </section>
+
+    <section class="stats-grid">
+      <app-stat-card title="Total Expenses" [value]="expenses().length.toString()" subtitle="All mock organization records" icon="receipt" />
+      <app-stat-card title="Pending" [value]="pendingCount().toString()" subtitle="Awaiting finance action" icon="clock" tone="warning" />
+      <app-stat-card title="Approved" [value]="approvedCount().toString()" subtitle="Cleared mock entries" icon="check-circle" tone="success" />
+      <app-stat-card title="Rejected" [value]="rejectedCount().toString()" subtitle="Needs resubmission or re-review" icon="alert" tone="danger" />
+      <app-stat-card title="Total Amount" [value]="(totalAmount() | currency:'INR':'symbol':'1.0-0') ?? ''" subtitle="Current visible operational value" icon="wallet" />
+      <app-stat-card title="Templates" value="6" subtitle="Mock template sets for reports" icon="layers" />
+    </section>
+
+    <section class="dashboard-grid">
+      <app-line-chart
+        title="Monthly Expense Trends"
+        headline="Budget versus actual"
+        subtitle="Last six months"
+        [data]="directoryService.trends()"
+      />
+
+      <app-donut-chart
+        title="Status Distribution"
+        [centerValue]="approvedCount().toString()"
+        centerLabel="Approved"
+        [segments]="statusSegments()"
+      />
+    </section>
+
+    <section class="dashboard-grid dashboard-grid--wide">
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Approval Status by Level</p>
+            <h3>Workflow status board</h3>
+          </div>
+        </div>
+        <div class="approval-summary-grid approval-summary-grid--compact">
+          @for (item of approvalStatusCards(); track item.label) {
+            <article>
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Manager Spend Summary</p>
+            <h3>Budget ownership snapshot</h3>
+          </div>
+        </div>
+        <div class="stack-list">
+          @for (summary of managerSummary(); track summary.user.id) {
+            <article class="stack-list__item">
+              <div>
+                <strong>{{ summary.user.name }}</strong>
+                <p>{{ summary.user.department }}</p>
+              </div>
+              <div>
+                <strong>{{ summary.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+                <p>{{ summary.approvedCount }} approved</p>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    </section>
+
+    <section class="dashboard-grid dashboard-grid--wide">
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Over-Budget Alerts</p>
+            <h3>Categories needing attention</h3>
+          </div>
+        </div>
+        <div class="alert-strip-list">
+          @for (category of overBudgetCategories(); track category.category.id) {
+            <article class="alert-strip">
+              <div>
+                <strong>{{ category.category.name }}</strong>
+                <p>
+                  {{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }} spent against
+                  {{ category.category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </p>
+              </div>
+              <app-status-badge [label]="category.status" />
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Latest Uploaded Bills</p>
+            <h3>Receipt preview gallery</h3>
+          </div>
+        </div>
+        <div class="receipt-gallery receipt-gallery--compact">
+          @for (expense of latestBills(); track expense.id) {
+            <article class="receipt-gallery__item">
+              <img [src]="expense.receipt?.url" [alt]="expense.receipt?.name ?? expense.title" />
+              <div>
+                <strong>{{ expense.title }}</strong>
+                <span>{{ expense.vendor }}</span>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    </section>
+
+    <section class="dashboard-grid dashboard-grid--wide">
+      <app-activity-timeline
+        title="Recent Activity Timeline"
+        subtitle="Latest approvals, submissions, and remarks"
+        [items]="timelineItems()"
+      />
+
+      <section class="glass-card admin-insights-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Decision Snapshot</p>
+            <h3>Manager-wise spend health</h3>
+          </div>
+        </div>
+        <div class="helper-list">
+          @for (summary of managerSummary().slice(0, 3); track summary.user.id) {
+            <article class="insight-row">
+              <div>
+                <strong>{{ summary.user.name }}</strong>
+                <p>{{ summary.user.location }}</p>
+              </div>
+              <div>
+                <strong>{{ summary.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+                <p>{{ summary.approvedCount }} approvals closed</p>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    </section>
+
+    <section class="glass-card admin-bill-strip">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Manager Snapshot</p>
+          <h3>Quick audit notes for today</h3>
+        </div>
+      </div>
+      <div class="helper-list">
+        @for (expense of latestBills(); track expense.id) {
+          <article class="insight-row">
+            <div>
+              <strong>{{ expense.title }}</strong>
+              <p>{{ expense.vendor }}</p>
+            </div>
+            <div>
+              <strong>{{ expense.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+              <p>{{ expense.status }}</p>
+            </div>
+          </article>
+        }
+      </div>
+    </section>

@@ -1,0 +1,24 @@
+    <section class="section-heading section-heading--page">
+      <div>
+        <p class="eyebrow">Profile</p>
+        <h1>Role profile and mock account settings</h1>
+      </div>
+    </section>
+
+    <div class="card-grid">
+      <article class="glass-card report-card">
+        <p class="eyebrow">User</p>
+        <h3>{{ authService.currentUser()?.name }}</h3>
+        <p>{{ authService.currentUser()?.title }} • {{ authService.currentUser()?.department }}</p>
+      </article>
+      <article class="glass-card report-card">
+        <p class="eyebrow">Assigned Budget</p>
+        <h3>{{ authService.currentUser()?.assignedBudget | currency:'INR':'symbol':'1.0-0' }}</h3>
+        <p>Mock allocation stored locally for role demo scenarios.</p>
+      </article>
+      <article class="glass-card report-card">
+        <p class="eyebrow">Workflow Access</p>
+        <h3>Submit, track, re-open, and re-submit expenses</h3>
+        <p>All actions stay in the frontend and can later be connected to real APIs without changing the screen structure.</p>
+      </article>
+    </div>

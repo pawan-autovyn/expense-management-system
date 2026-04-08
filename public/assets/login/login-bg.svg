@@ -1,0 +1,165 @@
+<svg width="1536" height="1024" viewBox="0 0 1536 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF" />
+      <stop offset="1" stop-color="#EAF1F8" />
+    </linearGradient>
+    <linearGradient id="desk" x1="0" y1="720" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EBC08A" />
+      <stop offset="1" stop-color="#D79A61" />
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFFFF" stop-opacity="0.92" />
+      <stop offset="1" stop-color="#F2F7FC" stop-opacity="0.72" />
+    </linearGradient>
+    <linearGradient id="screen" x1="74" y1="380" x2="410" y2="725" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D9E8F7" />
+      <stop offset="1" stop-color="#F8FBFF" />
+    </linearGradient>
+    <linearGradient id="calc" x1="398" y1="638" x2="625" y2="868" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4A6B97" />
+      <stop offset="1" stop-color="#2C3F5D" />
+    </linearGradient>
+    <linearGradient id="jarGlass" x1="870" y1="514" x2="1122" y2="902" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF" stop-opacity="0.94" />
+      <stop offset="1" stop-color="#DDEBFA" stop-opacity="0.88" />
+    </linearGradient>
+    <linearGradient id="coin" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#FFE07A" />
+      <stop offset="1" stop-color="#E5A92A" />
+    </linearGradient>
+    <filter id="softBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="22" />
+    </filter>
+  </defs>
+
+  <rect width="1536" height="1024" fill="url(#sky)" />
+  <rect y="720" width="1536" height="304" fill="url(#desk)" />
+
+  <rect x="0" y="0" width="1536" height="1024" fill="white" fill-opacity="0.18" />
+  <ellipse cx="130" cy="282" rx="110" ry="210" fill="#C6E89B" fill-opacity="0.55" filter="url(#softBlur)" />
+  <ellipse cx="973" cy="312" rx="138" ry="250" fill="#DDE7F3" fill-opacity="0.78" filter="url(#softBlur)" />
+  <ellipse cx="1224" cy="260" rx="132" ry="240" fill="#DCE4F0" fill-opacity="0.7" filter="url(#softBlur)" />
+
+  <g opacity="0.35">
+    <rect x="722" y="98" width="62" height="434" rx="16" fill="#D8E2EE" />
+    <rect x="801" y="72" width="78" height="470" rx="20" fill="#E0E7F1" />
+    <rect x="896" y="104" width="56" height="410" rx="16" fill="#D2DAE6" />
+    <rect x="991" y="84" width="64" height="446" rx="18" fill="#DCE4EF" />
+  </g>
+
+  <g>
+    <path d="M0 640C82 602 150 592 234 602C318 612 384 664 458 674C532 684 604 654 660 642V1024H0V640Z" fill="#F0E4CF" opacity="0.52" />
+    <path d="M0 680C96 638 192 636 278 654C372 674 446 718 536 726C620 734 706 706 764 688V1024H0V680Z" fill="#E8C79C" opacity="0.42" />
+  </g>
+
+  <g transform="translate(0 0)">
+    <rect x="58" y="396" width="428" height="316" rx="20" fill="#101521" fill-opacity="0.32" />
+    <rect x="64" y="388" width="420" height="304" rx="18" fill="#2B3347" />
+    <rect x="76" y="400" width="396" height="276" rx="12" fill="url(#screen)" />
+    <rect x="78" y="402" width="392" height="20" rx="10" fill="#D7E6F7" />
+    <circle cx="98" cy="412" r="4" fill="#9AC7F5" />
+    <circle cx="112" cy="412" r="4" fill="#B3D3F8" />
+    <circle cx="126" cy="412" r="4" fill="#D7E3F4" />
+
+    <ellipse cx="182" cy="520" rx="74" ry="74" fill="#A8D0F2" />
+    <path d="M182 520V446A74 74 0 0 1 246 483L182 520Z" fill="#F1C66D" />
+    <path d="M182 520L246 483A74 74 0 0 1 256 531L182 520Z" fill="#8DD4A2" />
+    <path d="M182 520L256 531A74 74 0 0 1 148 590L182 520Z" fill="#F8FAFF" />
+    <rect x="276" y="458" width="146" height="160" rx="12" fill="#FFFFFF" opacity="0.94" />
+    <rect x="290" y="474" width="118" height="10" rx="5" fill="#C2D6EA" />
+    <rect x="290" y="500" width="110" height="12" rx="6" fill="#78B5EE" />
+    <rect x="290" y="524" width="96" height="12" rx="6" fill="#F7C867" />
+    <rect x="290" y="548" width="124" height="12" rx="6" fill="#8EDB83" />
+    <rect x="290" y="572" width="104" height="12" rx="6" fill="#9FC6F9" />
+    <rect x="290" y="596" width="86" height="12" rx="6" fill="#F0C96E" />
+  </g>
+
+  <g transform="translate(340 242)">
+    <rect x="0" y="284" width="162" height="236" rx="18" fill="#C8C8C8" />
+    <rect x="10" y="294" width="142" height="216" rx="14" fill="url(#screen)" />
+    <rect x="26" y="312" width="112" height="118" rx="10" fill="#FFFFFF" opacity="0.9" />
+    <rect x="0" y="284" width="162" height="18" rx="9" fill="#4E556E" />
+    <rect x="20" y="304" width="122" height="10" rx="5" fill="#BACBE0" />
+    <rect x="20" y="320" width="122" height="10" rx="5" fill="#AFC9E8" />
+    <rect x="20" y="336" width="122" height="10" rx="5" fill="#D8E6F7" />
+    <rect x="20" y="352" width="122" height="10" rx="5" fill="#F1C96D" />
+    <rect x="20" y="368" width="122" height="10" rx="5" fill="#84C08B" />
+    <rect x="20" y="384" width="122" height="10" rx="5" fill="#9FC6F9" />
+  </g>
+
+  <g transform="translate(490 700)">
+    <rect x="0" y="0" width="170" height="92" rx="18" fill="url(#calc)" />
+    <rect x="14" y="14" width="142" height="16" rx="8" fill="#94B5D8" opacity="0.8" />
+    <rect x="14" y="36" width="142" height="42" rx="12" fill="#1A2941" opacity="0.6" />
+    <g fill="#A7C4E5">
+      <rect x="24" y="44" width="22" height="16" rx="4" />
+      <rect x="52" y="44" width="22" height="16" rx="4" />
+      <rect x="80" y="44" width="22" height="16" rx="4" />
+      <rect x="108" y="44" width="22" height="16" rx="4" />
+      <rect x="136" y="44" width="16" height="16" rx="4" />
+      <rect x="24" y="66" width="22" height="16" rx="4" />
+      <rect x="52" y="66" width="22" height="16" rx="4" />
+      <rect x="80" y="66" width="22" height="16" rx="4" />
+      <rect x="108" y="66" width="22" height="16" rx="4" />
+      <rect x="136" y="66" width="16" height="16" rx="4" />
+    </g>
+  </g>
+
+  <g transform="translate(385 803)">
+    <rect x="0" y="0" width="246" height="20" rx="10" fill="#FFFFFF" opacity="0.72" />
+    <rect x="20" y="18" width="206" height="18" rx="9" fill="#F6F9FD" />
+    <rect x="32" y="26" width="56" height="9" rx="4" fill="#9CC2E9" />
+    <rect x="92" y="26" width="62" height="9" rx="4" fill="#F2C86A" />
+    <rect x="160" y="26" width="36" height="9" rx="4" fill="#8BD594" />
+    <rect x="0" y="38" width="264" height="18" rx="9" fill="#F6F9FD" />
+    <rect x="24" y="46" width="50" height="9" rx="4" fill="#9CC2E9" />
+    <rect x="80" y="46" width="70" height="9" rx="4" fill="#F2C86A" />
+    <rect x="156" y="46" width="48" height="9" rx="4" fill="#8BD594" />
+  </g>
+
+  <g transform="translate(894 270)">
+    <rect x="0" y="0" width="126" height="196" rx="24" fill="#FFFFFF" opacity="0.18" />
+  </g>
+
+  <g transform="translate(1042 132)">
+    <rect x="0" y="0" width="360" height="210" rx="96" fill="#F9D2B8" opacity="0.88" />
+    <rect x="310" y="26" width="180" height="164" rx="34" fill="#2F3053" />
+    <rect x="0" y="80" width="308" height="88" rx="44" fill="#F7C2A3" />
+    <rect x="0" y="40" width="160" height="44" rx="22" fill="#FFE2D4" />
+    <rect x="0" y="122" width="98" height="50" rx="25" fill="#EFAE86" />
+    <rect x="-8" y="166" width="120" height="24" rx="12" fill="#D6DDE8" />
+    <rect x="356" y="106" width="90" height="26" rx="13" fill="#151A2D" />
+  </g>
+
+  <g transform="translate(1226 742)">
+    <rect x="0" y="0" width="174" height="174" rx="28" fill="url(#jarGlass)" stroke="#A8C0D8" stroke-width="4" />
+    <rect x="20" y="-12" width="134" height="28" rx="14" fill="#F6FAFF" stroke="#A8C0D8" stroke-width="4" />
+    <g transform="translate(16 36)">
+      <circle cx="54" cy="50" r="22" fill="url(#coin)" />
+      <circle cx="98" cy="28" r="22" fill="url(#coin)" />
+      <circle cx="122" cy="56" r="20" fill="url(#coin)" />
+      <circle cx="34" cy="100" r="20" fill="url(#coin)" />
+      <circle cx="84" cy="112" r="24" fill="url(#coin)" />
+      <circle cx="132" cy="104" r="18" fill="url(#coin)" />
+    </g>
+  </g>
+
+  <g transform="translate(1112 676)">
+    <circle cx="0" cy="0" r="28" fill="url(#coin)" />
+    <circle cx="52" cy="12" r="28" fill="url(#coin)" />
+    <circle cx="104" cy="0" r="28" fill="url(#coin)" />
+    <circle cx="156" cy="10" r="28" fill="url(#coin)" />
+    <circle cx="208" cy="0" r="28" fill="url(#coin)" />
+  </g>
+
+  <g transform="translate(1112 176)">
+    <path d="M0 0C72 18 110 54 132 106L184 120C202 92 220 56 264 28L300 4L432 4L432 160L354 160C276 160 208 108 170 56C145 22 108 8 44 0H0Z" fill="#2E3050" />
+    <path d="M88 74C54 58 38 38 26 14L104 14C124 34 134 54 138 82L88 74Z" fill="#F8E8E0" />
+    <ellipse cx="134" cy="118" rx="46" ry="52" fill="#FFD5BC" />
+    <path d="M112 120C106 118 104 112 108 108C118 98 128 96 140 100C150 104 154 112 152 122C150 130 146 136 138 140C128 144 120 138 112 120Z" fill="#F1B18D" />
+    <path d="M144 104C178 98 198 104 214 124C224 136 228 152 228 168C202 166 182 156 162 142C148 132 140 120 144 104Z" fill="#FFD5BC" />
+  </g>
+
+  <ellipse cx="1208" cy="909" rx="150" ry="34" fill="#B8792A" opacity="0.18" filter="url(#softBlur)" />
+</svg>

@@ -1,0 +1,47 @@
+    <aside class="sidebar" [ngClass]="{ 'sidebar--open': open() }">
+      <div class="sidebar__brand">
+        <div class="sidebar__brand-mark" aria-hidden="true">
+          <app-icon name="dashboard" [size]="20" />
+        </div>
+        <div class="sidebar__brand-copy">
+          <h2>{{ title }}</h2>
+          <p>{{ subtitle }}</p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="icon-button icon-button--plain sidebar__rail-toggle"
+        [class.sidebar__rail-toggle--open]="open()"
+        [attr.aria-label]="open() ? 'Collapse sidebar' : 'Expand sidebar'"
+        (click)="toggleRequested.emit()"
+      >
+        <app-icon [name]="open() ? 'chevron-left' : 'chevron-right'" [size]="18" />
+      </button>
+
+      <nav class="sidebar__nav">
+        @for (item of navigationItems(); track item.route) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="is-active"
+            class="sidebar__link"
+            (click)="closeRequested.emit()"
+          >
+            <span class="sidebar__link-icon">
+              <app-icon [name]="item.icon" [size]="18" />
+            </span>
+            <span>{{ item.label }}</span>
+            @if (item.badge) {
+              <span class="sidebar__badge">{{ item.badge }}</span>
+            }
+          </a>
+        }
+      </nav>
+
+      <div class="sidebar__spacer"></div>
+
+      <button type="button" class="sidebar__logout" (click)="logout()">
+        <app-icon name="logout" [size]="18" />
+        <span>Logout</span>
+      </button>
+    </aside>

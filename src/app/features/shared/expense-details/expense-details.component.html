@@ -1,0 +1,81 @@
+    @if (expense(); as record) {
+      <div class="page-grid page-grid--details">
+        <section class="glass-card detail-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Expense Details</p>
+              <h1>{{ record.title }}</h1>
+            </div>
+            <app-status-badge [label]="record.status" />
+          </div>
+
+          <div class="detail-grid">
+            <article>
+              <span>Amount</span>
+              <strong>{{ record.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </article>
+            <article>
+              <span>Date</span>
+              <strong>{{ record.date | date: 'MMM d, y' }}</strong>
+            </article>
+            <article>
+              <span>Vendor</span>
+              <strong>{{ record.vendor }}</strong>
+            </article>
+            <article>
+              <span>Category</span>
+              <strong>{{ categoryName() }}</strong>
+            </article>
+          </div>
+
+          <div class="glass-card detail-summary">
+            <p class="eyebrow">Notes</p>
+            <p>{{ record.description }}</p>
+          </div>
+
+          <div class="tag-list">
+            @for (tag of record.tags; track tag) {
+              <span>{{ tag }}</span>
+            }
+          </div>
+        </section>
+
+        <section class="detail-stack">
+          <section class="glass-card detail-card">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Receipt</p>
+                <h3>{{ record.receipt?.name ?? 'No attachment' }}</h3>
+              </div>
+            </div>
+
+            @if (record.receipt) {
+              <button type="button" class="button button--secondary" (click)="previewOpen = true">
+                Preview Bill
+              </button>
+            } @else {
+              <app-empty-state
+                title="No receipt uploaded"
+                description="This mock entry does not include a bill preview."
+              />
+            }
+          </section>
+
+          <app-activity-timeline
+            title="Approval Timeline"
+            subtitle="Mock workflow history"
+            [items]="timelineItems()"
+          />
+        </section>
+      </div>
+
+      <app-receipt-preview-modal
+        [attachment]="previewOpen ? record.receipt ?? null : null"
+        (closeRequested)="previewOpen = false"
+      />
+    } @else {
+      <app-empty-state
+        title="Expense not found"
+        description="The selected record could not be located in the mock repository."
+      />
+    }

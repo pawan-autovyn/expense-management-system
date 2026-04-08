@@ -1,0 +1,117 @@
+    <section class="section-heading section-heading--page">
+      <div>
+        <p class="eyebrow">Categories</p>
+        <h1>Category Management</h1>
+        <p>Add and monitor operating categories that flow into expenses, budgets, and reports.</p>
+      </div>
+    </section>
+
+    <section class="page-grid page-grid--details admin-categories__top">
+      <section class="glass-card form-card admin-category-form">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Add Category</p>
+            <h3>Create a new expense bucket</h3>
+          </div>
+          <span class="chip-button is-active">Live mock data</span>
+        </div>
+
+        <div class="form-grid admin-category-form__grid">
+          <label>
+            <span>Name</span>
+            <input
+              type="text"
+              [(ngModel)]="newCategory.name"
+              placeholder="Example: Courier"
+            />
+          </label>
+
+          <label>
+            <span>Monthly Budget</span>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              [(ngModel)]="newCategory.monthlyBudget"
+              placeholder="5000"
+            />
+          </label>
+
+          <label class="form-grid__full">
+            <span>Description</span>
+            <textarea
+              [(ngModel)]="newCategory.description"
+              placeholder="Short note about what this category covers"
+            ></textarea>
+          </label>
+
+          <label>
+            <span>Accent</span>
+            <input
+              type="text"
+              [(ngModel)]="newCategory.accent"
+              placeholder="#27528a"
+            />
+          </label>
+
+          <label>
+            <span>Icon</span>
+            <select [(ngModel)]="newCategory.icon">
+              @for (icon of iconChoices; track icon) {
+                <option [value]="icon">{{ icon }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="button button--primary" (click)="addCategory()">
+            <app-icon name="plus-circle" [size]="16" />
+            <span>Add Category</span>
+          </button>
+        </div>
+
+        @if (saveMessage) {
+          <p class="form-note">{{ saveMessage }}</p>
+        }
+      </section>
+
+      <section class="glass-card report-card admin-category-note">
+        <p class="eyebrow">How it works</p>
+        <h3>New categories update the shared mock directory instantly.</h3>
+        <p>
+          Once added, the category appears in expense forms, filters, dashboards, and category
+          reports without any backend wiring.
+        </p>
+      </section>
+    </section>
+
+    <section class="card-grid">
+      @for (category of categories(); track category.category.id) {
+        <article class="glass-card category-card">
+          <div class="category-card__header">
+            <div class="category-card__icon" [style.background]="category.category.accent">
+              {{ category.category.name.slice(0, 2) }}
+            </div>
+            <app-status-badge [label]="category.status" />
+          </div>
+          <h3>{{ category.category.name }}</h3>
+          <p>{{ category.category.description }}</p>
+          <div class="metric-pair">
+            <span>Monthly budget</span>
+            <strong>{{ category.category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+          </div>
+          <div class="metric-pair">
+            <span>Current spend</span>
+            <strong>{{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+          </div>
+          <div class="metric-pair">
+            <span>Remaining</span>
+            <strong>{{ category.remaining | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+          </div>
+          <div class="progress-track">
+            <span class="progress-fill" [style.width.%]="category.usage * 100"></span>
+          </div>
+        </article>
+      }
+    </section>

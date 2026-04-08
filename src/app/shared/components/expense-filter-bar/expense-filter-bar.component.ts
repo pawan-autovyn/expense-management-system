@@ -1,0 +1,70 @@
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+import { Category, ExpenseFilters, User } from '../../../models/app.models';
+import { SearchInputComponent } from '../search-input/search-input.component';
+
+@Component({
+  selector: 'app-expense-filter-bar',
+  standalone: true,
+  imports: [FormsModule, SearchInputComponent],
+  template: `
+    <section class="glass-card filter-bar">
+      <app-search-input
+        [value]="filters().searchTerm"
+        placeholder="Search title, vendor or notes"
+        (valueChange)="patchFilters({ searchTerm: $event })"
+      />
+
+      <select [ngModel]="filters().categoryId" (ngModelChange)="patchFilters({ categoryId: $event })">
+        <option value="all">All categories</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+
+      <select [ngModel]="filters().status" (ngModelChange)="patchFilters({ status: $event })">
+        <option value="all">All statuses</option>
+        @for (status of statuses(); track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+
+      @if (showManagerFilter()) {
+        <select [ngModel]="filters().managerId" (ngModelChange)="patchFilters({ managerId: $event })">
+          <option value="all">All managers</option>
+          @for (manager of managers(); track manager.id) {
+            <option [value]="manager.id">{{ manager.name }}</option>
+          }
+        </select>
+      }
+
+      <select [ngModel]="filters().dateRange" (ngModelChange)="patchFilters({ dateRange: $event })">
+        <option value="7d">Last 7 days</option>
+        <option value="30d">Last 30 days</option>
+        <option value="90d">Last 90 days</option>
+        <option value="all">All dates</option>
+      </select>
+
+      <select [ngModel]="filters().sortBy" (ngModelChange)="patchFilters({ sortBy: $event })">
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+        <option value="amount-desc">Highest amount</option>
+        <option value="amount-asc">Lowest amount</option>
+      </select>
+    </section>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ExpenseFilterBarComponent {
+  readonly filters = input.required<ExpenseFilters>();
+  readonly categories = input.required<Category[]>();
+  readonly managers = input<User[]>([]);
+  readonly showManagerFilter = input(false);
+  readonly filtersChange = output<ExpenseFilters>();
+  protected readonly statuses = input(['Draft', 'Submitted', 'Under Review', 'Approved', 'Rejected', 'Over Budget']);
+
+  protected patchFilters(patch: Partial<ExpenseFilters>): void {
+    this.filtersChange.emit({ ...this.filters(), ...patch });
+  }
+}

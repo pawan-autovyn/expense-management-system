@@ -1,0 +1,88 @@
+    <section class="page-hero">
+      <div>
+        <h1>View Expenses</h1>
+        <p>Browse and manage all expense records</p>
+      </div>
+    </section>
+
+    <section class="glass-card ref-filter-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Filters</p>
+          <h3>Refine expense register</h3>
+        </div>
+        <div class="page-toolbar__actions">
+          <button type="button" class="button button--ghost" (click)="resetFilters()">
+            <app-icon name="filter" [size]="16" />
+            <span>Reset</span>
+          </button>
+          <button type="button" class="button button--secondary" (click)="exportVisibleRows()">
+            <app-icon name="download" [size]="16" />
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="ref-filter-panel__row">
+        <label class="search-field ref-search-field">
+          <app-icon name="search" [size]="18" />
+          <input
+            type="search"
+            [ngModel]="filters().searchTerm"
+            (ngModelChange)="patchFilter('searchTerm', $event)"
+            placeholder="Search expenses..."
+          />
+        </label>
+
+        <select [ngModel]="filters().categoryId" (ngModelChange)="patchFilter('categoryId', $event)">
+          <option value="all">Category</option>
+          @for (category of directoryService.categories(); track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+
+        <select [ngModel]="filters().dateRange" (ngModelChange)="patchFilter('dateRange', $event)">
+          <option value="all">Date Range</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="90d">Last 90 days</option>
+        </select>
+
+        <select [ngModel]="filters().status" (ngModelChange)="patchFilter('status', $event)">
+          <option value="all">Status</option>
+          <option value="Draft">Draft</option>
+          <option value="Submitted">Submitted</option>
+          <option value="Under Review">Under Review</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Over Budget">Over Budget</option>
+        </select>
+
+        <select [ngModel]="filters().managerId" (ngModelChange)="patchFilter('managerId', $event)">
+          <option value="all">Manager</option>
+          @for (manager of managerUsers(); track manager.id) {
+            <option [value]="manager.id">{{ manager.name }}</option>
+          }
+        </select>
+
+        <select [ngModel]="budgetFilter()" (ngModelChange)="patchBudgetFilter($event)">
+          <option value="all">Budget Status</option>
+          <option value="Within Budget">Within-budget</option>
+          <option value="Near Limit">Near-limit</option>
+          <option value="Over Budget">Over-budget</option>
+        </select>
+      </div>
+    </section>
+
+    <app-data-table
+      [columns]="columns"
+      [rows]="rows()"
+      [actions]="actions"
+      [rowTrackBy]="trackById"
+      (actionTriggered)="handleAction($event)"
+    />
+
+    <app-receipt-preview-modal
+      [attachment]="selectedReceipt() ?? null"
+      (closeRequested)="selectedReceipt.set(null)"
+    />

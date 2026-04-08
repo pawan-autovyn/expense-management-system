@@ -1,0 +1,231 @@
+    <section class="page-hero page-hero--report">
+      <div class="page-hero__copy">
+        <p class="eyebrow">Template Report</p>
+        <h1>Template wise expense control tower</h1>
+        <p>
+          A modern enterprise report view with branch filters, approval status, and template-level
+          summaries built from the same admin data model.
+        </p>
+
+        <div class="hero-pills">
+          <span class="hero-pill">Admin review</span>
+          <span class="hero-pill">Approval chain</span>
+          <span class="hero-pill">Branch visibility</span>
+        </div>
+      </div>
+
+      <section class="smart-banner glass-card smart-banner--hero report-hero-card">
+        <app-icon name="layers" [size]="18" />
+        <div>
+          <strong>{{ visibleRows().length }} visible records</strong>
+          <span>
+            {{ pendingCount() }} pending, {{ approvedCount() }} approved, across
+            {{ branchSummaries().length }} active branches.
+          </span>
+        </div>
+      </section>
+    </section>
+
+    <section class="stats-grid stats-grid--report">
+      @for (card of summaryCards(); track card.title) {
+        <app-stat-card
+          [title]="card.title"
+          [value]="card.value"
+          [subtitle]="card.subtitle"
+          [icon]="card.icon"
+          [tone]="card.tone"
+        />
+      }
+    </section>
+
+    <section class="glass-card report-filter-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Filters</p>
+          <h3>Refine template report records</h3>
+        </div>
+        <div class="page-toolbar__actions">
+          <button type="button" class="button button--ghost" (click)="resetFilters()">
+            <app-icon name="filter" [size]="16" />
+            <span>Reset</span>
+          </button>
+          <button type="button" class="button button--secondary" (click)="exportVisibleRows()">
+            <app-icon name="download" [size]="16" />
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="report-filter-grid">
+        <label>
+          <span>From Date</span>
+          <input
+            type="date"
+            [ngModel]="filters().fromDate"
+            (ngModelChange)="patchFilter('fromDate', $event)"
+          />
+        </label>
+
+        <label>
+          <span>To Date</span>
+          <input
+            type="date"
+            [ngModel]="filters().toDate"
+            (ngModelChange)="patchFilter('toDate', $event)"
+          />
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select [ngModel]="filters().status" (ngModelChange)="patchFilter('status', $event)">
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="draft">Draft</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Template</span>
+          <select [ngModel]="filters().templateId" (ngModelChange)="patchFilter('templateId', $event)">
+            <option value="all">All Templates</option>
+            @for (category of directoryService.categories(); track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          <span>Branch</span>
+          <select [ngModel]="filters().branch" (ngModelChange)="patchFilter('branch', $event)">
+            <option value="all">All Branches</option>
+            @for (branch of branchNames(); track branch) {
+              <option [value]="branch">{{ branch }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="report-filter-grid__search">
+          <span>Search</span>
+          <div class="search-field report-search-field">
+            <app-icon name="search" [size]="18" />
+            <input
+              type="search"
+              [ngModel]="filters().searchTerm"
+              (ngModelChange)="patchFilter('searchTerm', $event)"
+              placeholder="Search employee, template, vendor, or remarks"
+            />
+          </div>
+        </label>
+      </div>
+    </section>
+
+    @if (visibleRows().length) {
+      <section class="table-wrapper glass-card report-table-shell">
+        <table class="data-table report-table">
+          <thead>
+            <tr>
+              <th>Sr.</th>
+              <th>Date</th>
+              <th>Employee Name</th>
+              <th>Template Name</th>
+              <th>Items</th>
+              <th>Amount</th>
+              <th class="report-table__remarks">Remarks</th>
+              <th class="report-table__branch">Branch</th>
+              <th>Status</th>
+              <th>Approver 1</th>
+              <th>Approver 2</th>
+              <th>Approver 3</th>
+              <th class="report-table__description">Description</th>
+              <th>Item Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of visibleRows(); track row.id) {
+              <tr>
+                <td>{{ row.index }}</td>
+                <td>{{ row.date | date: 'd MMM yyyy' }}</td>
+                <td>
+                  <strong>{{ row.employeeName }}</strong>
+                </td>
+                <td>{{ row.templateName }}</td>
+                <td>{{ row.items }}</td>
+                <td>{{ row.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
+                <td class="report-table__remarks">{{ row.remarks }}</td>
+                <td class="report-table__branch">{{ row.branch }}</td>
+                <td>
+                  <app-status-badge [label]="row.status" />
+                </td>
+                <td>{{ row.approver1 }}</td>
+                <td>{{ row.approver2 }}</td>
+                <td>{{ row.approver3 }}</td>
+                <td class="report-table__description">{{ row.description }}</td>
+                <td>{{ row.itemAmount | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    } @else {
+      <app-empty-state
+        title="No template reports found"
+        description="Try clearing filters or widening the date range to see more records."
+      />
+    }
+
+    <section class="dashboard-grid dashboard-grid--wide">
+      <section class="glass-card report-side-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Approval Chain</p>
+            <h3>Latest workflow handoff</h3>
+          </div>
+        </div>
+
+        <div class="helper-list">
+          @for (row of visibleRows().slice(0, 4); track row.id) {
+            <article class="insight-row">
+              <div>
+                <strong>{{ row.templateName }}</strong>
+                <p>{{ row.employeeName }} • {{ row.branch }}</p>
+              </div>
+              <div>
+                <strong>{{ row.status }}</strong>
+                <p>{{ row.approver1 }} → {{ row.approver2 }} → {{ row.approver3 }}</p>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="glass-card report-side-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Branch Health</p>
+            <h3>Top locations by spend</h3>
+          </div>
+        </div>
+
+        <div class="stack-list">
+          @for (branch of branchSummaries(); track branch.name) {
+            <article class="stack-list__item stack-list__item--report">
+              <div>
+                <strong>{{ branch.name }}</strong>
+                <p>{{ branch.pending }} pending, {{ branch.approved }} approved</p>
+              </div>
+              <div class="stack-list__progress">
+                <div class="progress-track">
+                  <span
+                    class="progress-fill"
+                    [style.width.%]="branch.total / (visibleRows().length || 1) * 100"
+                  ></span>
+                </div>
+                <span class="muted">{{ branch.total }} records</span>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    </section>

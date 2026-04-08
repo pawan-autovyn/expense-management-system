@@ -1,0 +1,39 @@
+    <header class="topbar">
+      <div class="topbar__left">
+        <button type="button" class="icon-button icon-button--plain topbar__menu" (click)="menuToggle.emit()">
+          <app-icon name="menu" [size]="18" />
+        </button>
+      </div>
+
+      <div class="topbar__right">
+        <div class="topbar__switcher">
+          <button
+            type="button"
+            class="chip-button"
+            [class.is-active]="currentRole() === roleAdmin"
+            (click)="switchRole(roleAdmin)"
+          >
+            Admin
+          </button>
+          <button
+            type="button"
+            class="chip-button"
+            [class.is-active]="currentRole() === roleManager"
+            (click)="switchRole(roleManager)"
+          >
+            Operation Manager
+          </button>
+        </div>
+
+        <button type="button" class="topbar__utility" (click)="themeService.toggleTheme()">
+          <app-icon [name]="themeService.isDarkMode() ? 'sun' : 'moon'" [size]="18" />
+        </button>
+
+        <button type="button" class="topbar__utility topbar__notification" aria-label="Notifications">
+          <app-icon name="bell" [size]="18" />
+          @if (notificationService.unreadCount()) {
+            <b class="topbar__notification-badge">{{ notificationService.unreadCount() }}</b>
+          }
+        </button>
+      </div>
+    </header>

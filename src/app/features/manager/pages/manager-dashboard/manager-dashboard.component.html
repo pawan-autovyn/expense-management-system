@@ -1,0 +1,90 @@
+    <section class="page-hero">
+      <div>
+        <h1>Manager Dashboard</h1>
+        <p>Track your expense submissions, remaining budgets, and approval movement in one place</p>
+      </div>
+    </section>
+
+    <section class="alert-banner alert-banner--warning">
+      <app-icon name="alert" [size]="18" />
+      <strong>This month exceeded last month by {{ monthDelta() }}% in your tracked categories</strong>
+    </section>
+
+    <section class="stats-grid stats-grid--manager">
+      <app-stat-card title="My Total Expenses" [value]="myExpenses().length.toString()" subtitle="All submitted and draft mock records" icon="receipt" />
+      <app-stat-card title="My Remaining Budget" [value]="(remainingBudget() | currency:'INR':'symbol':'1.0-0') ?? ''" subtitle="Across assigned categories" icon="wallet" tone="success" />
+      <app-stat-card title="This Month vs Last Month" [value]="monthDelta() + '%'" subtitle="Smart comparison insight" icon="activity" tone="warning" />
+      <app-stat-card title="Pending Actions" [value]="pendingCount().toString()" subtitle="Awaiting finance review" icon="clock" tone="warning" />
+    </section>
+
+    <div class="page-grid page-grid--details">
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Budget Progress by Category</p>
+            <h3>My top categories</h3>
+          </div>
+        </div>
+        <div class="stack-list">
+          @for (category of topCategories(); track category.category.id) {
+            <article class="stack-list__item stack-list__item--progress">
+              <div>
+                <strong>{{ category.category.name }}</strong>
+                <p>{{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }} spent</p>
+              </div>
+              <div class="stack-list__progress">
+                <div class="progress-track">
+                  <span class="progress-fill" [style.width.%]="category.usage * 100"></span>
+                </div>
+                <app-status-badge [label]="category.status" />
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Approval Summary</p>
+            <h3>My current status mix</h3>
+          </div>
+        </div>
+        <div class="approval-summary-grid approval-summary-grid--manager">
+          @for (item of approvalSummary(); track item.label) {
+            <article>
+              <span>{{ item.label }}</span>
+              <strong>{{ item.value }}</strong>
+            </article>
+          }
+        </div>
+      </section>
+    </div>
+
+    <section class="dashboard-grid dashboard-grid--wide">
+      <app-activity-timeline
+        title="My Activity Timeline"
+        subtitle="Recent submissions and review notes"
+        [items]="timelineItems()"
+      />
+
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Recent Uploaded Bills</p>
+            <h3>Latest receipt previews</h3>
+          </div>
+        </div>
+        <div class="receipt-gallery receipt-gallery--compact">
+          @for (expense of recentBills(); track expense.id) {
+            <article class="receipt-gallery__item">
+              <img [src]="expense.receipt?.url" [alt]="expense.receipt?.name ?? expense.title" />
+              <div>
+                <strong>{{ expense.title }}</strong>
+                <span>{{ expense.status }}</span>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    </section>

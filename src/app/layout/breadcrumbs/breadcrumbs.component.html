@@ -1,0 +1,10 @@
+    <nav class="breadcrumbs glass-card" aria-label="Breadcrumb">
+      @for (crumb of breadcrumbs(); track crumb.route; let last = $last) {
+        @if (!last) {
+          <a [routerLink]="crumb.route">{{ crumb.label }}</a>
+          <app-icon name="chevron-right" [size]="14" />
+        } @else {
+          <span>{{ crumb.label }}</span>
+        }
+      }
+    </nav>

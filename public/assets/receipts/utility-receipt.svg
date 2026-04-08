@@ -1,0 +1,7 @@
+<svg width="640" height="420" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="420" rx="32" fill="#EEF2FF"/>
+  <rect x="48" y="42" width="544" height="336" rx="24" fill="white"/>
+  <text x="80" y="96" fill="#0F172A" font-size="28" font-family="Arial">Prime Utility House</text>
+  <text x="80" y="132" fill="#64748B" font-size="18" font-family="Arial">Utility Consumables</text>
+  <text x="80" y="318" fill="#6366F1" font-size="26" font-family="Arial">Maintenance Utility Bill</text>
+</svg>

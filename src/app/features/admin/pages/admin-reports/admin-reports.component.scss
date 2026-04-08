@@ -1,0 +1,58 @@
+.report-filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.35rem;
+  border-radius: 28px;
+}
+
+.report-filter-panel .section-heading {
+  align-items: center;
+}
+
+.report-filter-panel .page-toolbar__actions {
+  justify-content: flex-end;
+}
+
+.report-filter-grid {
+  align-items: end;
+}
+
+.report-table-shell {
+  overflow: auto;
+}
+
+.report-table {
+  width: 100%;
+  min-width: 1440px;
+  table-layout: fixed;
+}
+
+.report-table__remarks,
+.report-table__description {
+  width: 220px;
+  overflow-wrap: anywhere;
+}
+
+.report-table__branch {
+  width: 150px;
+}
+
+.report-side-card {
+  padding: 1.35rem;
+}
+:host-context(:root:not([data-theme='dark'])) .report-filter-panel,
+:host-context(:root:not([data-theme='dark'])) .report-table-shell,
+:host-context(:root:not([data-theme='dark'])) .report-side-card,
+:host-context(:root:not([data-theme='dark'])) .report-hero-card {
+  background:
+    radial-gradient(circle at top left, rgba(91, 159, 228, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 255, 0.96));
+  border-color: rgba(48, 95, 157, 0.1);
+  box-shadow: 0 18px 42px rgba(48, 95, 157, 0.08);
+}
+
+:host-context(:root:not([data-theme='dark'])) .report-filter-panel input,
+:host-context(:root:not([data-theme='dark'])) .report-filter-panel select {
+  background: rgba(255, 255, 255, 0.92);
+}

@@ -1,0 +1,37 @@
+    <div
+      class="app-shell"
+      [ngClass]="{
+        'app-shell--sidebar-open': sidebarOpen(),
+        'app-shell--sidebar-collapsed': !sidebarOpen()
+      }"
+    >
+      <div
+        class="app-shell__backdrop"
+        tabindex="0"
+        (click)="sidebarOpen.set(false)"
+        (keydown.enter)="sidebarOpen.set(false)"
+      ></div>
+
+      <app-sidebar
+        [open]="sidebarOpen()"
+        (closeRequested)="sidebarOpen.set(false)"
+        (toggleRequested)="toggleSidebar()"
+      />
+
+      <main class="app-shell__main">
+        <app-topbar (menuToggle)="toggleSidebar()" />
+
+        <section class="app-shell__content">
+          <router-outlet />
+        </section>
+      </main>
+
+      <a
+        class="floating-action"
+        [routerLink]="quickActionRoute()"
+        [attr.aria-label]="quickActionLabel()"
+      >
+        <app-icon name="plus-circle" [size]="22" />
+        <span>{{ quickActionLabel() }}</span>
+      </a>
+    </div>

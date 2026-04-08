@@ -1,0 +1,188 @@
+<section class="page-hero page-hero--audit">
+  <div class="page-hero__copy">
+    <p class="eyebrow">Audit Trail</p>
+    <h1>System activity and accountability log</h1>
+    <p>
+      Track every submission, draft update, approval, and review handoff from the same EMS data
+      set that powers the rest of the admin workspace.
+    </p>
+
+    <div class="hero-pills">
+      <span class="hero-pill">Live trail</span>
+      <span class="hero-pill">Role aware</span>
+      <span class="hero-pill">Export ready</span>
+    </div>
+  </div>
+
+  <section class="smart-banner glass-card smart-banner--hero audit-hero-card">
+    <app-icon name="activity" [size]="18" />
+    <div>
+      <strong>{{ pageSummary().eventCount }} visible events</strong>
+      <span>
+        {{ pageSummary().touchedExpenseCount }} expenses touched, latest by user
+        {{ pageSummary().latestUser }}.
+      </span>
+    </div>
+  </section>
+</section>
+
+<section class="stats-grid stats-grid--audit">
+  @for (card of summaryCards(); track card.title) {
+    <app-stat-card
+      [title]="card.title"
+      [value]="card.value"
+      [subtitle]="card.subtitle"
+      [icon]="card.icon"
+      [tone]="card.tone"
+    />
+  }
+</section>
+
+<section class="glass-card audit-filter-panel">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Filters</p>
+      <h3>Refine audit activity</h3>
+    </div>
+    <div class="page-toolbar__actions">
+      <button type="button" class="button button--ghost" (click)="resetFilters()">
+        <app-icon name="filter" [size]="16" />
+        <span>Reset</span>
+      </button>
+      <button type="button" class="button button--secondary" (click)="exportVisibleRows()">
+        <app-icon name="download" [size]="16" />
+        <span>Export CSV</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="audit-filter-grid">
+    <label class="audit-filter-grid__search">
+      <span>Search</span>
+      <div class="search-field audit-search-field">
+        <app-icon name="search" [size]="18" />
+        <input
+          type="search"
+          [ngModel]="filters().searchTerm"
+          (ngModelChange)="patchFilter('searchTerm', $event)"
+          placeholder="Search expense, user, action, note, or vendor"
+        />
+      </div>
+    </label>
+
+    <label>
+      <span>Action</span>
+      <select [ngModel]="filters().actionGroup" (ngModelChange)="patchFilter('actionGroup', $event)">
+        @for (option of actionFilters; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      <span>User Role</span>
+      <select [ngModel]="filters().role" (ngModelChange)="patchFilter('role', $event)">
+        @for (option of roleFilters; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+  </div>
+</section>
+
+@if (visibleEntries().length) {
+  <section class="audit-layout">
+    <div class="audit-main-column">
+      <section class="table-wrapper glass-card audit-table-shell">
+      <table class="data-table audit-table">
+        <thead>
+          <tr>
+            <th class="audit-table__time">Time</th>
+            <th class="audit-table__expense">Expense</th>
+            <th class="audit-table__category">Category</th>
+            <th class="audit-table__action">Action</th>
+            <th class="audit-table__user">User</th>
+            <th class="audit-table__role">Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of pagedEntries(); track entry.id) {
+            <tr>
+              <td class="audit-table__time">{{ entry.date | date: 'd MMM yyyy, h:mm a' }}</td>
+              <td class="audit-table__expense">
+                <strong>{{ entry.expenseCode }}</strong>
+                <div class="audit-table__meta">
+                  {{ entry.title }} • {{ entry.vendor }}
+                </div>
+              </td>
+              <td class="audit-table__category">{{ entry.category }}</td>
+              <td class="audit-table__action">
+                <app-status-badge [label]="entry.action" />
+              </td>
+              <td class="audit-table__user">
+                <strong>{{ entry.userName }}</strong>
+              </td>
+              <td class="audit-table__role">
+                <app-status-badge [label]="entry.actorRoleLabel" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      </section>
+
+      <div class="pagination-bar audit-pagination">
+        <button type="button" class="button button--ghost" (click)="previousPage()" [disabled]="page() === 1">
+          Previous
+        </button>
+        <span class="audit-pagination__meta">
+          Showing {{ pageWindow().start }}-{{ pageWindow().end }} of {{ pageWindow().total }}
+        </span>
+        <span>Page {{ page() }} of {{ totalPages() }}</span>
+        <button type="button" class="button button--ghost" (click)="nextPage()" [disabled]="page() === totalPages()">
+          Next
+        </button>
+      </div>
+    </div>
+
+    <div class="audit-side-column">
+      <app-activity-timeline
+        title="Recent activity stream"
+        subtitle="Latest approvals, submissions, and user notes"
+        [items]="timelineItems()"
+      />
+
+      <section class="glass-card audit-side-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Action Mix</p>
+            <h3>What changed most</h3>
+          </div>
+        </div>
+
+        <div class="stack-list">
+          @for (item of actionBreakdown(); track item.label) {
+            <article class="stack-list__item stack-list__item--progress audit-breakdown-item">
+              <div>
+                <strong>{{ item.label }}</strong>
+                <p>{{ item.description }}</p>
+              </div>
+              <div class="audit-breakdown-item__metric">
+                <strong>{{ item.value }}</strong>
+                <span>{{ item.percent | number: '1.0-0' }}%</span>
+              </div>
+              <div class="progress-track">
+                <span class="progress-fill" [style.width.%]="item.percent"></span>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    </div>
+  </section>
+} @else {
+  <app-empty-state
+    title="No audit entries found"
+    description="Try clearing the filters to see the full EMS activity stream."
+  />
+}

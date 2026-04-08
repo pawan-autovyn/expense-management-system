@@ -1,0 +1,19 @@
+    <section class="section-heading section-heading--page">
+      <div>
+        <p class="eyebrow">Notifications</p>
+        <h1>Alert center and finance signals</h1>
+      </div>
+    </section>
+
+    <section class="stack-list glass-card">
+      @for (notification of notifications(); track notification.id) {
+        <article class="stack-list__item stack-list__item--notification">
+          <div>
+            <strong>{{ notification.title }}</strong>
+            <p>{{ notification.message }}</p>
+            <span>{{ notification.date | date: 'MMM d, h:mm a' }}</span>
+          </div>
+          <app-status-badge [label]="notification.tone" />
+        </article>
+      }
+    </section>

@@ -1,0 +1,58 @@
+import { Routes } from '@angular/router';
+
+export const MANAGER_ROUTES: Routes = [
+  {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'dashboard',
+  },
+  {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('./pages/manager-dashboard/manager-dashboard.component').then(
+        (m) => m.ManagerDashboardComponent,
+      ),
+  },
+  {
+    path: 'add-expense',
+    loadComponent: () =>
+      import('./pages/manager-add-expense/manager-add-expense.component').then(
+        (m) => m.ManagerAddExpenseComponent,
+      ),
+  },
+  {
+    path: 'expenses',
+    loadComponent: () =>
+      import('./pages/manager-expenses/manager-expenses.component').then(
+        (m) => m.ManagerExpensesComponent,
+      ),
+  },
+  {
+    path: 'expenses/:id',
+    loadComponent: () =>
+      import('../shared/expense-details/expense-details.component').then(
+        (m) => m.ExpenseDetailsComponent,
+      ),
+  },
+  {
+    path: 'budgets',
+    loadComponent: () =>
+      import('./pages/manager-budgets/manager-budgets.component').then(
+        (m) => m.ManagerBudgetsComponent,
+      ),
+  },
+  {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./pages/manager-notifications/manager-notifications.component').then(
+        (m) => m.ManagerNotificationsComponent,
+      ),
+  },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('./pages/manager-profile/manager-profile.component').then(
+        (m) => m.ManagerProfileComponent,
+      ),
+  },
+];
