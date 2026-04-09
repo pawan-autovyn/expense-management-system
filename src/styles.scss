@@ -280,7 +280,7 @@ label {
 .sidebar {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh;
   padding: 1.2rem;
   display: flex;
   flex-direction: column;
@@ -331,9 +331,9 @@ label {
   height: 42px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--surface-strong);
+  background: var(--surface);
   color: var(--text);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
   z-index: 40;
 }
 
@@ -343,6 +343,9 @@ label {
 }
 
 .sidebar__rail-toggle svg {
+  display: block;
+  width: 18px;
+  height: 18px;
   transition: transform 180ms ease;
 }
 
@@ -378,16 +381,21 @@ label {
 }
 
 .sidebar__nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .sidebar__link {
   display: flex;
   align-items: center;
   gap: 0.85rem;
+  width: 100%;
+  min-width: 0;
   padding: 0.95rem 1rem;
   border-radius: 18px;
   color: var(--text-muted);
@@ -434,8 +442,8 @@ label {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  width: calc(100% - 2rem);
-  margin: 0 1rem 1rem;
+  width: 100%;
+  margin: auto 0 0;
   padding: 1rem 1.2rem;
   border: 0;
   border-top: 1px solid rgba(48, 95, 157, 0.1);
@@ -2252,6 +2260,18 @@ label {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .sidebar__brand,
+  .sidebar__user,
+  .sidebar__footer,
+  .sidebar__logout {
+    padding-left: 0.95rem;
+    padding-right: 0.95rem;
+  }
+
+  .sidebar__link {
+    padding: 0.85rem 0.9rem;
+  }
+
   .receipt-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2269,10 +2289,15 @@ label {
     width: min(320px, calc(100vw - 3rem));
     transform: translateX(-110%);
     transition: transform 220ms ease;
+    overflow-y: auto;
   }
 
   .sidebar--open {
     transform: translateX(0);
+  }
+
+  .sidebar__nav {
+    overflow-y: auto;
   }
 
   .app-shell--sidebar-open .app-shell__backdrop {
