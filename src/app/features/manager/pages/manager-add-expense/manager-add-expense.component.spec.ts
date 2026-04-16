@@ -84,6 +84,7 @@ describe('ManagerAddExpenseComponent', () => {
     component.form.controls.title.reset('');
     component.form.patchValue({
       categoryId: 'missing-category',
+      locationId: 'loc-hq',
       amount: 999999,
       date: '2026-04-06',
       vendor: 'Fresh Brew Traders',
@@ -116,6 +117,7 @@ describe('ManagerAddExpenseComponent', () => {
     component.form.patchValue({
       title: 'Pantry refill',
       categoryId: 'tea-pantry',
+      locationId: 'loc-hq',
       amount: 1200,
       date: '2026-04-06',
       vendor: 'Fresh Brew Traders',
@@ -133,7 +135,7 @@ describe('ManagerAddExpenseComponent', () => {
     component.saveDraft();
 
     expect(createSpy).toHaveBeenCalled();
-    expect(navigateSpy).toHaveBeenCalledWith('/manager/expenses');
+    expect(navigateSpy).toHaveBeenCalledWith('/operation-manager/expenses');
   });
 
   it('does not persist when there is no authenticated user', () => {
@@ -152,6 +154,7 @@ describe('ManagerAddExpenseComponent', () => {
     component.form.patchValue({
       title: 'Guest water bottles',
       categoryId: 'tea-pantry',
+      locationId: 'loc-hq',
       amount: 300,
       date: '2026-04-06',
       vendor: 'Fresh Brew Traders',

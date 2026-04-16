@@ -39,7 +39,7 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "./src/styles.scss"
             ],
             "scripts": []
           },
@@ -98,7 +98,7 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "./src/styles.scss"
             ],
             "scripts": [],
             "codeCoverage": true

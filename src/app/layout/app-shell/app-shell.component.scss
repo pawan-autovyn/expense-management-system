@@ -1,4 +1,13 @@
 :host {
   display: block;
   min-height: 100vh;
+  background: var(--bg);
+}
+
+.app-shell__main {
+  min-width: 0;
+}
+
+.app-shell__content {
+  min-width: 0;
 }

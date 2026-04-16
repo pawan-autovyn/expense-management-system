@@ -7,34 +7,8 @@ import { IconComponent } from '../icon/icon.component';
   selector: 'app-stat-card',
   standalone: true,
   imports: [NgClass, DecimalPipe, IconComponent],
-  template: `
-    <article class="glass-card stat-card" [ngClass]="'stat-card--' + tone()">
-      <div class="stat-card__header">
-        <div>
-          <p class="eyebrow">{{ title() }}</p>
-          <h3>{{ value() }}</h3>
-        </div>
-        <span class="stat-card__icon">
-          <app-icon [name]="icon()" [size]="20" />
-        </span>
-      </div>
-
-      <p class="muted">{{ subtitle() }}</p>
-
-      @if (delta()) {
-        <div class="stat-card__delta">
-          <app-icon name="arrow-up-right" [size]="14" />
-          <span>{{ delta()! | number: '1.0-1' }}%</span>
-        </div>
-      }
-
-      @if (progress() !== null) {
-        <div class="progress-track">
-          <span class="progress-fill" [style.width.%]="progress()"></span>
-        </div>
-      }
-    </article>
-  `,
+  templateUrl: './stat-card.component.html',
+  styleUrl: './stat-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatCardComponent {

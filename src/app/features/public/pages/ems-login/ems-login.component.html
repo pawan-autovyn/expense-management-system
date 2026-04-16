@@ -1,0 +1,40 @@
+<section class="ems-login-page">
+  <header class="ems-login-page__brand">
+    <div class="ems-login-page__mark" aria-hidden="true">
+      <app-icon name="layers" [size]="20" />
+    </div>
+    <div>
+      <h1>ExpenseFlow Access</h1>
+      <p>Enterprise expense management sign-in</p>
+    </div>
+  </header>
+
+  <article class="ems-login-card glass-card">
+    <div class="ems-login-card__logo">
+      <app-icon name="dashboard" [size]="24" />
+      <span>ExpenseFlow</span>
+    </div>
+
+    <div class="ems-login-card__intro">
+      <h2>Sign in</h2>
+      <p>Enter your email ID or username to continue.</p>
+    </div>
+
+    <form class="ems-login-form" (submit)="submit(); $event.preventDefault()">
+      <label class="ems-login-field">
+        <span>Email ID or Username</span>
+        <input
+          type="text"
+          name="email"
+          [value]="email()"
+          (input)="updateEmail(emailInput.value)"
+          #emailInput
+          placeholder="Enter your email or username"
+          autocomplete="username"
+        />
+      </label>
+
+      <button type="submit" class="button button--primary ems-login-submit">Continue</button>
+    </form>
+  </article>
+</section>

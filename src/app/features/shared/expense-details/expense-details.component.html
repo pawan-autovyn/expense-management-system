@@ -56,14 +56,14 @@
             } @else {
               <app-empty-state
                 title="No receipt uploaded"
-                description="This mock entry does not include a bill preview."
+                description="This entry does not include a bill preview."
               />
             }
           </section>
 
           <app-activity-timeline
             title="Approval Timeline"
-            subtitle="Mock workflow history"
+            subtitle="Workflow history"
             [items]="timelineItems()"
           />
         </section>
@@ -76,6 +76,6 @@
     } @else {
       <app-empty-state
         title="Expense not found"
-        description="The selected record could not be located in the mock repository."
+        description="The selected record could not be located in the current records."
       />
     }

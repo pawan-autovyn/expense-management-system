@@ -29,7 +29,8 @@ describe('AuthService', () => {
 
     expect(service.hasRole([Role.OperationManager])).toBeTrue();
     expect(service.hasRole([Role.Admin])).toBeFalse();
-    expect(service.getDefaultRouteForRole(Role.OperationManager)).toBe('/manager/dashboard');
+    expect(service.getDefaultRouteForRole(Role.OperationManager)).toBe('/operation-manager/dashboard');
+    expect(service.getDefaultRouteForRole(Role.Recommender)).toBe('/recommender/dashboard');
   });
 
   it('clears the session on sign out', () => {
@@ -54,6 +55,6 @@ describe('AuthService', () => {
     expect(service.hasRole([Role.Admin])).toBeFalse();
     expect(service.switchRole(Role.OperationManager).role).toBe(Role.OperationManager);
     expect(service.getDefaultRouteForRole(Role.Admin)).toBe('/admin/dashboard');
-    expect(service.getDefaultRouteForRole(null)).toBe('/manager/dashboard');
+    expect(service.getDefaultRouteForRole(null)).toBe('/operation-manager/dashboard');
   });
 });

@@ -1,26 +1,8 @@
-    <div
-      class="app-shell"
-      [ngClass]="{
-        'app-shell--sidebar-open': sidebarOpen(),
-        'app-shell--sidebar-collapsed': !sidebarOpen()
-      }"
-    >
-      <div
-        class="app-shell__backdrop"
-        tabindex="0"
-        (click)="sidebarOpen.set(false)"
-        (keydown.enter)="sidebarOpen.set(false)"
-      ></div>
-
-      <app-sidebar
-        [open]="sidebarOpen()"
-        (closeRequested)="sidebarOpen.set(false)"
-        (toggleRequested)="toggleSidebar()"
-      />
+    <div class="app-shell">
+      <app-sidebar />
 
       <main class="app-shell__main">
-        <app-topbar (menuToggle)="toggleSidebar()" />
-
+        <app-topbar />
         <section class="app-shell__content">
           <router-outlet />
         </section>

@@ -3,3 +3,220 @@
   flex-direction: column;
   gap: 1.5rem;
 }
+
+:host .stats-grid {
+  align-items: stretch;
+}
+
+:host .stats-grid app-stat-card {
+  min-height: 100%;
+}
+
+:host .dashboard-grid {
+  align-items: start;
+}
+
+:host .dashboard-grid--wide {
+  gap: 1.15rem;
+}
+
+:host .glass-card {
+  border-radius: 30px;
+}
+
+.dashboard-range-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: 24px;
+}
+
+.dashboard-range-panel__row {
+  display: grid;
+  grid-template-columns: minmax(150px, 180px) minmax(130px, 150px) minmax(130px, 150px);
+  gap: 0.7rem;
+  align-items: end;
+}
+
+.dashboard-range-field {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.dashboard-range-panel span {
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-label);
+  color: var(--text-muted);
+}
+
+.dashboard-range-field select,
+.dashboard-range-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding-block: 0.45rem;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.dashboard-overbudget {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: 28px;
+}
+
+.dashboard-overbudget__title,
+.dashboard-overbudget__subtitle {
+  min-width: 0;
+}
+
+.dashboard-overbudget__subtitle {
+  max-width: 32rem;
+}
+
+.dashboard-overbudget__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.dashboard-overbudget__card,
+.dashboard-overbudget__empty-state {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  background: rgba(239, 246, 255, 0.72);
+  border: 1px solid rgba(59, 130, 246, 0.12);
+}
+
+.dashboard-overbudget__card strong,
+.dashboard-overbudget__empty-state strong {
+  display: block;
+  line-height: var(--line-height-snug);
+  overflow-wrap: anywhere;
+}
+
+.dashboard-overbudget__card p,
+.dashboard-overbudget__empty-state p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: var(--line-height-body);
+}
+
+.dashboard-overbudget__progress {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.dashboard-overbudget__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.dashboard-overbudget__meta span {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-default);
+}
+
+.dashboard-overbudget__empty-state {
+  margin: 0;
+}
+
+.dashboard-range-panel__note {
+  grid-column: 2 / -1;
+  margin: 0;
+  align-self: center;
+  color: var(--text-muted);
+  line-height: var(--line-height-body);
+  font-size: var(--font-size-caption);
+}
+
+.dashboard-grid--insights {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.15rem;
+}
+
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: 28px;
+}
+
+.dashboard-list {
+  gap: 0.7rem;
+}
+
+.dashboard-list__item {
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+
+.dashboard-list__main {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.dashboard-list__main strong,
+.dashboard-list__main p,
+.dashboard-list__main small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-list__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.dashboard-list__meta span {
+  font-weight: 700;
+}
+
+.dashboard-panel__empty {
+  margin: 0;
+}
+
+@media (max-width: 980px) {
+  .dashboard-range-panel__row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-range-field {
+    max-width: none;
+  }
+
+  .dashboard-range-panel__note {
+    grid-column: 1;
+  }
+
+  .dashboard-grid--insights {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-overbudget__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1240px) {
+  .dashboard-range-panel__row {
+    grid-template-columns: minmax(140px, 165px) minmax(120px, 140px) minmax(120px, 140px);
+  }
+}

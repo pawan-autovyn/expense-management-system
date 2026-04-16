@@ -4,7 +4,7 @@ import { Router, provideRouter } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { Role, ExpenseStatus } from '../../../../models/app.models';
+import { ExpenseStatus } from '../../../../models/app.models';
 import { ManagerExpensesComponent } from './manager-expenses.component';
 
 describe('ManagerExpensesComponent', () => {
@@ -29,7 +29,7 @@ describe('ManagerExpensesComponent', () => {
 
     localStorage.clear();
     authService = TestBed.inject(AuthService);
-    authService.loginAs(Role.OperationManager);
+    authService.loginWithCredentials('operations.manager.a@demo.com', 'SecurePass123!');
     expenseRepository = TestBed.inject(ExpenseRepositoryService);
     router = TestBed.inject(Router);
     fixture = TestBed.createComponent(ManagerExpensesComponent);
@@ -38,6 +38,13 @@ describe('ManagerExpensesComponent', () => {
   });
 
   it('creates a filtered row set for the active manager', () => {
+    const harness = component as unknown as {
+      filters: { set(value: Record<string, unknown>): void; (): Record<string, unknown> };
+    };
+
+    harness.filters.set({ ...harness.filters(), dateRange: 'all' });
+    fixture.detectChanges();
+
     expect(component.rows().length).toBeGreaterThan(0);
     expect(component.rows().every((row) => row.title.length > 0)).toBeTrue();
 
@@ -52,10 +59,17 @@ describe('ManagerExpensesComponent', () => {
 
     component.handleAction({ actionId: 'view', row });
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/manager/expenses', row.id]);
+    expect(navigateSpy).toHaveBeenCalledWith(['/operation-manager/my-expenses', row.id]);
   });
 
   it('opens delete confirmation for draft expenses and deletes on confirm', () => {
+    const harness = component as unknown as {
+      filters: { set(value: Record<string, unknown>): void; (): Record<string, unknown> };
+    };
+
+    harness.filters.set({ ...harness.filters(), dateRange: 'all' });
+    fixture.detectChanges();
+
     const draftRow = component.rows().find((row) => row.status === ExpenseStatus.Draft);
 
     expect(draftRow).toBeDefined();

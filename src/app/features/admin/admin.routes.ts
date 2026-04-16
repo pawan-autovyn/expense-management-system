@@ -35,7 +35,21 @@ export const ADMIN_ROUTES: Routes = [
       ),
   },
   {
+    path: 'approval',
+    loadComponent: () =>
+      import('./pages/admin-approvals/admin-approvals.component').then(
+        (m) => m.AdminApprovalsComponent,
+      ),
+  },
+  {
     path: 'audit-trail',
+    loadComponent: () =>
+      import('./pages/admin-audit-trail/admin-audit-trail.component').then(
+        (m) => m.AdminAuditTrailComponent,
+      ),
+  },
+  {
+    path: 'audit',
     loadComponent: () =>
       import('./pages/admin-audit-trail/admin-audit-trail.component').then(
         (m) => m.AdminAuditTrailComponent,
@@ -49,7 +63,19 @@ export const ADMIN_ROUTES: Routes = [
       ),
   },
   {
+    path: 'category',
+    loadComponent: () =>
+      import('./pages/admin-categories/admin-categories.component').then(
+        (m) => m.AdminCategoriesComponent,
+      ),
+  },
+  {
     path: 'budgets',
+    loadComponent: () =>
+      import('./pages/admin-budgets/admin-budgets.component').then((m) => m.AdminBudgetsComponent),
+  },
+  {
+    path: 'budget',
     loadComponent: () =>
       import('./pages/admin-budgets/admin-budgets.component').then((m) => m.AdminBudgetsComponent),
   },

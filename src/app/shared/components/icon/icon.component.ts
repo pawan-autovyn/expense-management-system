@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 const ICON_PATHS: Record<string, string[]> = {
   dashboard: ['M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z'],
+  home: ['M4 11.5 12 4l8 7.5', 'M6.5 10.5V20h11v-9.5'],
+  info: ['M12 17v-5', 'M12 8h.01', 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z'],
   receipt: [
     'M7 3h10l4 4v14l-2-1.2L17 21l-2-1.2L13 21l-2-1.2L9 21l-2-1.2L5 21V5a2 2 0 0 1 2-2Z',
     'M9 9h6',
@@ -10,6 +12,10 @@ const ICON_PATHS: Record<string, string[]> = {
   ],
   layers: ['M12 3 2 8l10 5 10-5-10-5Zm-10 9 10 5 10-5M2 16l10 5 10-5'],
   wallet: ['M3 7h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 0 2-3h11l2 3', 'M16 12h.01'],
+  target: ['M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16Z', 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z', 'M15.5 8.5 20 4'],
+  factory: ['M4 20h16V9l-5 2.5V9l-5 2.5V9L4 11v9Z', 'M8 20v-4h3v4', 'M15 20v-6h2v6'],
+  truck: ['M3 8h10v7H3z', 'M13 10h4l3 3v2h-7z', 'M7.5 18a1.5 1.5 0 1 0 0-.01Z', 'M18 18a1.5 1.5 0 1 0 0-.01Z'],
+  'bolt-circle': ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z', 'M13 4 8 13h4l-1 7 5-9h-4l1-7Z'],
   activity: ['M3 12h4l3-7 4 14 3-7h4'],
   users: ['M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2', 'M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M20 8v6', 'M23 11h-6'],
   alert: ['M12 9v4', 'M12 17h.01', 'M10.3 3.9 1.8 18.5a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z'],
@@ -24,6 +30,7 @@ const ICON_PATHS: Record<string, string[]> = {
   moon: ['M21 12.8A9 9 0 1 1 11.2 3a7 7 0 1 0 9.8 9.8Z'],
   logout: ['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4', 'M16 17l5-5-5-5', 'M21 12H9'],
   menu: ['M4 7h16', 'M4 12h16', 'M4 17h16'],
+  'chevron-down': ['m6 10 6 6 6-6'],
   'chevron-right': ['m9 18 6-6-6-6'],
   'chevron-left': ['m15 18-6-6 6-6'],
   filter: ['M4 6h16', 'M7 12h10', 'M10 18h4'],
@@ -41,23 +48,8 @@ const ICON_PATHS: Record<string, string[]> = {
 @Component({
   selector: 'app-icon',
   standalone: true,
-  template: `
-    <svg
-      [attr.width]="size()"
-      [attr.height]="size()"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      [attr.stroke-width]="strokeWidth()"
-      aria-hidden="true"
-    >
-      @for (path of paths(); track path) {
-        <path [attr.d]="path" />
-      }
-    </svg>
-  `,
+  templateUrl: './icon.component.html',
+  styleUrl: './icon.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IconComponent {

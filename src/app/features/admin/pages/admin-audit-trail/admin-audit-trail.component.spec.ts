@@ -68,7 +68,7 @@ describe('AdminAuditTrailComponent', () => {
   it('exports the visible entries as CSV', () => {
     let appendedAnchor: { download?: string } | null = null;
 
-    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:mock-url');
+    spyOn(window.URL, 'createObjectURL').and.returnValue('blob:test-url');
     spyOn(window.URL, 'revokeObjectURL');
     spyOn(HTMLAnchorElement.prototype, 'click').and.stub();
     spyOn(document.body, 'appendChild').and.callFake(((node: Node) => {
@@ -82,6 +82,6 @@ describe('AdminAuditTrailComponent', () => {
 
     expect(downloadName).toBe('corework-audit-trail-all.csv');
     expect(window.URL.createObjectURL).toHaveBeenCalled();
-    expect(window.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+    expect(window.URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-url');
   });
 });

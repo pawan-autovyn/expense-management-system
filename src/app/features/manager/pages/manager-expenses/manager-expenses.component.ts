@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { Attachment, ExpenseStatus } from '../../../../models/app.models';
+import { Attachment, ExpenseStatus, Role } from '../../../../models/app.models';
 import { DataTableComponent, TableAction, TableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { ExpenseFilterBarComponent } from '../../../../shared/components/expense-filter-bar/expense-filter-bar.component';
 import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -88,9 +88,14 @@ export class ManagerExpensesComponent {
 
   protected handleAction(event: { actionId: string; row: unknown }): void {
     const row = event.row as unknown as MyExpenseRow;
+    const currentUser = this.authService.currentUser();
+    const listRoute =
+      currentUser?.role === Role.OperationManager
+        ? '/operation-manager/my-expenses'
+        : '/operation-manager/expenses';
 
     if (event.actionId === 'view') {
-      void this.router.navigate(['/manager/expenses', row.id]);
+      void this.router.navigate([listRoute, row.id]);
 
       return;
     }

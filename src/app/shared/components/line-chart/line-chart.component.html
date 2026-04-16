@@ -1,0 +1,34 @@
+<div class="chart-card glass-card">
+  <div class="chart-card__header">
+    <div>
+      <p class="eyebrow">{{ title() }}</p>
+      <h3>{{ headline() }}</h3>
+    </div>
+    <p class="muted">{{ subtitle() }}</p>
+  </div>
+
+  <svg class="chart-svg" viewBox="0 0 420 220" preserveAspectRatio="none" aria-label="Trend chart">
+    <defs>
+      <linearGradient id="line-fill" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="rgba(79, 70, 229, 0.45)" />
+        <stop offset="100%" stop-color="rgba(79, 70, 229, 0)" />
+      </linearGradient>
+    </defs>
+    <path class="chart-grid" d="M30 30H390 M30 95H390 M30 160H390" />
+    <path class="chart-area" [attr.d]="areaPath()" />
+    <polyline class="chart-line chart-line--budget" [attr.points]="budgetPoints()" />
+    <polyline class="chart-line" [attr.points]="points()" />
+    @for (point of plottedPoints(); track point.label) {
+      <circle class="chart-dot" [attr.cx]="point.x" [attr.cy]="point.y" r="4"></circle>
+    }
+  </svg>
+
+  <div class="chart-card__labels">
+    @for (item of data(); track item.label) {
+      <div>
+        <span>{{ item.label }}</span>
+        <strong>{{ item.total | number: '1.0-0' }}</strong>
+      </div>
+    }
+  </div>
+</div>

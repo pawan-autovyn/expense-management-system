@@ -11,13 +11,14 @@ import {
 } from '../../models/app.models';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const DEMO_NOW = new Date('2026-04-02T23:59:59+05:30');
 
 export const DEFAULT_EXPENSE_FILTERS: ExpenseFilters = {
   searchTerm: '',
   categoryId: 'all',
   status: 'all',
   managerId: 'all',
-  dateRange: '30d',
+  dateRange: 'last-month',
   sortBy: 'date-desc',
 };
 
@@ -49,7 +50,10 @@ export function buildCategoryBudgetViews(
       const spend = expenses
         .filter((expense) => expense.categoryId === category.id)
         .filter((expense) => !managerId || expense.managerId === managerId)
-        .filter((expense) => expense.status !== ExpenseStatus.Rejected)
+        .filter(
+          (expense) =>
+            ![ExpenseStatus.Rejected, ExpenseStatus.Cancelled].includes(expense.status),
+        )
         .reduce((total, expense) => total + expense.amount, 0);
 
       return {
@@ -65,14 +69,9 @@ export function buildCategoryBudgetViews(
 }
 
 export function filterExpenses(expenses: Expense[], filters: ExpenseFilters): Expense[] {
-  const now = new Date('2026-04-02T23:59:59+05:30');
-  const rangeMap: Record<ExpenseFilters['dateRange'], number> = {
-    '7d': 7,
-    '30d': 30,
-    '90d': 90,
-    all: Number.POSITIVE_INFINITY,
-  };
+  const now = DEMO_NOW;
   const searchTerm = filters.searchTerm.trim().toLowerCase();
+  const rangeBounds = resolveDateBounds(filters, now);
 
   return expenses
     .filter((expense) => {
@@ -81,19 +80,23 @@ export function filterExpenses(expenses: Expense[], filters: ExpenseFilters): Ex
         expense.vendor,
         expense.description,
         expense.status,
+        ...(expense.remarks ?? []),
         ...expense.tags,
       ]
         .join(' ')
         .toLowerCase();
+      const expenseDate = new Date(expense.date);
       const withinDate =
-        Math.abs(now.getTime() - new Date(expense.date).getTime()) / DAY_MS <=
-        rangeMap[filters.dateRange];
+        !rangeBounds ||
+        (expenseDate.getTime() >= rangeBounds.start.getTime() &&
+          expenseDate.getTime() <= rangeBounds.end.getTime());
 
       return (
         (!searchTerm || searchable.includes(searchTerm)) &&
         (filters.categoryId === 'all' || expense.categoryId === filters.categoryId) &&
         (filters.status === 'all' || expense.status === filters.status) &&
         (filters.managerId === 'all' || expense.managerId === filters.managerId) &&
+        (!filters.locationId || expense.locationId === filters.locationId) &&
         withinDate
       );
     })
@@ -112,12 +115,92 @@ export function filterExpenses(expenses: Expense[], filters: ExpenseFilters): Ex
     });
 }
 
+function resolveDateBounds(
+  filters: ExpenseFilters,
+  now: Date,
+): { start: Date; end: Date } | null {
+  if (filters.dateRange === 'all') {
+    return null;
+  }
+
+  if (filters.dateRange === 'custom') {
+    if (!filters.dateFrom && !filters.dateTo) {
+      return null;
+    }
+
+    const start = filters.dateFrom ? startOfDay(new Date(filters.dateFrom)) : startOfYear(now);
+    const end = filters.dateTo ? endOfDay(new Date(filters.dateTo)) : endOfDay(now);
+
+    return { start, end };
+  }
+
+  if (filters.dateRange === 'last-year') {
+    const year = now.getFullYear() - 1;
+
+    return {
+      start: new Date(year, 0, 1, 0, 0, 0, 0),
+      end: new Date(year, 11, 31, 23, 59, 59, 999),
+    };
+  }
+
+  if (filters.dateRange === 'current-year') {
+    return {
+      start: new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0),
+      end: endOfDay(now),
+    };
+  }
+
+  if (filters.dateRange === 'last-2-years') {
+    return {
+      start: new Date(now.getFullYear() - 2, 0, 1, 0, 0, 0, 0),
+      end: new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59, 999),
+    };
+  }
+
+  if (filters.dateRange === 'last-month') {
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+    const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+    return { start, end };
+  }
+
+  const dayCountMap: Record<
+    Exclude<
+      ExpenseFilters['dateRange'],
+      'all' | 'custom' | 'last-month' | 'last-year' | 'current-year' | 'last-2-years'
+    >,
+    number
+  > = {
+    '7d': 7,
+    '30d': 30,
+    '90d': 90,
+  };
+  const days = dayCountMap[filters.dateRange as '7d' | '30d' | '90d'];
+  const start = new Date(now.getTime() - days * DAY_MS);
+
+  return { start: startOfDay(start), end: endOfDay(now) };
+}
+
+function startOfDay(value: Date): Date {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate(), 0, 0, 0, 0);
+}
+
+function endOfDay(value: Date): Date {
+  return new Date(value.getFullYear(), value.getMonth(), value.getDate(), 23, 59, 59, 999);
+}
+
+function startOfYear(value: Date): Date {
+  return new Date(value.getFullYear(), 0, 1, 0, 0, 0, 0);
+}
+
 export function buildManagerSpendSummary(expenses: Expense[], users: User[]): ManagerSpendSummary[] {
   return users
     .filter((user) => user.role === Role.OperationManager)
     .map((user) => {
       const userExpenses = expenses.filter(
-        (expense) => expense.managerId === user.id && expense.status !== ExpenseStatus.Rejected,
+        (expense) =>
+          expense.managerId === user.id &&
+          ![ExpenseStatus.Rejected, ExpenseStatus.Cancelled].includes(expense.status),
       );
 
       return {

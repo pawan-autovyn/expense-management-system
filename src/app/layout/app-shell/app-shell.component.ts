@@ -1,36 +1,51 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { Role } from '../../models/app.models';
 import { SidebarComponent } from '../sidebar/sidebar.component';
-import { TopbarComponent } from '../topbar/topbar.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
+import { TopbarComponent } from '../topbar/topbar.component';
 
 @Component({
   selector: 'app-app-shell',
   standalone: true,
-  imports: [NgClass, RouterLink, RouterOutlet, SidebarComponent, TopbarComponent, IconComponent],
+  imports: [RouterLink, RouterOutlet, SidebarComponent, TopbarComponent, IconComponent],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppShellComponent {
   private readonly authService = inject(AuthService);
-  protected readonly sidebarOpen = signal(this.isDesktopViewport());
-  protected readonly quickActionRoute = computed(() =>
-    this.authService.currentRole() === Role.Admin ? '/admin/approvals' : '/manager/add-expense',
-  );
-  protected readonly quickActionLabel = computed(() =>
-    this.authService.currentRole() === Role.Admin ? 'Review queue' : 'Quick add expense',
-  );
+  protected readonly quickActionRoute = computed(() => {
+    const role = this.authService.currentRole();
 
-  protected toggleSidebar(): void {
-    this.sidebarOpen.update((value) => !value);
-  }
+    if (role === Role.Admin) {
+      return '/admin/approvals';
+    }
 
-  private isDesktopViewport(): boolean {
-    return typeof window !== 'undefined' ? window.innerWidth >= 980 : true;
-  }
+    if (role === Role.Recommender) {
+      return '/recommender/recommendation';
+    }
+
+    if (role === Role.OperationManager) {
+      return '/operation-manager/add-expense';
+    }
+
+    return '/operation-manager/add-expense';
+  });
+  protected readonly quickActionLabel = computed(() => {
+    const role = this.authService.currentRole();
+
+    if (role === Role.Admin) {
+      return 'Open approvals';
+    }
+
+    if (role === Role.Recommender) {
+      return 'Review queue';
+    }
+
+    return 'New expense';
+  });
+
 }

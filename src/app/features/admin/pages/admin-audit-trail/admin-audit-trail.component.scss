@@ -41,8 +41,9 @@
 
 .audit-filter-grid label span {
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: var(--font-size-label);
   font-weight: 600;
+  line-height: var(--line-height-label);
 }
 
 .audit-filter-grid__search {
@@ -52,7 +53,9 @@
 .audit-search-field {
   min-height: 48px;
   border-radius: 16px;
-  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 254, 0.96));
+  box-shadow: 0 10px 26px rgba(27, 46, 73, 0.05);
 }
 
 .audit-layout {
@@ -89,6 +92,9 @@
 .audit-table th,
 .audit-table td {
   vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .audit-table__time {
@@ -122,8 +128,8 @@
 .audit-table__meta {
   margin-top: 0.3rem;
   color: var(--text-muted);
-  font-size: 0.88rem;
-  line-height: 1.4;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-body);
 }
 
 .audit-table__action .status-badge,
@@ -152,12 +158,12 @@
 }
 
 .audit-breakdown-item__metric strong {
-  font-size: 1.28rem;
+  font-size: var(--font-size-section-title);
 }
 
 .audit-breakdown-item__metric span {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--font-size-caption);
 }
 
 .audit-pagination {
@@ -172,37 +178,28 @@
   font-weight: 600;
 }
 
-:host-context(:root:not([data-theme='dark'])) .page-hero--audit,
-:host-context(:root:not([data-theme='dark'])) .audit-filter-panel,
-:host-context(:root:not([data-theme='dark'])) .audit-table-shell,
-:host-context(:root:not([data-theme='dark'])) .audit-side-card,
-:host-context(:root:not([data-theme='dark'])) .audit-hero-card {
-  background:
-    radial-gradient(circle at top left, rgba(91, 159, 228, 0.09), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.98));
-  border-color: rgba(48, 95, 157, 0.1);
-  box-shadow: 0 18px 42px rgba(48, 95, 157, 0.08);
-}
-
-:host-context(:root:not([data-theme='dark'])) .audit-filter-panel input,
-:host-context(:root:not([data-theme='dark'])) .audit-filter-panel select {
-  background: rgba(255, 255, 255, 0.92);
-}
-
 .audit-hero-card {
   max-width: 500px;
   padding: 1.25rem 1.4rem;
   border-radius: 24px;
 }
 
+.audit-hero-card strong,
+.audit-hero-card span,
+.audit-table__meta,
+.audit-breakdown-item__metric strong,
+.audit-breakdown-item__metric span {
+  overflow-wrap: anywhere;
+}
+
 .audit-hero-card strong {
   display: block;
-  font-size: 1rem;
-  line-height: 1.35;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-snug);
 }
 
 .audit-hero-card span {
-  line-height: 1.55;
+  line-height: var(--line-height-body);
 }
 
 .audit-filter-panel,

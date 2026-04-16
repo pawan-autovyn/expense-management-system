@@ -28,7 +28,7 @@ describe('guestGuard', () => {
     expect(result).toBeTrue();
   });
 
-  it('redirects authenticated users to the role home page', () => {
+  it('redirects authenticated users to the default workspace', () => {
     authService.loginAs(Role.OperationManager);
 
     const result = TestBed.runInInjectionContext(() =>
@@ -36,6 +36,6 @@ describe('guestGuard', () => {
     );
 
     expect(result instanceof UrlTree).toBeTrue();
-    expect(router.serializeUrl(result as UrlTree)).toBe('/manager/dashboard');
+    expect(router.serializeUrl(result as UrlTree)).toBe('/operation-manager/dashboard');
   });
 });

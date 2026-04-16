@@ -65,7 +65,7 @@ describe('ExpenseDetailsComponent', () => {
 
   it('falls back to unknown category and empty timeline data when the record is malformed', async () => {
     localStorage.setItem(
-      'aurora-ledger-expenses',
+      'enterprise-expense-expenses',
       JSON.stringify([
         {
           id: 'malformed-expense',

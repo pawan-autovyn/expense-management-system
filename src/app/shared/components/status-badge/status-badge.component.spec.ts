@@ -17,7 +17,10 @@ describe('StatusBadgeComponent', () => {
     const cases = [
       { label: 'Approved', toneClass: 'status-badge--success' },
       { label: 'Pending Review', toneClass: 'status-badge--warning' },
+      { label: 'Recommended', toneClass: 'status-badge--warning' },
+      { label: 'Reopened', toneClass: 'status-badge--warning' },
       { label: 'Rejected', toneClass: 'status-badge--danger' },
+      { label: 'Cancelled', toneClass: 'status-badge--danger' },
       { label: 'Draft', toneClass: 'status-badge--info' },
     ];
 

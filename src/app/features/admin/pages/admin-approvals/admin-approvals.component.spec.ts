@@ -47,22 +47,16 @@ describe('AdminApprovalsComponent', () => {
     expect(component.filteredRows().length).toBeGreaterThan(0);
 
     component.selectedTab.set('all');
-    expect(
-      component
-        .filteredRows()
-        .every(
-          (row) => row.status.startsWith('Pending') || row.status === ExpenseStatus.OverBudget,
-        ),
-    ).toBeTrue();
+    expect(component.filteredRows().every((row) => row.status !== ExpenseStatus.Draft)).toBeTrue();
 
     component.selectedTab.set('l1');
-    expect(component.filteredRows().every((row) => row.status === 'Pending L1')).toBeTrue();
+    expect(component.filteredRows().every((row) => row.level === 'L1')).toBeTrue();
 
     component.selectedTab.set('l2');
-    expect(component.filteredRows().every((row) => row.status === 'Pending L2')).toBeTrue();
+    expect(component.filteredRows().every((row) => row.level === 'L2')).toBeTrue();
 
     component.selectedTab.set('l3');
-    expect(component.filteredRows().every((row) => row.status === 'Pending L3')).toBeTrue();
+    expect(component.filteredRows().every((row) => row.level === 'L3')).toBeTrue();
 
     component.selectedTab.set('rejected');
     expect(component.filteredRows().every((row) => row.status.startsWith('Rejected'))).toBeTrue();
@@ -83,8 +77,19 @@ describe('AdminApprovalsComponent', () => {
 
     expect(component.selectedRowId()).toBe(selected.id);
     expect(component.selectedRow()?.level).toBe(selected.level);
-    expect(component.timelineSteps().length).toBe(4);
+    expect(component.timelineSteps().length).toBe(3);
     expect(component.timelineSteps()[0].owner).toBe(selected.manager);
+    expect(component.timelineSteps()[2].label).toBe('L3 Admin Approval');
+  });
+
+  it('shows the forwarded-request banner for routed approvals', () => {
+    component.selectedTab.set('l2');
+    fixture.detectChanges();
+
+    const content = fixture.nativeElement as HTMLElement;
+
+    expect(content.textContent).toContain('The recommender approved this request and sent it forward.');
+    expect(content.textContent).toContain('Your approval is pending for the final admin step.');
   });
 
   it('uses the first row as the default selection when no explicit row is chosen', () => {
@@ -135,24 +140,35 @@ describe('AdminApprovalsComponent', () => {
   it('resolves stage labels and levels for all workflow states', () => {
     expect(
       (
-        component as unknown as { resolveLevel: (index: number, status: ExpenseStatus) => string }
-      ).resolveLevel(0, ExpenseStatus.Submitted),
+        component as unknown as { resolveLevel: (expense: { status: ExpenseStatus }) => string }
+      ).resolveLevel({ status: ExpenseStatus.Draft }),
     ).toBe('L1');
     expect(
       (
-        component as unknown as { resolveLevel: (index: number, status: ExpenseStatus) => string }
-      ).resolveLevel(1, ExpenseStatus.Submitted),
+        component as unknown as {
+          resolveLevel: (expense: { status: ExpenseStatus; approvalStage?: string }) => string;
+        }
+      ).resolveLevel({ status: ExpenseStatus.Submitted }),
+    ).toBe('L1');
+    expect(
+      (
+        component as unknown as {
+          resolveLevel: (expense: { status: ExpenseStatus; approvalStage?: string }) => string;
+        }
+      ).resolveLevel({ status: ExpenseStatus.UnderReview }),
     ).toBe('L2');
     expect(
       (
-        component as unknown as { resolveLevel: (index: number, status: ExpenseStatus) => string }
-      ).resolveLevel(2, ExpenseStatus.Submitted),
+        component as unknown as {
+          resolveLevel: (expense: { status: ExpenseStatus; approvalStage?: string }) => string;
+        }
+      ).resolveLevel({ status: ExpenseStatus.Approved }),
     ).toBe('L3');
     expect(
       (
-        component as unknown as { resolveLevel: (index: number, status: ExpenseStatus) => string }
-      ).resolveLevel(0, ExpenseStatus.OverBudget),
-    ).toBe('L3');
+        component as unknown as { resolveLevel: (expense: { status: ExpenseStatus }) => string }
+      ).resolveLevel({ status: ExpenseStatus.OverBudget }),
+    ).toBe('L1');
 
     const helper = component as unknown as {
       resolveStageLabel: (status: ExpenseStatus, level: 'L1' | 'L2' | 'L3') => string;
@@ -164,6 +180,9 @@ describe('AdminApprovalsComponent', () => {
     expect(helper.resolveStageLabel(ExpenseStatus.Draft, 'L2')).toBe('Draft');
     expect(helper.resolveStageLabel(ExpenseStatus.OverBudget, 'L2')).toBe('Over Budget');
     expect(helper.resolveStageLabel(ExpenseStatus.Submitted, 'L2')).toBe('Pending L2');
+    expect(helper.resolveStageLabel(ExpenseStatus.Recommended, 'L2')).toBe(
+      'Recommended, pending admin',
+    );
   });
 });
 

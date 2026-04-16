@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
-import { guestGuard } from './core/guards/guest.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { Role } from './models/app.models';
 
@@ -13,9 +12,16 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/public/pages/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'ems/login',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/public/pages/ems-login/ems-login.component').then(
+        (m) => m.EmsLoginComponent,
+      ),
   },
   {
     path: 'unauthorized',
@@ -31,18 +37,24 @@ export const routes: Routes = [
       import('./layout/app-shell/app-shell.component').then((m) => m.AppShellComponent),
     children: [
       {
+        path: 'operation-manager',
+        canActivate: [roleGuard],
+        data: { roles: [Role.OperationManager] },
+        loadChildren: () =>
+          import('./features/requester/requester.routes').then((m) => m.REQUESTER_ROUTES),
+      },
+      {
+        path: 'recommender',
+        canActivate: [roleGuard],
+        data: { roles: [Role.Recommender] },
+        loadChildren: () => import('./features/hr/hr.routes').then((m) => m.HR_ROUTES),
+      },
+      {
         path: 'admin',
         canActivate: [roleGuard],
         data: { roles: [Role.Admin] },
         loadChildren: () =>
           import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
-      },
-      {
-        path: 'manager',
-        canActivate: [roleGuard],
-        data: { roles: [Role.OperationManager] },
-        loadChildren: () =>
-          import('./features/manager/manager.routes').then((m) => m.MANAGER_ROUTES),
       },
     ],
   },

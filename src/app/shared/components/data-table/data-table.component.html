@@ -1,0 +1,61 @@
+@if (rows().length) {
+  <div class="table-wrapper glass-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          @for (column of columns(); track column.key) {
+            <th>{{ column.label }}</th>
+          }
+          @if (actions().length) {
+            <th class="table-actions">Actions</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track rowTrackBy()(row)) {
+          <tr>
+            @for (column of columns(); track column.key) {
+              <td>
+                @switch (column.type ?? 'text') {
+                  @case ('currency') {
+                    {{ resolveCell(row, column) | currency: 'INR' : 'symbol' : '1.0-0' }}
+                  }
+                  @case ('date') {
+                    {{ resolveCell(row, column) | date: 'MMM d, y' }}
+                  }
+                  @case ('badge') {
+                    <app-status-badge [label]="resolveCell(row, column).toString()" />
+                  }
+                  @default {
+                    {{ resolveCell(row, column) }}
+                  }
+                }
+              </td>
+            }
+            @if (actions().length) {
+              <td class="table-actions">
+                @for (action of actions(); track action.id) {
+                  @if (!action.visible || action.visible(row)) {
+                    <button
+                      type="button"
+                      class="table-action-button"
+                      [attr.aria-label]="action.label"
+                      (click)="actionTriggered.emit({ actionId: action.id, row })"
+                    >
+                      <app-icon [name]="action.icon" [size]="16" />
+                    </button>
+                  }
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
+  <app-empty-state
+    title="Nothing to show"
+    description="Try changing filters or create a new expense entry."
+  />
+}

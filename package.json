@@ -5,13 +5,13 @@
     "node": ">=20.19.0 <21 || >=22.12.0"
   },
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test --watch=false",
-    "test:coverage": "ng test --watch=false --code-coverage",
-    "lint": "ng lint",
+    "ng": "bash ./scripts/run-with-node20.sh ng",
+    "start": "bash ./scripts/run-with-node20.sh ng serve",
+    "build": "bash ./scripts/run-with-node20.sh ng build",
+    "watch": "bash ./scripts/run-with-node20.sh ng build --watch --configuration development",
+    "test": "bash ./scripts/run-with-node20.sh ng test --watch=false",
+    "test:coverage": "bash ./scripts/run-with-node20.sh ng test --watch=false --code-coverage",
+    "lint": "bash ./scripts/run-with-node20.sh ng lint",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

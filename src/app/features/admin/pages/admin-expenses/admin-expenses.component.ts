@@ -13,7 +13,7 @@ import {
   filterExpenses,
 } from '../../../../shared/utils/expense.utils';
 import { buildCsvContent, downloadCsv } from '../../../../shared/utils/export.utils';
-import { Expense } from '../../../../models/app.models';
+import { Expense, ExpenseFilters } from '../../../../models/app.models';
 
 interface ExpenseRow {
   id: string;
@@ -88,7 +88,7 @@ export class AdminExpensesComponent {
     { id: 'delete', label: 'Delete', icon: 'trash' },
     {
       id: 'receipt',
-      label: 'Bill',
+      label: 'Receipt',
       icon: 'receipt',
       visible: (row) => Boolean((row as Record<string, unknown>)['receiptUrl']),
     },
@@ -113,7 +113,7 @@ export class AdminExpensesComponent {
     this.selectedReceipt.set(record?.receipt ?? null);
   }
 
-  protected patchFilter(key: string, value: string): void {
+  protected patchFilter(key: keyof ExpenseFilters, value: string): void {
     this.filters.update((filters) => ({
       ...filters,
       [key]: value,
@@ -122,6 +122,22 @@ export class AdminExpensesComponent {
 
   protected patchBudgetFilter(value: string): void {
     this.budgetFilter.set(value);
+  }
+
+  protected patchLocationFilter(value: string): void {
+    this.filters.update((filters) => ({
+      ...filters,
+      locationId: value === 'all' ? undefined : value,
+    }));
+  }
+
+  protected applyPresetRange(dateRange: ExpenseFilters['dateRange']): void {
+    this.filters.update((filters) => ({
+      ...filters,
+      dateRange,
+      dateFrom: dateRange === 'custom' ? filters.dateFrom : undefined,
+      dateTo: dateRange === 'custom' ? filters.dateTo : undefined,
+    }));
   }
 
   protected resetFilters(): void {

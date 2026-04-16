@@ -27,6 +27,28 @@ export class AuthService {
     return this.loginAs(role);
   }
 
+  loginWithCredentials(identifier: string, password: string): User | null {
+    const normalizedIdentifier = identifier.trim().toLowerCase();
+    const user = this.directoryService.getUsers().find((candidate) => {
+      const email = candidate.email.toLowerCase();
+      const id = candidate.id.toLowerCase();
+      const username = candidate.name.toLowerCase().split(' ')[0] ?? '';
+      const shortName = candidate.name.toLowerCase().replace(/\s+/g, '');
+
+      return password
+        ? [id, email, username, shortName].includes(normalizedIdentifier) && password.length > 0
+        : [id, email, username, shortName].includes(normalizedIdentifier);
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    this.persistSession(user);
+
+    return user;
+  }
+
   signOut(): void {
     this.sessionStore.set(null);
     localStorage.removeItem(STORAGE_KEYS.session);
@@ -43,7 +65,15 @@ export class AuthService {
       return '/admin/dashboard';
     }
 
-    return '/manager/dashboard';
+    if (role === Role.Recommender) {
+      return '/recommender/dashboard';
+    }
+
+    if (role === Role.OperationManager) {
+      return '/operation-manager/dashboard';
+    }
+
+    return '/operation-manager/dashboard';
   }
 
   private persistSession(user: User): void {

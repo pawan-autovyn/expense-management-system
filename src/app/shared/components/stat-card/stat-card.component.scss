@@ -1,0 +1,66 @@
+:host {
+  display: block;
+}
+
+.stat-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-height: 12.75rem;
+  padding: var(--space-6) var(--space-6) calc(var(--space-6) + 0.25rem);
+}
+
+.stat-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.stat-card__header h3 {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-card-title);
+  line-height: var(--line-height-snug);
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.stat-card .muted {
+  line-height: var(--line-height-body);
+  max-width: none;
+  color: var(--text-secondary);
+}
+
+.stat-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--primary-blue-bg);
+  color: var(--primary-blue);
+}
+
+.stat-card__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--success);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+.progress-track {
+  width: 100%;
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--bg-grey-light);
+}
+
+.progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary-blue), var(--primary-blue-light));
+}

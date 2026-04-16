@@ -2,26 +2,40 @@ import { routes } from './app.routes';
 
 describe('app routes', () => {
   it('wires the public shell and lazy feature areas', async () => {
-    expect(routes[0].redirectTo).toBe('login');
+    const loginRoute = routes.find((route) => route.path === 'login');
+    const emsLoginRoute = routes.find((route) => route.path === 'ems/login');
+    const unauthorizedRoute = routes.find((route) => route.path === 'unauthorized');
+    const shellRouteConfig = routes.find((route) => route.path === '' && 'children' in route);
+    const notFoundRoute = routes.find((route) => route.path === '**');
 
-    const loginComponent = await routes[1].loadComponent?.();
-    const unauthorizedComponent = await routes[2].loadComponent?.();
-    const shellComponent = await routes[3].loadComponent?.();
-    const shellRoute = routes[3] as {
-      children: [
-        { loadChildren: () => Promise<{ path?: string }[]> },
-        { loadChildren: () => Promise<{ path?: string }[]> },
-      ];
+    const loginComponent = await loginRoute?.loadComponent?.();
+    const emsLoginComponent = await emsLoginRoute?.loadComponent?.();
+    const unauthorizedComponent = await unauthorizedRoute?.loadComponent?.();
+    if (!shellRouteConfig) {
+      fail('Expected the authenticated shell route to exist.');
+
+      return;
+    }
+
+    const shellRoute = shellRouteConfig as {
+      children: { path?: string; loadChildren: () => Promise<{ path?: string }[]> }[];
     };
-    const adminRoutes = await shellRoute.children[0].loadChildren();
-    const managerRoutes = await shellRoute.children[1].loadChildren();
-    const notFoundComponent = await routes[4].loadComponent?.();
+    const operationManagerRoute = shellRoute.children.find((route) => route.path === 'operation-manager');
+    const recommenderRoute = shellRoute.children.find((route) => route.path === 'recommender');
+    const adminRoute = shellRoute.children.find((route) => route.path === 'admin');
+    const operationManagerRoutes = await operationManagerRoute?.loadChildren();
+    const recommenderRoutes = await recommenderRoute?.loadChildren();
+    const adminRoutes = await adminRoute?.loadChildren();
+    const notFoundComponent = await notFoundRoute?.loadComponent?.();
 
+    expect(routes[0].redirectTo).toBe('login');
     expect(loginComponent).toBeTruthy();
+    expect(emsLoginComponent).toBeTruthy();
     expect(unauthorizedComponent).toBeTruthy();
-    expect(shellComponent).toBeTruthy();
-    expect(adminRoutes.some((route) => route.path === 'dashboard')).toBeTrue();
-    expect(managerRoutes.some((route) => route.path === 'dashboard')).toBeTrue();
+    expect(shellRouteConfig).toBeTruthy();
+    expect(operationManagerRoutes?.some((route) => route.path === 'dashboard')).toBeTrue();
+    expect(recommenderRoutes?.some((route) => route.path === 'dashboard')).toBeTrue();
+    expect(adminRoutes?.some((route) => route.path === 'dashboard')).toBeTrue();
     expect(notFoundComponent).toBeTruthy();
   });
 });

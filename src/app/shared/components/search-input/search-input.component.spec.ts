@@ -36,4 +36,13 @@ describe('SearchInputComponent', () => {
 
     expect(values).toEqual(['milk']);
   });
+
+  it('renders a visible search icon wrapper', () => {
+    fixture.detectChanges();
+
+    const iconWrapper = fixture.nativeElement.querySelector('.search-field__icon');
+
+    expect(iconWrapper).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-icon')).not.toBeNull();
+  });
 });

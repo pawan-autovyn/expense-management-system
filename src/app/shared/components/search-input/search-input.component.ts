@@ -7,17 +7,8 @@ import { IconComponent } from '../icon/icon.component';
   selector: 'app-search-input',
   standalone: true,
   imports: [FormsModule, IconComponent],
-  template: `
-    <label class="search-field">
-      <app-icon name="search" [size]="18" />
-      <input
-        type="search"
-        [ngModel]="value()"
-        (ngModelChange)="valueChange.emit($event)"
-        [placeholder]="placeholder()"
-      />
-    </label>
-  `,
+  templateUrl: './search-input.component.html',
+  styleUrl: './search-input.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchInputComponent {

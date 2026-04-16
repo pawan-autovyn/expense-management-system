@@ -3,14 +3,11 @@ import { provideRouter, Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
-import { ThemeService } from '../../../../core/services/theme.service';
-import { Role } from '../../../../models/app.models';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let authService: AuthService;
-  let themeService: ThemeService;
   let router: Router;
 
   beforeEach(async () => {
@@ -21,58 +18,78 @@ describe('LoginComponent', () => {
     }).compileComponents();
 
     authService = TestBed.inject(AuthService);
-    themeService = TestBed.inject(ThemeService);
     router = TestBed.inject(Router);
     fixture = TestBed.createComponent(LoginComponent);
     fixture.detectChanges();
   });
 
-  it('shows the default admin email in the login form', () => {
-    const emailInput = fixture.nativeElement.querySelector('input[name="email"]') as HTMLInputElement;
+  it('starts with empty login fields', () => {
+    const userIdInput = fixture.nativeElement.querySelector('input[name="userId"]') as HTMLInputElement;
+    const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
 
-    expect(emailInput.value).toBe('vikas.yadav@autovyn.in');
+    expect(userIdInput.value).toBe('');
+    expect(passwordInput.value).toBe('');
   });
 
-  it('routes manager demo email to the manager dashboard', () => {
-    spyOn(authService, 'loginAs').and.callThrough();
+  it('routes an operation manager user ID to the operation manager dashboard', () => {
+    spyOn(authService, 'loginWithCredentials').and.callThrough();
     spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
 
-    const emailInput = fixture.nativeElement.querySelector('input[name="email"]') as HTMLInputElement;
-    emailInput.value = 'pankaj.jhakar@autovyn.in';
-    emailInput.dispatchEvent(new Event('input'));
+    const userIdInput = fixture.nativeElement.querySelector('input[name="userId"]') as HTMLInputElement;
+    userIdInput.value = 'operations.manager.a@demo.com';
+    userIdInput.dispatchEvent(new Event('input'));
+    const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
+    passwordInput.value = 'SecurePass123!';
+    passwordInput.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.login-submit')?.click();
+    fixture.detectChanges();
+
+    expect(authService.loginWithCredentials).toHaveBeenCalledWith(
+      'operations.manager.a@demo.com',
+      'SecurePass123!',
+    );
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/operation-manager/dashboard');
+  });
+
+  it('routes the recommender user ID to the recommender dashboard', () => {
+    spyOn(authService, 'loginWithCredentials').and.callThrough();
+    spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
+
+    const userIdInput = fixture.nativeElement.querySelector('input[name="userId"]') as HTMLInputElement;
+    userIdInput.value = 'recommender@demo.com';
+    userIdInput.dispatchEvent(new Event('input'));
+    const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
+    passwordInput.value = 'SecurePass123!';
+    passwordInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
     fixture.nativeElement.querySelector('.login-submit')?.click();
 
-    expect(authService.loginAs).toHaveBeenCalledWith(Role.OperationManager);
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/manager/dashboard');
+    expect(authService.loginWithCredentials).toHaveBeenCalledWith(
+      'recommender@demo.com',
+      'SecurePass123!',
+    );
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/recommender/dashboard');
   });
 
-  it('routes the admin demo email to the admin dashboard', () => {
-    spyOn(authService, 'loginAs').and.callThrough();
+  it('routes the admin user ID to the admin dashboard', () => {
+    spyOn(authService, 'loginWithCredentials').and.callThrough();
     spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
 
-    const emailInput = fixture.nativeElement.querySelector('input[name="email"]') as HTMLInputElement;
-    emailInput.value = 'vikas.yadav@autovyn.in';
-    emailInput.dispatchEvent(new Event('input'));
+    const userIdInput = fixture.nativeElement.querySelector('input[name="userId"]') as HTMLInputElement;
+    userIdInput.value = 'admin@demo.com';
+    userIdInput.dispatchEvent(new Event('input'));
+    const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
+    passwordInput.value = 'SecurePass123!';
+    passwordInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
     fixture.nativeElement.querySelector('.login-submit')?.click();
 
-    expect(authService.loginAs).toHaveBeenCalledWith(Role.Admin);
+    expect(authService.loginWithCredentials).toHaveBeenCalledWith('admin@demo.com', 'SecurePass123!');
     expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/dashboard');
   });
 
-  it('shows a theme toggle and switches the active theme when clicked', () => {
-    const toggleButton = fixture.nativeElement.querySelector('.login-theme-toggle') as HTMLButtonElement;
-
-    expect(toggleButton).toBeTruthy();
-    expect(toggleButton.getAttribute('aria-label')).toContain('dark theme');
-
-    toggleButton.click();
-    fixture.detectChanges();
-
-    expect(themeService.isDarkMode()).toBeTrue();
-    expect(document.documentElement.dataset['theme']).toBe('dark');
-  });
 });

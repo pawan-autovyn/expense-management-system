@@ -1,93 +1,104 @@
-    <section class="page-hero">
-      <div>
-        <h1>Budget Management</h1>
-        <p>Monitor and manage category budgets</p>
-      </div>
-    </section>
+<section class="page-hero">
+  <div>
+    <h1>Expense Budget</h1>
+    <p>Set a yearly budget, then let the app split it into monthly limits automatically.</p>
+  </div>
 
-    <section class="alert-banner alert-banner--danger alert-banner--wide">
-      <app-icon name="alert" [size]="18" />
-      <strong>
-        Marketing has exceeded its monthly budget by
-        {{ overage | currency: 'INR' : 'symbol' : '1.0-0' }}
-      </strong>
-    </section>
-
-    <section class="budget-card-grid">
-      @for (item of featuredBudgets; track item.id) {
-        <article class="glass-card budget-card-ref">
-          <div class="budget-card-ref__header">
-            <div>
-              <h3>{{ item.title }}</h3>
-              <p>Assigned: {{ item.assignee }}</p>
-            </div>
-            <span
-              class="budget-percent-chip"
-              [class.is-warning]="item.tone === 'warning'"
-              [class.is-danger]="item.tone === 'danger'"
-            >
-              {{ item.percent }}%
-            </span>
-          </div>
-
-          <div class="progress-track budget-card-ref__track" [attr.data-tone]="item.tone">
-            <span
-              class="progress-fill"
-              [class.progress-fill--success]="item.tone === 'success'"
-              [class.progress-fill--warning]="item.tone === 'warning'"
-              [class.progress-fill--danger]="item.tone === 'danger'"
-              [style.width.%]="item.percent > 100 ? 100 : item.percent"
-            ></span>
-          </div>
-
-          <div class="budget-card-ref__meta">
-            <span>Used: {{ item.used | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
-            <span>Budget: {{ item.budget | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
-          </div>
-        </article>
+  <label class="budget-year-switcher">
+    <span>Financial year</span>
+    <select [ngModel]="selectedFinancialYear()" (ngModelChange)="setFinancialYear($event)">
+      @for (year of financialYearOptions; track year) {
+        <option [value]="year">{{ year }}</option>
       }
-    </section>
+    </select>
+  </label>
+</section>
 
-    <section class="glass-card budget-summary-card">
+<section class="budget-workspace">
+  <aside class="glass-card budget-library">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Template List</p>
+        <h3>Pick a category</h3>
+      </div>
+    </div>
+
+    <div class="budget-library__list">
+      @for (item of featuredBudgets(); track item.id) {
+        <button
+          type="button"
+          class="budget-library__item"
+          [class.is-active]="selectedCategoryId() === item.id"
+          (click)="selectCategory(item.id)"
+        >
+          <div>
+            <strong>{{ item.title }}</strong>
+            <p>Annual budget {{ item.budget | currency: 'INR' : 'symbol' : '1.0-0' }}</p>
+          </div>
+          <span>{{ item.percent }}%</span>
+        </button>
+      }
+    </div>
+  </aside>
+
+  <section class="glass-card budget-editor">
+    @if (selectedCategory(); as category) {
       <div class="section-heading">
         <div>
-          <h3>Monthly Budget Summary</h3>
+          <p class="eyebrow">Budget Editor</p>
+          <h3>{{ category.name }} - Yearly Budget</h3>
         </div>
+        <p class="budget-editor__subtitle">
+          Current monthly budget {{ category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}
+        </p>
       </div>
 
-      <div class="budget-bar-chart-ref">
-        <div class="budget-bar-chart-ref__axis">
-          @for (tick of axisTicks; track tick) {
-            <span>{{ tick }}</span>
-          }
-        </div>
-
-        <div class="budget-bar-chart-ref__plot">
-          <div class="budget-bar-chart-ref__grid">
-            @for (_ of axisTicks; track $index) {
-              <span></span>
-            }
-          </div>
-
-          <div class="budget-bar-chart">
-            @for (bar of budgetBars; track bar.label) {
-              <article class="budget-bar-chart__group">
-                <div class="budget-bar-chart__bars">
-                  <span
-                    class="budget-bar-chart__bar budget-bar-chart__bar--budget"
-                    [style.height.%]="bar.budgetHeight"
-                    [attr.aria-label]="bar.label + ' budget'"
-                  ></span>
-                  <span
-                    class="budget-bar-chart__bar budget-bar-chart__bar--actual"
-                    [style.height.%]="bar.actualHeight"
-                    [attr.aria-label]="bar.label + ' actual'"
-                  ></span>
-                </div>
-                <span>{{ bar.label }}</span>
-              </article>
-            }
-          </div>
-        </div>
+      <div class="budget-editor__summary-grid">
+        <article class="budget-summary-card">
+          <span>Yearly total</span>
+          <strong>{{ annualBudgetDraft() | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+        </article>
+        <article class="budget-summary-card">
+          <span>Monthly split</span>
+          <strong>{{ monthlyAllocation() | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+        </article>
+        <article class="budget-summary-card">
+          <span>Previous spend</span>
+          <strong>{{ category.previousSpend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+        </article>
+        <article class="budget-summary-card">
+          <span>Remaining annual room</span>
+          <strong>
+            {{ (annualBudgetDraft() - category.previousSpend) | currency: 'INR' : 'symbol' : '1.0-0' }}
+          </strong>
+        </article>
       </div>
-    </section>
+
+      <label class="budget-editor__field">
+        <span>Enter yearly budget</span>
+        <input
+          type="number"
+          min="0"
+          [ngModel]="annualBudgetDraft()"
+          (ngModelChange)="updateAnnualBudget($event)"
+        />
+      </label>
+
+      <div class="budget-month-grid">
+        @for (month of monthlyBreakdown(); track month.label) {
+          <article class="budget-month-card">
+            <span>{{ month.label }}</span>
+            <strong>{{ month.budget | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+          </article>
+        }
+      </div>
+
+      <div class="budget-editor__actions">
+        <button type="button" class="button button--primary" (click)="saveBudget()">
+          <app-icon name="check-circle" [size]="16" />
+          <span>Save Budget</span>
+        </button>
+      </div>
+    }
+  </section>
+</section>

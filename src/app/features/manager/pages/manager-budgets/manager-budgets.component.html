@@ -3,34 +3,47 @@
         <p class="eyebrow">Budget Overview</p>
         <h1>Assigned category budgets and remaining capacity</h1>
       </div>
+      <app-search-input
+        [value]="searchTerm()"
+        placeholder="Search budgets"
+        (valueChange)="searchTerm.set($event)"
+      />
     </section>
 
     <section class="card-grid">
-      @for (category of categoryViews(); track category.category.id) {
-        <article class="glass-card category-card">
-          <div class="category-card__header">
-            <div class="category-card__icon" [style.background]="category.category.accent">
-              {{ category.category.name.slice(0, 2) }}
+      @if (visibleCategoryViews().length) {
+        @for (category of visibleCategoryViews(); track category.category.id) {
+          <article class="glass-card category-card">
+            <div class="category-card__header">
+              <div class="category-card__icon" [style.background]="category.category.accent">
+                {{ category.category.name.slice(0, 2) }}
+              </div>
+              <app-status-badge [label]="category.status" />
             </div>
-            <app-status-badge [label]="category.status" />
-          </div>
-          <h3>{{ category.category.name }}</h3>
-          <p>{{ category.category.description }}</p>
-          <div class="metric-pair">
-            <span>Budget</span>
-            <strong>{{ category.category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-          </div>
-          <div class="metric-pair">
-            <span>Spend</span>
-            <strong>{{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-          </div>
-          <div class="metric-pair">
-            <span>Remaining</span>
-            <strong>{{ category.remaining | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-          </div>
-          <div class="progress-track">
-            <span class="progress-fill" [style.width.%]="category.usage * 100"></span>
-          </div>
-        </article>
+            <h3>{{ category.category.name }}</h3>
+            <p>{{ category.category.description }}</p>
+            <div class="metric-pair">
+              <span>Budget</span>
+              <strong>{{ category.category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+            <div class="metric-pair">
+              <span>Spend</span>
+              <strong>{{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+            <div class="metric-pair">
+              <span>Remaining</span>
+              <strong>{{ category.remaining | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+            <div class="progress-track">
+              <span class="progress-fill" [style.width.%]="category.usage * 100"></span>
+            </div>
+          </article>
+        }
+      } @else {
+        <app-empty-state
+          class="budget-empty-state"
+          title="No budgets found"
+          description="Try a different category, status, or description keyword."
+        />
       }
     </section>

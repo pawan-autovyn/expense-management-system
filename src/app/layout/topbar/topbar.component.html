@@ -1,39 +1,29 @@
-    <header class="topbar">
-      <div class="topbar__left">
-        <button type="button" class="icon-button icon-button--plain topbar__menu" (click)="menuToggle.emit()">
-          <app-icon name="menu" [size]="18" />
-        </button>
+<header class="topbar glass-card">
+  <div class="topbar__left">
+    <div class="topbar__mark" aria-hidden="true">
+      <app-icon name="dashboard" [size]="18" />
+    </div>
+    <div class="topbar__title">
+      <span class="eyebrow topbar__eyebrow">Expense Management</span>
+      <h1>Workspace</h1>
+      <p>Clean role-based dashboard for daily approvals and expense tracking.</p>
+    </div>
+  </div>
+
+  <div class="topbar__right">
+    <span class="topbar__role">{{ roleLabel() }}</span>
+
+    <div class="topbar__user">
+      <div class="topbar__avatar" aria-hidden="true">{{ initials() }}</div>
+      <div class="topbar__user-copy">
+        <strong>{{ currentUser()?.name ?? 'Guest' }}</strong>
+        <span>{{ currentUser()?.department ?? 'Session' }}</span>
       </div>
+    </div>
 
-      <div class="topbar__right">
-        <div class="topbar__switcher">
-          <button
-            type="button"
-            class="chip-button"
-            [class.is-active]="currentRole() === roleAdmin"
-            (click)="switchRole(roleAdmin)"
-          >
-            Admin
-          </button>
-          <button
-            type="button"
-            class="chip-button"
-            [class.is-active]="currentRole() === roleManager"
-            (click)="switchRole(roleManager)"
-          >
-            Operation Manager
-          </button>
-        </div>
-
-        <button type="button" class="topbar__utility" (click)="themeService.toggleTheme()">
-          <app-icon [name]="themeService.isDarkMode() ? 'sun' : 'moon'" [size]="18" />
-        </button>
-
-        <button type="button" class="topbar__utility topbar__notification" aria-label="Notifications">
-          <app-icon name="bell" [size]="18" />
-          @if (notificationService.unreadCount()) {
-            <b class="topbar__notification-badge">{{ notificationService.unreadCount() }}</b>
-          }
-        </button>
-      </div>
-    </header>
+    <button type="button" class="topbar__logout icon-button" (click)="logout()">
+      <app-icon name="logout" [size]="18" />
+      <span>Logout</span>
+    </button>
+  </div>
+</header>

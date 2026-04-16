@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { Attachment, BudgetStatus, ExpenseStatus } from '../../../../models/app.models';
+import { Attachment, BudgetStatus, ExpenseStatus, Role } from '../../../../models/app.models';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
@@ -37,12 +37,14 @@ export class ManagerAddExpenseComponent {
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
     categoryId: ['', Validators.required],
+    locationId: [this.directoryService.locations()[0]?.id ?? '', Validators.required],
     amount: [null as number | null, [Validators.required, Validators.min(1)]],
     date: ['2026-04-06', Validators.required],
     vendor: ['', Validators.required],
     tags: [''],
     description: ['', [Validators.required, Validators.minLength(8)]],
   });
+  protected readonly locations = computed(() => this.directoryService.locations());
   protected readonly categoryViews = computed(() =>
     buildCategoryBudgetViews(
       this.directoryService.categories(),
@@ -97,6 +99,7 @@ export class ManagerAddExpenseComponent {
       {
         title: this.form.controls.title.value ?? '',
         categoryId: this.form.controls.categoryId.value ?? '',
+        locationId: this.form.controls.locationId.value ?? this.directoryService.locations()[0]?.id ?? '',
         amount: Number(this.form.controls.amount.value ?? 0),
         date: this.form.controls.date.value ?? '',
         vendor: this.form.controls.vendor.value ?? '',
@@ -111,7 +114,20 @@ export class ManagerAddExpenseComponent {
       mode,
     );
 
-    void this.router.navigateByUrl('/manager/expenses');
+    const prefix =
+      user.role === Role.OperationManager
+        ? '/operation-manager'
+        : user.role === Role.Admin
+          ? '/admin'
+          : '/recommender';
+    const listRoute =
+      user.role === Role.OperationManager
+        ? 'expenses'
+        : user.role === Role.Admin
+          ? 'expenses'
+          : 'expenses';
+
+    void this.router.navigateByUrl(`${prefix}/${listRoute}`);
   }
 
   private resolveStatusLabel(status: BudgetStatus): string {
@@ -119,7 +135,7 @@ export class ManagerAddExpenseComponent {
   }
 
   protected shouldShowError(
-    controlName: 'title' | 'categoryId' | 'amount' | 'date' | 'vendor' | 'description',
+    controlName: 'title' | 'categoryId' | 'locationId' | 'amount' | 'date' | 'vendor' | 'description',
   ): boolean {
     const control = this.form.controls[controlName];
 

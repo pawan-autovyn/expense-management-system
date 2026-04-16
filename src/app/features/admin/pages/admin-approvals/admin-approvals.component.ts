@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { Attachment, ExpenseStatus } from '../../../../models/app.models';
+import { ApprovalStage, Attachment, ExpenseStatus, Role } from '../../../../models/app.models';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { ReceiptPreviewModalComponent } from '../../../../shared/components/receipt-preview-modal/receipt-preview-modal.component';
 import * as exportUtils from '../../../../shared/utils/export.utils';
@@ -18,6 +18,7 @@ interface ApprovalRow {
   manager: string;
   status: string;
   level: 'L1' | 'L2' | 'L3';
+  stageLabel: string;
   category: string;
   date: string;
   vendor: string;
@@ -35,7 +36,7 @@ export class AdminApprovalsComponent {
   private readonly authService = inject(AuthService);
   private readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
-  protected reviewNote = 'Approved in mock workflow after verifying uploaded bill and budget coverage.';
+  protected reviewNote = 'Reviewed after verifying the request and budget coverage.';
   protected readonly selectedId = signal<string | null>(null);
   protected readonly selectedReceipt = signal<Attachment | null>(null);
   protected readonly selectedTab = signal('all');
@@ -44,16 +45,18 @@ export class AdminApprovalsComponent {
     this.expenseRepository
       .expenses()
       .map((expense, index) => {
-        const level = this.resolveLevel(index, expense.status);
+        const level = this.resolveLevel(expense);
+        const stageLabel = this.resolveStageLabel(expense.status, level);
 
         return {
           id: expense.id,
-          expenseCode: `EXP-${String(index + 2).padStart(3, '0')}`,
+          expenseCode: `EXP-${String(index + 1).padStart(3, '0')}`,
           title: expense.title,
           amount: expense.amount,
           manager: this.directoryService.getUserById(expense.managerId)?.name ?? 'Manager',
-          status: this.resolveStageLabel(expense.status, level),
+          status: stageLabel,
           level,
+          stageLabel,
           category: this.directoryService.getCategoryById(expense.categoryId)?.name ?? 'Unknown',
           date: expense.date,
           vendor: expense.vendor,
@@ -62,10 +65,10 @@ export class AdminApprovalsComponent {
   );
 
   protected readonly approvalTabs = computed(() => [
-    { label: 'All Pending', value: 'all' },
-    { label: 'Pending L1', value: 'l1' },
-    { label: 'Pending L2', value: 'l2' },
-    { label: 'Pending L3', value: 'l3' },
+    { label: 'All Requests', value: 'all' },
+    { label: 'L1 Operation Manager', value: 'l1' },
+    { label: 'L2 Recommender', value: 'l2' },
+    { label: 'L3 Admin Approval', value: 'l3' },
     { label: 'Rejected', value: 'rejected' },
     { label: 'Approved', value: 'approved' },
   ]);
@@ -73,7 +76,7 @@ export class AdminApprovalsComponent {
   protected readonly filteredRows = computed(() =>
     this.approvalRows().filter((row) => {
       if (this.selectedTab() === 'all') {
-        return row.status.startsWith('Pending') || row.status === ExpenseStatus.OverBudget;
+        return row.status !== ExpenseStatus.Draft;
       }
 
       if (this.selectedTab() === 'rejected') {
@@ -84,7 +87,7 @@ export class AdminApprovalsComponent {
         return row.status.startsWith('Approved') || row.status === 'Final Approved';
       }
 
-      return row.status === `Pending ${this.selectedTab().toUpperCase()}`;
+      return row.level === this.selectedTab().toUpperCase();
     }),
   );
 
@@ -99,29 +102,34 @@ export class AdminApprovalsComponent {
 
   protected readonly timelineSteps = computed(() => {
     const row = this.selectedRow();
+    const isHrApproved =
+      row?.level === 'L2' ||
+      row?.level === 'L3' ||
+      row?.status === 'Recommended, pending admin' ||
+      row?.status.startsWith('Approved') === true;
+    const isAdminPending = row?.status === 'Recommended, pending admin';
+    const isApproved = row?.status.startsWith('Approved') ?? false;
 
     return [
-      { label: 'Submitted', owner: row?.manager ?? 'Manager', state: 'Done', active: true },
+      { label: 'L1 Operation Manager', owner: row?.manager ?? 'Operation Manager', state: 'Done', active: true },
       {
-        label: 'L1 Review',
-        owner: row?.level === 'L1' ? 'Priya M.' : 'Completed',
-        state: row?.level === 'L1' ? 'Pending' : 'Done',
-        active: true,
-      },
-      {
-        label: 'L2 Review',
-        owner: row?.level === 'L2' ? 'Pending' : 'Waiting',
-        state: row?.level === 'L2' ? 'Pending' : 'Waiting',
+        label: 'L2 Recommender',
+        owner: isHrApproved ? 'Recommendation completed' : 'Waiting',
+        state: isHrApproved ? 'Done' : 'Waiting',
         active: row?.level !== 'L1',
       },
       {
-        label: 'L3 Final',
-        owner: row?.level === 'L3' ? 'Pending' : 'Waiting',
-        state: row?.level === 'L3' ? 'Pending' : 'Waiting',
-        active: row?.level === 'L3',
+        label: 'L3 Admin Approval',
+        owner: isAdminPending ? 'Your approval is pending' : isApproved ? 'Completed' : 'Waiting',
+        state: isAdminPending ? 'Pending final approval' : isApproved ? 'Done' : 'Waiting',
+        active: row?.level === 'L3' || isApproved || isAdminPending,
       },
     ];
   });
+
+  protected readonly primaryActionLabel = computed(() =>
+    this.authService.currentUser()?.role === Role.Admin ? 'Approve' : 'Recommend',
+  );
 
   protected approve(): void {
     const expense = this.selectedExpense();
@@ -156,7 +164,7 @@ export class AdminApprovalsComponent {
     this.expenseRepository.reopenExpense(
       expense.id,
       reviewer,
-      'Expense has been moved back into the review stream for mock reassessment.',
+      'Expense has been moved back into the review stream for reassessment.',
     );
   }
 
@@ -178,12 +186,32 @@ export class AdminApprovalsComponent {
     exportUtils.downloadCsv(`corework-approvals-${suffix}.csv`, csv);
   }
 
-  private resolveLevel(index: number, status: ExpenseStatus): 'L1' | 'L2' | 'L3' {
-    if (status === ExpenseStatus.OverBudget) {
+  private resolveLevel(expense: { status: ExpenseStatus; approvalStage?: ApprovalStage }): 'L1' | 'L2' | 'L3' {
+    if (expense.status === ExpenseStatus.Approved || expense.status === ExpenseStatus.Rejected) {
       return 'L3';
     }
 
-    return index % 3 === 0 ? 'L1' : index % 3 === 1 ? 'L2' : 'L3';
+    if (
+      expense.status === ExpenseStatus.Recommended ||
+      expense.status === ExpenseStatus.Reopened ||
+      expense.status === ExpenseStatus.UnderReview ||
+      expense.approvalStage === ApprovalStage.Recommender
+    ) {
+      return 'L2';
+    }
+
+    if (expense.approvalStage === ApprovalStage.Approver) {
+      return 'L3';
+    }
+
+    if (
+      expense.status === ExpenseStatus.Submitted ||
+      expense.approvalStage === ApprovalStage.OperationManager
+    ) {
+      return 'L1';
+    }
+
+    return 'L1';
   }
 
   private resolveStageLabel(status: ExpenseStatus, level: 'L1' | 'L2' | 'L3'): string {
@@ -193,6 +221,10 @@ export class AdminApprovalsComponent {
 
     if (status === ExpenseStatus.Rejected) {
       return `Rejected by ${level}`;
+    }
+
+    if (status === ExpenseStatus.Recommended) {
+      return 'Recommended, pending admin';
     }
 
     if (status === ExpenseStatus.Draft) {

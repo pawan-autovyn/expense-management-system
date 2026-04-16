@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { ExpenseStatus, Role } from '../../models/app.models';
+import { ApprovalStage, ExpenseStatus, Role } from '../../models/app.models';
 import { STORAGE_KEYS } from '../constants/app.constants';
 import { DirectoryService } from './directory.service';
 import { ExpenseRepositoryService } from './expense-repository.service';
@@ -25,7 +25,7 @@ describe('ExpenseRepositoryService', () => {
     };
   }
 
-  it('restores demo expenses when storage is empty and cleans invalid payloads', () => {
+  it('restores seeded expenses when storage is empty and cleans invalid payloads', () => {
     const empty = createService();
 
     expect(empty.service.expenses().length).toBeGreaterThan(0);
@@ -43,7 +43,8 @@ describe('ExpenseRepositoryService', () => {
     const manager = directoryService.getDefaultUserByRole(Role.OperationManager);
     const sharedForm = {
       title: 'Pantry top up',
-      categoryId: 'tea-pantry',
+      categoryId: 'laptop',
+      locationId: 'loc-hq',
       amount: 120,
       date: '2026-04-03',
       description: 'Tea and cups',
@@ -67,6 +68,7 @@ describe('ExpenseRepositoryService', () => {
       {
         ...sharedForm,
         title: 'Pantry top up submitted',
+        locationId: 'loc-hq',
       },
       manager,
       ExpenseStatus.Draft,
@@ -77,6 +79,7 @@ describe('ExpenseRepositoryService', () => {
         ...sharedForm,
         title: 'Pantry top up submitted',
         amount: 180,
+        locationId: 'loc-hq',
       },
       ExpenseStatus.Submitted,
     );
@@ -84,14 +87,18 @@ describe('ExpenseRepositoryService', () => {
       {
         ...sharedForm,
         title: 'Draft to remove',
+        locationId: 'loc-hq',
       },
       manager,
       ExpenseStatus.Draft,
     );
 
     expect(draft.status).toBe(ExpenseStatus.Draft);
+    expect(draft.approvalStage).toBe(ApprovalStage.OperationManager);
     expect(draftUpdate?.status).toBe(ExpenseStatus.Draft);
+    expect(draftUpdate?.approvalStage).toBe(ApprovalStage.OperationManager);
     expect(convertedDraft?.status).toBe(ExpenseStatus.Submitted);
+    expect(convertedDraft?.approvalStage).toBe(ApprovalStage.OperationManager);
     expect(service.updateDraft('missing-id', sharedForm, ExpenseStatus.Submitted)).toBeUndefined();
 
     service.deleteDraft(removableDraft.id);
@@ -108,17 +115,43 @@ describe('ExpenseRepositoryService', () => {
 
   it('approves, rejects, and reopens expenses', () => {
     const { service, directoryService } = createService();
-    const reviewer = directoryService.getDefaultUserByRole(Role.Admin);
-    const expenseId = service.expenses()[0].id;
+    const manager = directoryService.getDefaultUserByRole(Role.OperationManager);
+    const recommender = directoryService.getDefaultUserByRole(Role.Recommender);
+    const admin = directoryService.getDefaultUserByRole(Role.Admin);
+    const submittedExpense = service.createExpense(
+      {
+        title: 'Approval flow expense',
+        categoryId: 'laptop',
+        locationId: 'loc-hq',
+        amount: 250,
+        date: '2026-04-03',
+        description: 'Flow test',
+        vendor: 'Flow Vendor',
+        tags: ['flow'],
+      },
+      manager,
+      ExpenseStatus.Submitted,
+    );
 
-    expect(service.approveExpense(expenseId, reviewer, 'Looks good')?.status).toBe(
+    expect(service.approveExpense(submittedExpense.id, recommender, 'Looks good')?.status).toBe(
+      ExpenseStatus.Recommended,
+    );
+    expect(
+      service.approveExpense(submittedExpense.id, recommender, 'Looks good')?.approvalStage,
+    ).toBe(
+      ApprovalStage.Recommender,
+    );
+    expect(service.approveExpense(submittedExpense.id, admin, 'Looks good')?.status).toBe(
       ExpenseStatus.Approved,
     );
-    expect(service.rejectExpense(expenseId, reviewer, 'Needs more detail')?.status).toBe(
+    expect(service.approveExpense(submittedExpense.id, recommender, 'Final attempt')?.status).toBe(
+      ExpenseStatus.Approved,
+    );
+    expect(service.rejectExpense(submittedExpense.id, admin, 'Needs more detail')?.status).toBe(
       ExpenseStatus.Rejected,
     );
-    expect(service.reopenExpense(expenseId, reviewer, 'Re-opened for review')?.status).toBe(
-      ExpenseStatus.UnderReview,
+    expect(service.reopenExpense(submittedExpense.id, admin, 'Re-opened for review')?.status).toBe(
+      ExpenseStatus.Reopened,
     );
     expect(service.getExpensesForManager('usr-mgr-1').length).toBeGreaterThan(0);
     expect(
@@ -129,12 +162,13 @@ describe('ExpenseRepositoryService', () => {
     expect(service.getExpenseById('missing-id')).toBeUndefined();
   });
 
-  it('restores valid stored expenses and persists submitted creations', () => {
+  it('restores valid stored expenses and persists submitted requests', () => {
     const storedExpenses = [
       {
         id: 'stored-draft',
         title: 'Stored draft',
         categoryId: 'tea-pantry',
+        locationId: 'loc-hq',
         amount: 75,
         date: '2026-04-01',
         description: 'Stored draft',
@@ -155,6 +189,7 @@ describe('ExpenseRepositoryService', () => {
       {
         title: 'Submitted pantry top up',
         categoryId: 'tea-pantry',
+        locationId: 'loc-hq',
         amount: 50,
         date: '2026-04-03',
         description: 'Submitted pantry top up',
@@ -169,6 +204,7 @@ describe('ExpenseRepositoryService', () => {
       {
         title: 'Stored draft updated',
         categoryId: 'tea-pantry',
+        locationId: 'loc-hq',
         amount: 80,
         date: '2026-04-03',
         description: 'Stored draft updated',

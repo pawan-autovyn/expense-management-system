@@ -1,9 +1,9 @@
-export const APP_TITLE = 'CoreWork EMS';
-export const APP_SUBTITLE = 'Enterprise Expense Management';
+export const APP_TITLE = 'ExpenseFlow';
+export const APP_SUBTITLE = 'Enterprise expense workflow';
 
 export const STORAGE_KEYS = {
-  session: 'aurora-ledger-session',
-  theme: 'aurora-ledger-theme',
-  expenses: 'aurora-ledger-expenses',
-  notifications: 'aurora-ledger-notifications',
+  session: 'enterprise-expense-session',
+  theme: 'enterprise-expense-theme',
+  expenses: 'enterprise-expense-expenses',
+  notifications: 'enterprise-expense-notifications',
 } as const;

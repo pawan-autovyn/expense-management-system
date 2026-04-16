@@ -1,0 +1,33 @@
+:host {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 15, 28, 0.56);
+}
+
+.overlay-panel {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  width: min(100% - 2rem, 30rem);
+  padding: var(--space-6);
+  z-index: 1;
+}
+
+.overlay-panel h3 {
+  font-size: var(--font-size-section-title);
+  line-height: var(--line-height-snug);
+}
+
+.overlay-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}

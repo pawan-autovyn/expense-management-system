@@ -5,11 +5,8 @@ import { NgClass } from '@angular/common';
   selector: 'app-status-badge',
   standalone: true,
   imports: [NgClass],
-  template: `
-    <span class="status-badge" [ngClass]="'status-badge--' + tone()">
-      {{ label() }}
-    </span>
-  `,
+  templateUrl: './status-badge.component.html',
+  styleUrl: './status-badge.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusBadgeComponent {
@@ -26,12 +23,14 @@ export class StatusBadgeComponent {
       value.includes('warning') ||
       value.includes('review') ||
       value.includes('near') ||
-      value.includes('pending')
+      value.includes('pending') ||
+      value.includes('recommended') ||
+      value.includes('reopened')
     ) {
       return 'warning';
     }
 
-    if (value.includes('over') || value.includes('reject')) {
+    if (value.includes('over') || value.includes('reject') || value.includes('cancel')) {
       return 'danger';
     }
 

@@ -1,0 +1,352 @@
+@use '../../../../../styles/mixins' as *;
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.hr-workspace {
+  @include content-area;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-height: 100vh;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--bg-main);
+}
+
+.hr-workspace > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hr-workspace__header {
+  @include mat-card;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.hr-workspace__header-actions {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.3fr) minmax(180px, 220px) minmax(180px, 220px);
+  gap: var(--space-3);
+  min-width: min(100%, 760px);
+}
+
+.hr-workspace__date-panel,
+.hr-workspace__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: 24px;
+}
+
+.hr-workspace__date-actions {
+  display: grid;
+  grid-template-columns: minmax(150px, 180px) minmax(130px, 150px) minmax(130px, 150px);
+  gap: 0.7rem;
+  align-items: end;
+}
+
+.hr-workspace__date-field,
+.hr-workspace__header-actions label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.hr-workspace__date-actions span,
+.hr-workspace__header-actions span {
+  color: var(--text-muted);
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  line-height: var(--line-height-label);
+}
+
+.hr-workspace__date-field select,
+.hr-workspace__date-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding-block: 0.45rem;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.hr-workspace__date-note {
+  grid-column: 2 / -1;
+  margin: 0;
+  align-self: center;
+  color: var(--text-muted);
+  line-height: var(--line-height-body);
+  font-size: var(--font-size-caption);
+}
+
+.hr-workspace__stats,
+.hr-workspace__reports {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.hr-workspace__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
+  gap: var(--space-4);
+}
+
+.hr-workspace__queue {
+  padding: var(--space-6);
+}
+
+.hr-card,
+.hr-panel {
+  padding: var(--space-5);
+}
+
+.hr-card {
+  border-left: 4px solid transparent;
+}
+
+.hr-card--info {
+  border-left-color: var(--info);
+}
+
+.hr-card--success {
+  border-left-color: var(--success);
+}
+
+.hr-card--warning {
+  border-left-color: var(--warning);
+}
+
+.hr-card--danger {
+  border-left-color: var(--danger);
+}
+
+.hr-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.hr-panel--wide {
+  min-height: 100%;
+}
+
+.hr-panel__header,
+.detail-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stack-list__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-2xl);
+  background: var(--surface-soft);
+  min-width: 0;
+}
+
+.stack-list__tone {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+}
+
+.stack-list__tone--info {
+  background: var(--info);
+}
+
+.stack-list__tone--success {
+  background: var(--success);
+}
+
+.stack-list__tone--warning {
+  background: var(--warning);
+}
+
+.stack-list__tone--danger {
+  background: var(--danger);
+}
+
+.queue-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.8fr);
+  gap: var(--space-4);
+}
+
+.hr-workspace__queue-note {
+  margin: 0;
+  padding: 0.2rem 0 0.1rem;
+  line-height: var(--line-height-body);
+}
+
+.queue-layout__table {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  vertical-align: top;
+}
+
+th {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.queue-row {
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+
+.queue-row:hover,
+.queue-row--active {
+  background: rgba(108, 160, 216, 0.08);
+}
+
+.empty-table {
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.queue-layout__panel {
+  padding: var(--space-5);
+  background: var(--surface);
+}
+
+.detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.detail-grid div,
+.detail-card {
+  padding: var(--space-3);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-2xl);
+  background: var(--surface-soft);
+  min-width: 0;
+}
+
+.detail-grid span,
+.detail-card__label {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.detail-grid strong,
+.detail-card p,
+.detail-panel__header p {
+  overflow-wrap: anywhere;
+}
+
+.detail-card--receipt img {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-light);
+  background: #fff;
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.report-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.report-list__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-2xl);
+  background: var(--surface-soft);
+}
+
+@include mobile {
+  .hr-workspace__header,
+  .hr-workspace__header-actions,
+  .hr-workspace__date-actions,
+  .hr-workspace__grid,
+  .queue-layout,
+  .hr-workspace__stats,
+  .hr-workspace__reports {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-workspace__header {
+    flex-direction: column;
+  }
+
+  .hr-workspace__header-actions {
+    min-width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .hr-workspace__date-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-workspace__date-note {
+    grid-column: 1;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

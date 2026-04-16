@@ -9,7 +9,7 @@ describe('NotificationService', () => {
     localStorage.clear();
   });
 
-  it('loads demo notifications when storage is empty', () => {
+  it('loads seeded notifications when storage is empty', () => {
     TestBed.configureTestingModule({
       providers: [NotificationService],
     });

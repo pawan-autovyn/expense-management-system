@@ -1,0 +1,153 @@
+@use '../../../../../styles/mixins' as *;
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.ems-login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: clamp(1rem, 2vw, 2rem);
+  padding: clamp(1rem, 2vw, 2rem);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.92), transparent 32%),
+    radial-gradient(circle at 84% 16%, rgba(125, 207, 255, 0.12), transparent 24%),
+    linear-gradient(180deg, #f7f9fd 0%, #eef3f9 100%);
+}
+
+.ems-login-page::before,
+.ems-login-page::after {
+  content: '';
+  position: absolute;
+  inset: auto;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.ems-login-page::before {
+  top: 4rem;
+  right: -5rem;
+  width: 17rem;
+  height: 17rem;
+  background: rgba(45, 95, 159, 0.08);
+  filter: blur(20px);
+}
+
+.ems-login-page::after {
+  left: -5rem;
+  bottom: 6rem;
+  width: 14rem;
+  height: 14rem;
+  background: rgba(124, 143, 214, 0.08);
+  filter: blur(18px);
+}
+
+.ems-login-page__brand,
+.ems-login-card {
+  position: relative;
+  z-index: 1;
+}
+
+.ems-login-page__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: fit-content;
+  color: var(--primary);
+}
+
+.ems-login-page__mark {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: rgba(45, 95, 159, 0.1);
+  color: var(--primary);
+}
+
+.ems-login-page__brand h1 {
+  margin: 0;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-card-title);
+  letter-spacing: -0.035em;
+}
+
+.ems-login-page__brand p {
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.ems-login-card {
+  width: min(100%, 680px);
+  margin: auto;
+  padding: clamp(1.35rem, 2.5vw, 2rem);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 253, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 26px 70px rgba(1, 7, 22, 0.12);
+}
+
+.ems-login-card__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--primary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+}
+
+.ems-login-card__intro {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1.1rem;
+}
+
+.ems-login-card__intro h2 {
+  @include heading-h2;
+}
+
+.ems-login-card__intro p {
+  color: var(--text-secondary);
+  line-height: var(--line-height-body);
+}
+
+.ems-login-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ems-login-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ems-login-field span {
+  color: var(--text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ems-login-field input {
+  min-height: 3.35rem;
+}
+
+.ems-login-submit {
+  min-height: 3.25rem;
+}
+
+@media (max-width: 720px) {
+  .ems-login-page {
+    padding: 1rem;
+  }
+
+  .ems-login-card {
+    border-radius: 24px;
+  }
+}

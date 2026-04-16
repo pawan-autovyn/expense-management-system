@@ -1,0 +1,297 @@
+<main class="hr-workspace">
+  <header class="hr-workspace__header glass-card">
+    <div>
+      <p class="eyebrow">Human review</p>
+      <h1>{{ title }}</h1>
+      <p class="muted">Calm, policy-first review space for recommendation decisions and status tracking.</p>
+    </div>
+  </header>
+
+  @if (page() === 'dashboard') {
+    <section class="glass-card hr-workspace__date-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Date Filter</p>
+          <h3>View dashboard activity by period</h3>
+        </div>
+      </div>
+
+      <div class="hr-workspace__date-actions">
+        <label class="hr-workspace__date-field">
+          <span>Period</span>
+          <select [ngModel]="dashboardRange()" (ngModelChange)="setDashboardRange($event)">
+            @for (option of dashboardRangeOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </label>
+
+        @if (dashboardRange() === 'custom') {
+          <label class="hr-workspace__date-field">
+            <span>From</span>
+            <input
+              type="date"
+              [ngModel]="dashboardDateFrom()"
+              (ngModelChange)="setDashboardDateFrom($event)"
+            />
+          </label>
+
+          <label class="hr-workspace__date-field">
+            <span>To</span>
+            <input
+              type="date"
+              [ngModel]="dashboardDateTo()"
+              (ngModelChange)="setDashboardDateTo($event)"
+            />
+          </label>
+        } @else {
+          <p class="hr-workspace__date-note">
+            Choose custom range to edit the from and to dates.
+          </p>
+        }
+      </div>
+    </section>
+  } @else {
+    <section class="glass-card hr-workspace__filters">
+      <div class="hr-workspace__header-actions">
+        <app-search-input
+          [value]="searchTerm()"
+          placeholder="Search expenses"
+          (valueChange)="searchTerm.set($event)"
+        />
+        <select [ngModel]="categoryFilter()" (ngModelChange)="setCategoryFilter($event)">
+          <option value="all">All categories</option>
+          @for (category of directoryService.categories(); track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+        <select [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
+          <option value="all">All statuses</option>
+          <option [value]="ExpenseStatus.Submitted">Submitted</option>
+          <option [value]="ExpenseStatus.Reopened">Reopened</option>
+          <option [value]="ExpenseStatus.OverBudget">Over Budget</option>
+        </select>
+      </div>
+    </section>
+  }
+
+  @if (!isReportPage()) {
+    <section class="hr-workspace__stats">
+      @for (card of dashboardCards(); track card.label) {
+        <article class="hr-card glass-card" [ngClass]="'hr-card--' + card.tone">
+          <p class="eyebrow">{{ card.label }}</p>
+          <h2>{{ card.count }}</h2>
+          <p class="muted">Current queue count for this dashboard.</p>
+        </article>
+      }
+    </section>
+  }
+
+  @if (page() === 'dashboard') {
+    <section class="hr-workspace__grid">
+      <article class="glass-card hr-panel hr-panel--wide">
+        <div class="hr-panel__header">
+          <div>
+            <p class="eyebrow">Review trend</p>
+            <h3>Budget and review momentum</h3>
+          </div>
+          <p class="muted">A low-noise summary for long working hours.</p>
+        </div>
+
+        <app-line-chart
+          [data]="trendData()"
+          title="Expense pattern"
+          headline="Budget vs spend"
+          subtitle="Review volume mapped over time"
+        />
+      </article>
+
+      <article class="glass-card hr-panel">
+        <div class="hr-panel__header">
+          <div>
+            <p class="eyebrow">Recent activity</p>
+            <h3>Latest submissions</h3>
+          </div>
+        </div>
+
+        <div class="stack-list">
+          @for (item of recentActivity(); track item.id) {
+            <article class="stack-list__item">
+              <span class="stack-list__tone stack-list__tone--{{ item.tone }}"></span>
+              <div>
+                <h4>{{ item.title }}</h4>
+                <p>{{ item.action }}</p>
+              </div>
+              <small class="muted">{{ item.date | date: 'MMM d, HH:mm' }}</small>
+            </article>
+          }
+        </div>
+      </article>
+    </section>
+  }
+
+  @if (isQueuePage()) {
+    <section class="hr-workspace__queue glass-card">
+      <div class="hr-panel__header">
+        <div>
+          <p class="eyebrow">Recommendation queue</p>
+          <h3>One list for recommendation review and forwarding</h3>
+        </div>
+        <p class="muted">Click a row to open the detail panel.</p>
+      </div>
+
+      @if (isActionQueuePage()) {
+        <p class="hr-workspace__queue-note muted">
+          This is the same review list for the recommender role. Once an item is approved, it moves to the admin approval flow.
+        </p>
+      }
+
+      <div class="queue-layout">
+        <div class="queue-layout__table">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Expense</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (expense of queueExpenses(); track expense.id) {
+                <tr
+                  class="queue-row"
+                  [class.queue-row--active]="selectedExpenseId() === expense.id"
+                (click)="selectExpense(expense)"
+              >
+                  <td>{{ expenseEmployee(expense) }}</td>
+                  <td>{{ expense.title }}</td>
+                  <td>{{ directoryService.getCategoryById(expense.categoryId)?.name ?? 'Category' }}</td>
+                  <td>{{ expense.amount | currency: 'INR':'symbol':'1.0-0' }}</td>
+                  <td><app-status-badge [label]="expense.status" /></td>
+                  <td>{{ expense.date | date: 'MMM d' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="empty-table">No queued items right now.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <aside class="queue-layout__panel glass-card" aria-label="Expense review detail">
+          @if (selectedExpense(); as expense) {
+            <div class="detail-panel">
+              <div class="detail-panel__header">
+                <div>
+                  <p class="eyebrow">Selected request</p>
+                  <h3>{{ expense.title }}</h3>
+                  <p class="muted">{{ expenseEmployee(expense) }} · {{ expenseLocation(expense) }}</p>
+                </div>
+                <app-status-badge [label]="expense.status" />
+              </div>
+
+              <div class="detail-grid">
+                <div>
+                  <span>Amount</span>
+                  <strong>{{ expense.amount | currency: 'INR':'symbol':'1.0-0' }}</strong>
+                </div>
+                <div>
+                  <span>Vendor</span>
+                  <strong>{{ expense.vendor }}</strong>
+                </div>
+                <div>
+                  <span>Date</span>
+                  <strong>{{ expense.date | date: 'mediumDate' }}</strong>
+                </div>
+                <div>
+                  <span>Category</span>
+                  <strong>{{ directoryService.getCategoryById(expense.categoryId)?.name ?? 'Category' }}</strong>
+                </div>
+              </div>
+
+              <section class="detail-card">
+                <p class="detail-card__label">Notes</p>
+                <p class="muted">{{ expense.description }}</p>
+              </section>
+
+              <section class="detail-card">
+                <p class="detail-card__label">Remarks</p>
+                <textarea [ngModel]="reviewNote()" (ngModelChange)="reviewNote.set($event)"></textarea>
+              </section>
+
+              @if (expense.receipt) {
+                <section class="detail-card detail-card--receipt">
+                  <p class="detail-card__label">Bill preview</p>
+                  <img [src]="expense.receipt.url" [alt]="expense.receipt.name" />
+                </section>
+              }
+
+              <div class="detail-actions">
+                <button type="button" class="button button--primary" (click)="recommend()">
+                  Recommend &amp; Forward
+                </button>
+                <button type="button" class="button button--secondary" (click)="reopen()">Reopen</button>
+                <button type="button" class="button button--danger" (click)="reject()">Reject</button>
+              </div>
+            </div>
+          } @else {
+            <p class="muted">Select an expense to see details.</p>
+          }
+        </aside>
+      </div>
+    </section>
+  }
+
+  @if (isReportPage()) {
+    <section class="hr-workspace__reports">
+      <article class="glass-card hr-panel">
+        <div class="hr-panel__header">
+          <div>
+            <p class="eyebrow">Category report</p>
+            <h3>Top spend categories</h3>
+          </div>
+        </div>
+
+        <div class="report-list">
+          @for (row of reportRows().categories; track row.label) {
+            <div class="report-list__row">
+              <span>{{ row.label }}</span>
+              <strong>{{ row.amount | currency: 'INR':'symbol':'1.0-0' }}</strong>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="glass-card hr-panel">
+        <div class="hr-panel__header">
+          <div>
+            <p class="eyebrow">Status report</p>
+            <h3>Workflow distribution</h3>
+          </div>
+        </div>
+
+        <div class="report-list">
+          @for (row of reportRows().statuses; track row.label) {
+            <div class="report-list__row">
+              <span>{{ row.label }}</span>
+              <strong>{{ row.count }}</strong>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="glass-card hr-panel hr-panel--wide">
+        <app-line-chart
+          [data]="trendData()"
+          title="Trend"
+          headline="Review cycle trend"
+          subtitle="A gentle view of budget movement over time"
+        />
+      </article>
+    </section>
+  }
+</main>

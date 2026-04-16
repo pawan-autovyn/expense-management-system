@@ -27,7 +27,7 @@ describe('DirectoryService', () => {
   it('falls back to the first user and returns undefined for missing entries', () => {
     const fallback = service.getDefaultUserByRole('unknown-role' as Role);
 
-    expect(fallback.id).toBe(service.users()[0].id);
+    expect(fallback.role).toBe(Role.Admin);
     expect(service.getUserById('missing-user')).toBeUndefined();
     expect(service.getCategoryById('missing-category')).toBeUndefined();
   });

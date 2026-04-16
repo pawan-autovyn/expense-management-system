@@ -1,0 +1,46 @@
+:host {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.upload-field {
+  display: block;
+  cursor: pointer;
+}
+
+.upload-field input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.upload-field__content {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border: 1px dashed var(--border-primary);
+  border-radius: var(--radius-2xl);
+  background: var(--surface-soft);
+  text-align: center;
+}
+
+.upload-field__content strong {
+  color: var(--text-heading);
+}
+
+.upload-field__content small {
+  color: var(--text-secondary);
+}
+
+.upload-preview {
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border-light);
+  background: var(--surface);
+}
+
+.upload-preview img {
+  width: 100%;
+  height: auto;
+}

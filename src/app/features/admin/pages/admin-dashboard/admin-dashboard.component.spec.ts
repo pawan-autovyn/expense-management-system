@@ -17,6 +17,12 @@ describe('AdminDashboardComponent', () => {
   });
 
   it('should create', () => {
+    const content = fixture.nativeElement as HTMLElement;
+
     expect(fixture.componentInstance).toBeTruthy();
+    expect(content.textContent).toContain('Total Budget');
+    expect(content.textContent).toContain('Total Spent');
+    expect(content.textContent).toContain('Remaining Amount');
+    expect(content.textContent).not.toContain('Workflow counts');
   });
 });

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { DirectoryService } from '../../core/services/directory.service';
@@ -9,7 +9,6 @@ import { SidebarComponent } from './sidebar.component';
 describe('SidebarComponent', () => {
   let fixture: ComponentFixture<SidebarComponent>;
   let authService: AuthService;
-  let router: Router;
 
   beforeEach(async () => {
     localStorage.clear();
@@ -19,56 +18,44 @@ describe('SidebarComponent', () => {
     }).compileComponents();
 
     authService = TestBed.inject(AuthService);
-    router = TestBed.inject(Router);
     fixture = TestBed.createComponent(SidebarComponent);
   });
 
-  it('filters admin navigation and logs out', () => {
-    authService.loginAs(Role.Admin);
-    fixture.componentRef.setInput('open', true);
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.sidebar').className).toContain('sidebar--open');
-    expect(fixture.nativeElement.textContent).toContain('Audit Trail');
-    expect(fixture.nativeElement.textContent).toContain('Template Report');
-    expect(fixture.nativeElement.textContent).not.toContain('Add Expense');
-
-    spyOn(authService, 'signOut').and.callThrough();
-    spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
-
-    fixture.nativeElement.querySelector('.sidebar__logout')?.click();
-
-    expect(authService.signOut).toHaveBeenCalled();
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
-  });
-
-  it('filters manager navigation and emits close requests when links are clicked', () => {
-    const closed: number[] = [];
-
+  it('shows operation manager navigation only for the operation manager role', () => {
     authService.loginAs(Role.OperationManager);
-    fixture.componentRef.setInput('open', true);
-    fixture.componentInstance.closeRequested.subscribe(() => closed.push(1));
     fixture.detectChanges();
 
+    expect(fixture.nativeElement.textContent).toContain('Dashboard');
     expect(fixture.nativeElement.textContent).toContain('Add Expense');
+    expect(fixture.nativeElement.textContent).toContain('My Expenses');
     expect(fixture.nativeElement.textContent).toContain('Budget Overview');
-
-    fixture.nativeElement.querySelector('.sidebar__link')?.click();
-
-    expect(closed).toEqual([1]);
+    expect(fixture.nativeElement.textContent).not.toContain('Approval Queue');
+    expect(fixture.nativeElement.textContent).not.toContain('Audit Trail');
   });
 
-  it('emits a toggle request from the centered rail control', () => {
-    const toggled: number[] = [];
-
-    authService.loginAs(Role.Admin);
-    fixture.componentRef.setInput('open', true);
-    fixture.componentInstance.toggleRequested.subscribe(() => toggled.push(1));
+  it('shows recommender navigation only for the recommender role', () => {
+    authService.loginAs(Role.Recommender);
     fixture.detectChanges();
 
-    fixture.nativeElement.querySelector('.sidebar__rail-toggle')?.click();
+    expect(fixture.nativeElement.textContent).toContain('Recommendation Queue');
+    expect(fixture.nativeElement.textContent).toContain('Expense Review');
+    expect(fixture.nativeElement.textContent).toContain('Reports');
+    expect(fixture.nativeElement.textContent).toContain('Budget Overview');
+    expect(fixture.nativeElement.textContent).not.toContain('Approval Queue');
+    expect(fixture.nativeElement.textContent).not.toContain('Audit Trail');
+  });
 
-    expect(toggled).toEqual([1]);
+  it('shows admin navigation only for the admin role', () => {
+    authService.loginAs(Role.Admin);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Approval Queue');
+    expect(fixture.nativeElement.textContent).toContain('View Expenses');
+    expect(fixture.nativeElement.textContent).toContain('Budget Management');
+    expect(fixture.nativeElement.textContent).toContain('Category Management');
+    expect(fixture.nativeElement.textContent).toContain('Reports');
+    expect(fixture.nativeElement.textContent).toContain('Audit Trail');
+    expect(fixture.nativeElement.textContent).not.toContain('Add Expense');
   });
 
   it('renders no navigation items when the user is signed out', () => {

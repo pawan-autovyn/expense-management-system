@@ -8,7 +8,6 @@ import { AppShellComponent } from './app-shell.component';
 
 describe('AppShellComponent', () => {
   let fixture: ComponentFixture<AppShellComponent>;
-  let component: AppShellComponent;
   let authService: AuthService;
 
   beforeEach(async () => {
@@ -26,34 +25,25 @@ describe('AppShellComponent', () => {
     authService = TestBed.inject(AuthService);
     authService.loginAs(Role.Admin);
     fixture = TestBed.createComponent(AppShellComponent);
-    component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('renders the role-aware floating action and toggles the sidebar state', () => {
+  it('renders the fixed shell and quick action', () => {
     const content = fixture.nativeElement as HTMLElement;
 
-    expect(content.textContent).toContain('Review queue');
+    expect(content.textContent).toContain('Open approvals');
     expect(content.querySelector('.floating-action')?.getAttribute('aria-label')).toBe(
-      'Review queue',
+      'Open approvals',
     );
-    expect(
-      content.querySelector('.app-shell')?.classList.contains('app-shell--sidebar-open'),
-    ).toBeTrue();
-
-    (component as unknown as { toggleSidebar: () => void }).toggleSidebar();
-    fixture.detectChanges();
-
-    expect(
-      content.querySelector('.app-shell')?.classList.contains('app-shell--sidebar-open'),
-    ).toBeFalse();
+    expect(content.querySelector('app-topbar')).not.toBeNull();
+    expect(content.querySelector('app-breadcrumbs')).toBeNull();
 
     authService.loginAs(Role.OperationManager);
     fixture.detectChanges();
 
-    expect(content.textContent).toContain('Quick add expense');
+    expect(content.textContent).toContain('New expense');
     expect(content.querySelector('.floating-action')?.getAttribute('aria-label')).toBe(
-      'Quick add expense',
+      'New expense',
     );
   });
 });

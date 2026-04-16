@@ -41,25 +41,60 @@
           }
         </select>
 
-        <select [ngModel]="filters().dateRange" (ngModelChange)="patchFilter('dateRange', $event)">
-          <option value="all">Date Range</option>
+        <select [ngModel]="filters().dateRange" (ngModelChange)="applyPresetRange($event)">
+          <option value="all">Any time</option>
           <option value="7d">Last 7 days</option>
           <option value="30d">Last 30 days</option>
           <option value="90d">Last 90 days</option>
+          <option value="current-year">Current year</option>
+          <option value="last-month">Last month</option>
+          <option value="last-year">Last year</option>
+          <option value="last-2-years">Last 2 years</option>
+          <option value="custom">Custom range</option>
         </select>
+
+        @if (filters().dateRange === 'custom') {
+          <label class="date-range-field">
+            <span>From</span>
+            <input
+              type="date"
+              [ngModel]="filters().dateFrom ?? ''"
+              (ngModelChange)="patchFilter('dateFrom', $event)"
+            />
+          </label>
+
+          <label class="date-range-field">
+            <span>To</span>
+            <input
+              type="date"
+              [ngModel]="filters().dateTo ?? ''"
+              (ngModelChange)="patchFilter('dateTo', $event)"
+            />
+          </label>
+        }
 
         <select [ngModel]="filters().status" (ngModelChange)="patchFilter('status', $event)">
           <option value="all">Status</option>
           <option value="Draft">Draft</option>
           <option value="Submitted">Submitted</option>
+          <option value="Recommended">Recommended</option>
+          <option value="Reopened">Reopened</option>
           <option value="Under Review">Under Review</option>
           <option value="Approved">Approved</option>
           <option value="Rejected">Rejected</option>
+          <option value="Cancelled">Cancelled</option>
           <option value="Over Budget">Over Budget</option>
         </select>
 
+        <select [ngModel]="filters().locationId ?? 'all'" (ngModelChange)="patchLocationFilter($event)">
+          <option value="all">Location</option>
+          @for (location of directoryService.locations(); track location.id) {
+            <option [value]="location.id">{{ location.name }}</option>
+          }
+        </select>
+
         <select [ngModel]="filters().managerId" (ngModelChange)="patchFilter('managerId', $event)">
-          <option value="all">Manager</option>
+          <option value="all">Employee</option>
           @for (manager of managerUsers(); track manager.id) {
             <option [value]="manager.id">{{ manager.name }}</option>
           }
@@ -67,9 +102,9 @@
 
         <select [ngModel]="budgetFilter()" (ngModelChange)="patchBudgetFilter($event)">
           <option value="all">Budget Status</option>
-          <option value="Within Budget">Within-budget</option>
-          <option value="Near Limit">Near-limit</option>
-          <option value="Over Budget">Over-budget</option>
+          <option value="Within Budget">Within budget</option>
+          <option value="Near Limit">Near limit</option>
+          <option value="Over Budget">Over budget</option>
         </select>
       </div>
     </section>

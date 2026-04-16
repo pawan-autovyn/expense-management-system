@@ -1,11 +1,17 @@
 export enum Role {
   Admin = 'admin',
+  Recommender = 'recommender',
   OperationManager = 'operation-manager',
 }
 
 export enum ThemeMode {
-  Dark = 'dark',
   Light = 'light',
+}
+
+export enum ApprovalStage {
+  OperationManager = 'operation-manager',
+  Recommender = 'recommender',
+  Approver = 'approver',
 }
 
 export enum BudgetStatus {
@@ -17,9 +23,12 @@ export enum BudgetStatus {
 export enum ExpenseStatus {
   Draft = 'Draft',
   Submitted = 'Submitted',
+  Recommended = 'Recommended',
+  Reopened = 'Reopened',
   UnderReview = 'Under Review',
   Approved = 'Approved',
   Rejected = 'Rejected',
+  Cancelled = 'Cancelled',
   OverBudget = 'Over Budget',
 }
 
@@ -38,6 +47,14 @@ export interface User {
   location: string;
 }
 
+export interface Location {
+  id: string;
+  name: string;
+  city: string;
+  code: string;
+  active: boolean;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -46,6 +63,17 @@ export interface Category {
   accent: string;
   monthlyBudget: number;
   previousSpend: number;
+}
+
+export interface Budget {
+  id: string;
+  categoryId: string;
+  locationId: string;
+  annualBudget: number;
+  spent: number;
+  active: boolean;
+  notes: string;
+  updatedAt: string;
 }
 
 export interface Attachment {
@@ -69,6 +97,8 @@ export interface Expense {
   id: string;
   title: string;
   categoryId: string;
+  locationId?: string;
+  employeeId?: string;
   amount: number;
   date: string;
   description: string;
@@ -80,6 +110,8 @@ export interface Expense {
   updatedAt: string;
   receipt?: Attachment;
   auditTrail: AuditTrailEntry[];
+  approvalStage?: ApprovalStage;
+  remarks?: string[];
 }
 
 export interface NotificationItem {
@@ -131,18 +163,38 @@ export interface ManagerSpendSummary {
   approvedCount: number;
 }
 
+export interface LocationSpendSummary {
+  location: Location;
+  spend: number;
+  budget: number;
+  variance: number;
+}
+
 export interface ExpenseFilters {
   searchTerm: string;
   categoryId: string;
   status: ExpenseStatus | 'all';
   managerId: string;
-  dateRange: '7d' | '30d' | '90d' | 'all';
+  locationId?: string;
+  dateRange:
+    | '7d'
+    | '30d'
+    | '90d'
+    | 'current-year'
+    | 'last-month'
+    | 'last-year'
+    | 'last-2-years'
+    | 'custom'
+    | 'all';
+  dateFrom?: string;
+  dateTo?: string;
   sortBy: 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc';
 }
 
 export interface ExpenseFormValue {
   title: string;
   categoryId: string;
+  locationId: string;
   amount: number;
   date: string;
   description: string;

@@ -39,6 +39,18 @@
           </label>
 
           <label>
+            <span>Location *</span>
+            <select formControlName="locationId">
+              @for (location of locations(); track location.id) {
+                <option [value]="location.id">{{ location.name }}</option>
+              }
+            </select>
+            @if (shouldShowError('locationId')) {
+              <small class="form-error">Choose the office location.</small>
+            }
+          </label>
+
+          <label>
             <span>Amount (INR) *</span>
             <input type="number" formControlName="amount" placeholder="0.00" />
             @if (shouldShowError('amount')) {

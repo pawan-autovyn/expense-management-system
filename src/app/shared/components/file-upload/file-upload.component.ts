@@ -7,22 +7,8 @@ import { IconComponent } from '../icon/icon.component';
   selector: 'app-file-upload',
   standalone: true,
   imports: [IconComponent],
-  template: `
-    <label class="upload-field">
-      <input type="file" accept="image/*" (change)="onFileSelected($event)" />
-      <span class="upload-field__content">
-        <app-icon name="upload" [size]="18" />
-        <strong>{{ existingAttachment()?.name ?? 'Upload bill or receipt' }}</strong>
-        <small>PNG, JPG or SVG preview in mock mode</small>
-      </span>
-    </label>
-
-    @if (existingAttachment()) {
-      <div class="upload-preview">
-        <img [src]="existingAttachment()!.url" [alt]="existingAttachment()!.name" />
-      </div>
-    }
-  `,
+  templateUrl: './file-upload.component.html',
+  styleUrl: './file-upload.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadComponent {

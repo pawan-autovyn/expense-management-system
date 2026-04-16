@@ -1,56 +1,48 @@
-import { NavItem, Role } from '../../models/app.models';
+import { Role } from '../../models/app.models';
 
-export const NAVIGATION_ITEMS: NavItem[] = [
-  { label: 'Dashboard', icon: 'dashboard', route: '/admin/dashboard', roles: [Role.Admin] },
-  { label: 'Expense Register', icon: 'receipt', route: '/admin/expenses', roles: [Role.Admin] },
-  { label: 'Approvals Queue', icon: 'check-circle', route: '/admin/approvals', roles: [Role.Admin] },
-  { label: 'Audit Trail', icon: 'activity', route: '/admin/audit-trail', roles: [Role.Admin] },
-  { label: 'Template Report', icon: 'layers', route: '/admin/reports', roles: [Role.Admin] },
-  { label: 'Add Budget', icon: 'wallet', route: '/admin/budgets', roles: [Role.Admin] },
-  { label: 'Manage Categories', icon: 'activity', route: '/admin/categories', roles: [Role.Admin] },
-  {
-    label: 'Notifications',
-    icon: 'bell',
-    route: '/admin/notifications',
-    roles: [Role.Admin],
-    badge: '4',
-  },
-  { label: 'Settings', icon: 'settings', route: '/admin/settings', roles: [Role.Admin] },
-  {
-    label: 'Dashboard',
-    icon: 'dashboard',
-    route: '/manager/dashboard',
-    roles: [Role.OperationManager],
-  },
-  {
-    label: 'Add Expense',
-    icon: 'plus-circle',
-    route: '/manager/add-expense',
-    roles: [Role.OperationManager],
-  },
-  {
-    label: 'My Expenses',
-    icon: 'receipt',
-    route: '/manager/expenses',
-    roles: [Role.OperationManager],
-  },
-  {
-    label: 'Budget Overview',
-    icon: 'wallet',
-    route: '/manager/budgets',
-    roles: [Role.OperationManager],
-  },
-  {
-    label: 'Settings',
-    icon: 'settings',
-    route: '/manager/profile',
-    roles: [Role.OperationManager],
-  },
-  {
-    label: 'Notifications',
-    icon: 'bell',
-    route: '/manager/notifications',
-    roles: [Role.OperationManager],
-    badge: '3',
-  },
-];
+export interface SidebarNavItem {
+  label: string;
+  icon: string;
+  route: string;
+  badge?: string;
+}
+
+export type SidebarRoleKey = 'operation-manager' | 'recommender' | 'admin';
+
+export const SIDEBAR_CONFIG: Record<SidebarRoleKey, SidebarNavItem[]> = {
+  'operation-manager': [
+    { label: 'Dashboard', icon: 'dashboard', route: '/operation-manager/dashboard' },
+    { label: 'Add Expense', icon: 'plus-circle', route: '/operation-manager/add-expense' },
+    { label: 'My Expenses', icon: 'receipt', route: '/operation-manager/my-expenses' },
+    { label: 'Budget Overview', icon: 'wallet', route: '/operation-manager/budget' },
+  ],
+  recommender: [
+    { label: 'Dashboard', icon: 'dashboard', route: '/recommender/dashboard' },
+    { label: 'Recommendation Queue', icon: 'check-circle', route: '/recommender/recommendation' },
+    { label: 'Expense Review', icon: 'receipt', route: '/recommender/expenses' },
+    { label: 'Reports', icon: 'layers', route: '/recommender/reports' },
+    { label: 'Budget Overview', icon: 'wallet', route: '/recommender/budget' },
+  ],
+  admin: [
+    { label: 'Dashboard', icon: 'dashboard', route: '/admin/dashboard' },
+    { label: 'Approval Queue', icon: 'check-circle', route: '/admin/approval' },
+    { label: 'View Expenses', icon: 'receipt', route: '/admin/expenses' },
+    { label: 'Budget Management', icon: 'wallet', route: '/admin/budget' },
+    { label: 'Category Management', icon: 'settings', route: '/admin/category' },
+    { label: 'Reports', icon: 'layers', route: '/admin/reports' },
+    { label: 'Audit Trail', icon: 'activity', route: '/admin/audit' },
+  ],
+};
+
+export function getSidebarItemsForRole(role: Role | null): SidebarNavItem[] {
+  switch (role) {
+    case Role.OperationManager:
+      return SIDEBAR_CONFIG['operation-manager'];
+    case Role.Recommender:
+      return SIDEBAR_CONFIG.recommender;
+    case Role.Admin:
+      return SIDEBAR_CONFIG.admin;
+    default:
+      return [];
+  }
+}

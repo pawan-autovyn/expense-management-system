@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { DEMO_EXPENSES } from '../../mock-data/demo-data';
 import {
   Attachment,
+  ApprovalStage,
   Expense,
   ExpenseFormValue,
   ExpenseStatus,
@@ -31,8 +32,49 @@ export class ExpenseRepositoryService {
     return this.expenses().filter((expense) => expense.managerId === managerId);
   }
 
+  getExpensesForUser(userId: string): Expense[] {
+    return this.expenses().filter(
+      (expense) => expense.employeeId === userId || expense.managerId === userId,
+    );
+  }
+
   approveExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
-    return this.updateExpenseStatus(expenseId, ExpenseStatus.Approved, reviewer, note, 'success');
+    const expense = this.getExpenseById(expenseId);
+
+    if (!expense || [ExpenseStatus.Draft, ExpenseStatus.Cancelled].includes(expense.status)) {
+      return undefined;
+    }
+
+    if (expense.status === ExpenseStatus.Approved || expense.status === ExpenseStatus.Rejected) {
+      return expense;
+    }
+
+    const currentStage = expense.approvalStage ?? ApprovalStage.OperationManager;
+
+    if (reviewer.role === Role.Recommender && currentStage === ApprovalStage.OperationManager) {
+      return this.updateExpenseWorkflow(expenseId, reviewer, note, {
+        status: ExpenseStatus.Recommended,
+        approvalStage: ApprovalStage.Recommender,
+        action: 'Recommended by recommender',
+        notePrefix: 'Recommendation completed and forwarded to admin.',
+        tone: 'warning',
+      });
+    }
+
+    if (
+      reviewer.role === Role.Admin &&
+      (currentStage === ApprovalStage.Recommender || expense.status === ExpenseStatus.Recommended)
+    ) {
+      return this.updateExpenseWorkflow(expenseId, reviewer, note, {
+        status: ExpenseStatus.Approved,
+        approvalStage: ApprovalStage.Approver,
+        action: 'Approved by admin',
+        notePrefix: 'Final approval completed.',
+        tone: 'success',
+      });
+    }
+
+    return expense;
   }
 
   rejectExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
@@ -40,7 +82,11 @@ export class ExpenseRepositoryService {
   }
 
   reopenExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
-    return this.updateExpenseStatus(expenseId, ExpenseStatus.UnderReview, reviewer, note, 'warning');
+    return this.updateExpenseStatus(expenseId, ExpenseStatus.Reopened, reviewer, note, 'warning');
+  }
+
+  cancelExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
+    return this.updateExpenseStatus(expenseId, ExpenseStatus.Cancelled, reviewer, note, 'danger');
   }
 
   createExpense(
@@ -60,6 +106,8 @@ export class ExpenseRepositoryService {
       id: `exp-${Date.now()}`,
       title: value.title,
       categoryId: value.categoryId,
+      locationId: value.locationId,
+      employeeId: manager.id,
       amount: value.amount,
       date: value.date,
       description: value.description,
@@ -70,17 +118,18 @@ export class ExpenseRepositoryService {
       createdAt: timestamp,
       updatedAt: timestamp,
       receipt: value.receipt,
+      approvalStage: ApprovalStage.OperationManager,
       auditTrail: [
         {
           id: `audit-${Date.now()}`,
           action: mode === ExpenseStatus.Draft ? 'Draft saved' : 'Expense submitted',
           actor: manager.name,
-          actorRole: Role.OperationManager,
+          actorRole: manager.role,
           date: timestamp,
-          note:
-            mode === ExpenseStatus.Draft
-              ? 'Saved locally for later review.'
-              : 'Submitted into mock approval workflow.',
+            note:
+              mode === ExpenseStatus.Draft
+                ? 'Saved locally for later review.'
+              : 'Submitted into the approval workflow.',
           tone: mode === ExpenseStatus.Draft ? 'info' : 'success',
         },
       ],
@@ -102,7 +151,10 @@ export class ExpenseRepositoryService {
 
     this.expensesStore.update((expenses) =>
       expenses.map((expense) => {
-        if (expense.id !== expenseId || expense.status !== ExpenseStatus.Draft) {
+        if (
+          expense.id !== expenseId ||
+          ![ExpenseStatus.Draft, ExpenseStatus.Reopened].includes(expense.status)
+        ) {
           return expense;
         }
 
@@ -118,15 +170,16 @@ export class ExpenseRepositoryService {
           ...expense,
           ...value,
           status: nextStatus,
+          approvalStage: ApprovalStage.OperationManager,
           updatedAt: timestamp,
           auditTrail: [
             {
               id: `audit-${Date.now()}`,
               action: mode === ExpenseStatus.Draft ? 'Draft updated' : 'Draft submitted',
               actor: expense.auditTrail[0]?.actor ?? 'Operation Manager',
-              actorRole: Role.OperationManager,
+              actorRole: expense.auditTrail[0]?.actorRole ?? Role.OperationManager,
               date: timestamp,
-              note: 'Local mock record updated.',
+              note: 'Local record updated.',
               tone: 'info',
             },
             ...expense.auditTrail,
@@ -145,7 +198,11 @@ export class ExpenseRepositoryService {
   deleteDraft(expenseId: string): void {
     this.expensesStore.update((expenses) =>
       expenses.filter(
-        (expense) => !(expense.id === expenseId && expense.status === ExpenseStatus.Draft),
+        (expense) =>
+          !(
+            expense.id === expenseId &&
+            [ExpenseStatus.Draft, ExpenseStatus.Reopened].includes(expense.status)
+          ),
       ),
     );
     this.persist();
@@ -199,21 +256,74 @@ export class ExpenseRepositoryService {
         updatedExpense = {
           ...expense,
           status,
+          approvalStage:
+            status === ExpenseStatus.Reopened ? ApprovalStage.OperationManager : expense.approvalStage,
           updatedAt: timestamp,
           auditTrail: [
             {
               id: `audit-${Date.now()}`,
               action:
                 status === ExpenseStatus.Approved
-                  ? 'Approved by finance'
+                  ? 'Final approved'
                   : status === ExpenseStatus.Rejected
-                    ? 'Rejected by finance'
-                    : 'Re-opened for review',
+                    ? 'Rejected by admin'
+                    : status === ExpenseStatus.Cancelled
+                      ? 'Cancelled by operation manager'
+                      : 'Reopened for review',
               actor: reviewer.name,
               actorRole: reviewer.role,
               date: timestamp,
               note,
               tone,
+            },
+            ...expense.auditTrail,
+          ],
+        };
+
+        return updatedExpense;
+      }),
+    );
+
+    this.persist();
+
+    return updatedExpense;
+  }
+
+  private updateExpenseWorkflow(
+    expenseId: string,
+    reviewer: User,
+    note: string,
+    workflow: {
+      status: ExpenseStatus;
+      approvalStage: ApprovalStage;
+      action: string;
+      notePrefix: string;
+      tone: 'success' | 'danger' | 'warning' | 'info';
+    },
+  ): Expense | undefined {
+    let updatedExpense: Expense | undefined;
+    const timestamp = new Date().toISOString();
+
+    this.expensesStore.update((expenses) =>
+      expenses.map((expense) => {
+        if (expense.id !== expenseId) {
+          return expense;
+        }
+
+        updatedExpense = {
+          ...expense,
+          status: workflow.status,
+          approvalStage: workflow.approvalStage,
+          updatedAt: timestamp,
+          auditTrail: [
+            {
+              id: `audit-${Date.now()}`,
+              action: workflow.action,
+              actor: reviewer.name,
+              actorRole: reviewer.role,
+              date: timestamp,
+              note: `${workflow.notePrefix} ${note}`.trim(),
+              tone: workflow.tone,
             },
             ...expense.auditTrail,
           ],

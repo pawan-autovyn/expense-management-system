@@ -1,1 +1,36 @@
-/* Page styles live here. */
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.section-heading {
+  align-items: center;
+}
+
+.section-heading app-search-input {
+  width: min(100%, 22rem);
+}
+
+.budget-library__item div {
+  min-width: 0;
+}
+
+.budget-library__item strong,
+.budget-library__item p {
+  overflow-wrap: anywhere;
+}
+
+.budget-empty-state {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1180px) {
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .section-heading app-search-input {
+    width: 100%;
+  }
+}

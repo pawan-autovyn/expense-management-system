@@ -1,0 +1,34 @@
+:host {
+  display: block;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: clamp(1.25rem, 2vw, 2rem);
+  text-align: center;
+}
+
+.empty-state__icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--primary-blue-bg);
+  color: var(--primary-blue);
+  font-size: var(--font-size-card-title);
+  font-weight: var(--font-weight-semibold);
+}
+
+.empty-state h3 {
+  font-size: var(--font-size-card-title);
+  line-height: var(--line-height-snug);
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  max-width: 32rem;
+  line-height: var(--line-height-body);
+}

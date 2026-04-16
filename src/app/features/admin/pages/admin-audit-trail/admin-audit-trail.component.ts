@@ -322,7 +322,9 @@ export class AdminAuditTrailComponent {
         ? 'success'
         : expense.status === ExpenseStatus.Rejected
           ? 'danger'
-          : expense.status === ExpenseStatus.UnderReview
+          : [ExpenseStatus.Recommended, ExpenseStatus.Reopened, ExpenseStatus.UnderReview].includes(
+              expense.status,
+            )
             ? 'warning'
             : 'info';
 
@@ -363,7 +365,15 @@ export class AdminAuditTrailComponent {
   }
 
   private resolveRoleLabel(role: Role): string {
-    return role === Role.Admin ? 'Admin' : 'Operation Manager';
+    if (role === Role.Admin) {
+      return 'Admin';
+    }
+
+    if (role === Role.Recommender) {
+      return 'Recommender';
+    }
+
+    return 'Operation Manager';
   }
 
   private buildActionBreakdown(

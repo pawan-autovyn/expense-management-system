@@ -1,0 +1,67 @@
+:host {
+  display: block;
+}
+
+.chart-card {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+.chart-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.chart-svg {
+  width: 100%;
+  min-height: 13.5rem;
+}
+
+.chart-grid {
+  fill: none;
+  stroke: var(--border-light);
+  stroke-width: 1;
+}
+
+.chart-area {
+  fill: url(#line-fill);
+  stroke: none;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--primary-blue-light);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-line--budget {
+  stroke: rgba(95, 156, 224, 0.38);
+  stroke-dasharray: 6 5;
+}
+
+.chart-dot {
+  fill: var(--bg-white);
+  stroke: var(--primary-blue);
+  stroke-width: 3;
+}
+
+.chart-card__labels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5rem, 1fr));
+  gap: var(--space-3);
+}
+
+.chart-card__labels div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.chart-card__labels span {
+  color: var(--text-secondary);
+  font-size: var(--font-size-label);
+}
