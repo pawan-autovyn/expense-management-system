@@ -49,4 +49,11 @@ export const HR_ROUTES: Routes = [
         (m) => m.ManagerBudgetsComponent,
       ),
   },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('../manager/pages/manager-profile/manager-profile.component').then(
+        (m) => m.ManagerProfileComponent,
+      ),
+  },
 ];

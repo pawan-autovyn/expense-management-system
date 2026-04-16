@@ -1,24 +1,114 @@
-    <section class="section-heading section-heading--page">
-      <div>
-        <p class="eyebrow">Profile</p>
-        <h1>Role profile and account settings</h1>
-      </div>
-    </section>
+<section class="section-heading section-heading--page">
+  <div>
+    <p class="eyebrow">Profile</p>
+    <h1>Role profile and account settings</h1>
+    <p>Review your account details and update password preferences from one place.</p>
+  </div>
+</section>
 
-    <div class="card-grid">
-      <article class="glass-card report-card">
-        <p class="eyebrow">User</p>
-        <h3>{{ authService.currentUser()?.name }}</h3>
-        <p>{{ authService.currentUser()?.title }} • {{ authService.currentUser()?.department }}</p>
-      </article>
-      <article class="glass-card report-card">
-        <p class="eyebrow">Assigned Budget</p>
-        <h3>{{ authService.currentUser()?.assignedBudget | currency:'INR':'symbol':'1.0-0' }}</h3>
-        <p>Assigned allocation stored locally for your current role.</p>
-      </article>
-      <article class="glass-card report-card">
-        <p class="eyebrow">Workflow Access</p>
-        <h3>Submit, track, re-open, and re-submit expenses</h3>
-        <p>All actions stay in the frontend and can later be connected to real APIs without changing the screen structure.</p>
-      </article>
+<div class="card-grid manager-profile-grid">
+  <article class="glass-card report-card">
+    <p class="eyebrow">User</p>
+    <h3>{{ authService.currentUser()?.name }}</h3>
+    <p>{{ authService.currentUser()?.title }} • {{ authService.currentUser()?.department }}</p>
+  </article>
+
+  <article class="glass-card report-card">
+    <p class="eyebrow">Assigned Budget</p>
+    <h3>{{ authService.currentUser()?.assignedBudget | currency:'INR':'symbol':'1.0-0' }}</h3>
+    <p>Assigned allocation stored locally for your current role.</p>
+  </article>
+
+  <article class="glass-card report-card">
+    <p class="eyebrow">Workflow Access</p>
+    <h3>Submit, track, re-open, and re-submit expenses</h3>
+    <p>
+      All actions stay in the frontend and can later be connected to real APIs without changing
+      the screen structure.
+    </p>
+  </article>
+</div>
+
+<section class="glass-card profile-security-card">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Security</p>
+      <h3>Password change options</h3>
     </div>
+    <app-icon name="lock" [size]="18" />
+  </div>
+
+  <div class="profile-security-grid">
+    <label>
+      <span>Current Password</span>
+      <input
+        type="password"
+        [ngModel]="currentPassword()"
+        (ngModelChange)="currentPassword.set($event)"
+        placeholder="Enter current password"
+        autocomplete="current-password"
+      />
+    </label>
+
+    <label>
+      <span>New Password</span>
+      <input
+        type="password"
+        [ngModel]="newPassword()"
+        (ngModelChange)="newPassword.set($event)"
+        placeholder="Create a new password"
+        autocomplete="new-password"
+      />
+    </label>
+
+    <label>
+      <span>Confirm Password</span>
+      <input
+        type="password"
+        [ngModel]="confirmPassword()"
+        (ngModelChange)="confirmPassword.set($event)"
+        placeholder="Re-enter new password"
+        autocomplete="new-password"
+      />
+    </label>
+  </div>
+
+  <div class="profile-security-options">
+    <label class="profile-option">
+      <input
+        type="checkbox"
+        [checked]="requirePasswordReset()"
+        (change)="setRequirePasswordReset($event)"
+      />
+      <span>Require password reset on next sign-in</span>
+    </label>
+
+    <label class="profile-option">
+      <input
+        type="checkbox"
+        [checked]="signOutOtherDevices()"
+        (change)="setSignOutOtherDevices($event)"
+      />
+      <span>Sign out other active sessions after update</span>
+    </label>
+  </div>
+
+  <div class="button-row">
+    <button type="button" class="button button--primary" (click)="updatePassword()">
+      <app-icon name="check-circle" [size]="16" />
+      <span>Update Password</span>
+    </button>
+    <button type="button" class="button button--secondary" (click)="applyStrongPreset()">
+      <app-icon name="check-circle" [size]="16" />
+      <span>Use Strong Preset</span>
+    </button>
+    <button type="button" class="button button--ghost" (click)="clearSecurityForm()">
+      <app-icon name="x" [size]="16" />
+      <span>Clear</span>
+    </button>
+  </div>
+
+  @if (passwordMessage()) {
+    <p class="form-note">{{ passwordMessage() }}</p>
+  }
+</section>

@@ -19,10 +19,17 @@ export class TopbarComponent {
   protected readonly currentUser = this.authService.currentUser;
   protected readonly roleLabel = computed(() => this.formatRole(this.authService.currentRole()));
   protected readonly initials = computed(() => this.createInitials(this.currentUser()?.name ?? 'Guest'));
+  protected readonly profileRoute = computed(() =>
+    this.authService.getProfileRouteForRole(this.authService.currentRole()),
+  );
 
   protected logout(): void {
     this.authService.signOut();
     void this.router.navigateByUrl('/login');
+  }
+
+  protected openProfile(): void {
+    void this.router.navigateByUrl(this.profileRoute());
   }
 
   private formatRole(role: string | null): string {

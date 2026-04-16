@@ -4,12 +4,14 @@
 
 .table-wrapper {
   padding: 0;
-  overflow: hidden;
+  overflow: auto;
   border-radius: 28px;
+  scrollbar-gutter: stable;
 }
 
 .data-table {
   width: 100%;
+  min-width: 980px;
   border-collapse: separate;
   border-spacing: 0 0.7rem;
   table-layout: fixed;
@@ -37,6 +39,7 @@
 .data-table tbody td {
   font-size: var(--font-size-table);
   line-height: var(--line-height-body);
+  vertical-align: middle;
 }
 
 .data-table tbody tr {
@@ -66,8 +69,13 @@
 }
 
 .table-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-start;
+  width: 8.5rem;
+  min-width: 8.5rem;
   white-space: nowrap;
-  width: 1%;
   overflow-wrap: normal;
 }
 
@@ -76,12 +84,12 @@
   place-items: center;
   width: 2rem;
   height: 2rem;
-  margin-right: var(--space-2);
   border: 1px solid rgba(118, 167, 255, 0.22);
   border-radius: 999px;
   background: rgba(118, 167, 255, 0.1);
   color: var(--text-primary);
   cursor: pointer;
+  flex: 0 0 auto;
 }
 
 .table-action-button:hover {

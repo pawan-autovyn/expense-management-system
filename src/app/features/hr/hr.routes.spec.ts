@@ -12,6 +12,7 @@ describe('Recommender routes', () => {
       'expenses',
       'reports',
       'budget',
+      'profile',
     ]);
 
     const resolved = await Promise.all(

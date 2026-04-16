@@ -86,32 +86,59 @@
       </section>
     </section>
 
-    <section class="card-grid">
-      @for (category of categories(); track category.category.id) {
-        <article class="glass-card category-card">
-          <div class="category-card__header">
-            <div class="category-card__icon" [style.background]="category.category.accent">
-              {{ category.category.name.slice(0, 2) }}
-            </div>
-            <app-status-badge [label]="category.status" />
-          </div>
-          <h3>{{ category.category.name }}</h3>
-          <p>{{ category.category.description }}</p>
-          <div class="metric-pair">
-            <span>Monthly budget</span>
-            <strong>{{ category.category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-          </div>
-          <div class="metric-pair">
-            <span>Current spend</span>
-            <strong>{{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-          </div>
-          <div class="metric-pair">
-            <span>Remaining</span>
-            <strong>{{ category.remaining | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-          </div>
-          <div class="progress-track">
-            <span class="progress-fill" [style.width.%]="category.usage * 100"></span>
-          </div>
-        </article>
-      }
+    <section class="glass-card admin-category-search">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Category Library</p>
+          <h3>Find categories quickly</h3>
+        </div>
+        <p class="muted">{{ filteredCategories().length }} of {{ categories().length }} shown</p>
+      </div>
+
+      <label class="search-field admin-category-search__field">
+        <app-icon name="search" [size]="18" />
+        <input
+          type="search"
+          [ngModel]="categorySearchTerm()"
+          (ngModelChange)="categorySearchTerm.set($event)"
+          placeholder="Search category name or description"
+        />
+      </label>
     </section>
+
+    @if (filteredCategories().length) {
+      <section class="card-grid">
+        @for (category of filteredCategories(); track category.category.id) {
+          <article class="glass-card category-card">
+            <div class="category-card__header">
+              <div class="category-card__icon" [style.background]="category.category.accent">
+                {{ category.category.name.slice(0, 2) }}
+              </div>
+              <app-status-badge [label]="category.status" />
+            </div>
+            <h3>{{ category.category.name }}</h3>
+            <p>{{ category.category.description }}</p>
+            <div class="metric-pair">
+              <span>Monthly budget</span>
+              <strong>{{ category.category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+            <div class="metric-pair">
+              <span>Current spend</span>
+              <strong>{{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+            <div class="metric-pair">
+              <span>Remaining</span>
+              <strong>{{ category.remaining | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+            </div>
+            <div class="progress-track">
+              <span class="progress-fill" [style.width.%]="category.usage * 100"></span>
+            </div>
+          </article>
+        }
+      </section>
+    } @else {
+      <section class="glass-card admin-category-empty">
+        <h3>No categories found</h3>
+        <p class="muted">Try a different search term to reveal more categories.</p>
+      </section>
+    }

@@ -6,15 +6,12 @@ import { ExpenseRepositoryService } from '../../../../core/services/expense-repo
 import { ExpenseStatus, Role } from '../../../../models/app.models';
 import { AdminApprovalsComponent } from './admin-approvals.component';
 
-interface ApprovalHarness {
-  selectedTab: { set(value: string): void };
-}
-
 describe('AdminApprovalsComponent', () => {
   let fixture: ComponentFixture<AdminApprovalsComponent>;
   let component: AdminApprovalsComponent & {
     selectedId: { set: (value: string | null) => void };
     selectedTab: { set: (value: string) => void };
+    searchTerm: { set: (value: string) => void };
     filteredRows: () => { id: string; status: string; level: 'L1' | 'L2' | 'L3' }[];
     selectedRowId: () => string;
     selectedRow: () => { id: string; level: 'L1' | 'L2' | 'L3'; manager: string } | undefined;
@@ -46,17 +43,11 @@ describe('AdminApprovalsComponent', () => {
   it('builds approval rows and filters them by workflow stage', () => {
     expect(component.filteredRows().length).toBeGreaterThan(0);
 
-    component.selectedTab.set('all');
-    expect(component.filteredRows().every((row) => row.status !== ExpenseStatus.Draft)).toBeTrue();
-
     component.selectedTab.set('l1');
     expect(component.filteredRows().every((row) => row.level === 'L1')).toBeTrue();
 
     component.selectedTab.set('l2');
     expect(component.filteredRows().every((row) => row.level === 'L2')).toBeTrue();
-
-    component.selectedTab.set('l3');
-    expect(component.filteredRows().every((row) => row.level === 'L3')).toBeTrue();
 
     component.selectedTab.set('rejected');
     expect(component.filteredRows().every((row) => row.status.startsWith('Rejected'))).toBeTrue();
@@ -80,6 +71,23 @@ describe('AdminApprovalsComponent', () => {
     expect(component.timelineSteps().length).toBe(3);
     expect(component.timelineSteps()[0].owner).toBe(selected.manager);
     expect(component.timelineSteps()[2].label).toBe('L3 Admin Approval');
+  });
+
+  it('filters the queue by search term', () => {
+    const rows = component.filteredRows();
+    const target = rows.find((row) => row.title.length > 0) ?? rows[0];
+    const term = target.title.slice(0, 4);
+
+    component.searchTerm.set(term);
+
+    expect(component.filteredRows().some((row) => row.id === target.id)).toBeTrue();
+    expect(
+      component.filteredRows().every((row) =>
+        [row.title, row.expenseCode, row.manager, row.category, row.vendor, row.status, row.level].some((value) =>
+          value.toLowerCase().includes(term.toLowerCase()),
+        ),
+      ),
+    ).toBeTrue();
   });
 
   it('shows the forwarded-request banner for routed approvals', () => {
@@ -218,7 +226,7 @@ describe('AdminApprovalsComponent without expenses', () => {
     const content = fixture.nativeElement as HTMLElement;
 
     expect(content.textContent).toContain('Expense Queue (0)');
-    expect(content.textContent).not.toContain('Bill Preview');
+    expect(content.textContent).toContain('No request selected');
     expect(content.textContent).not.toContain('Approval Timeline');
   });
 });
@@ -241,8 +249,8 @@ describe('AdminApprovalsComponent with receiptless expense', () => {
           managerId: 'usr-mgr-1',
           status: ExpenseStatus.Approved,
           vendor: 'Placeholder Vendor',
-          description: 'Mock record without receipt.',
-          auditTrail: [{ actor: 'Rhea Sharma' }, { actor: 'Aarav Malhotra' }],
+          description: 'Seeded record without receipt.',
+          auditTrail: [{ actor: 'Operations Reviewer' }, { actor: 'Admin Approver' }],
         },
       ],
       getExpenseById: (expenseId: string) =>
@@ -256,8 +264,8 @@ describe('AdminApprovalsComponent with receiptless expense', () => {
               managerId: 'usr-mgr-1',
               status: ExpenseStatus.Approved,
               vendor: 'Placeholder Vendor',
-              description: 'Mock record without receipt.',
-              auditTrail: [{ actor: 'Rhea Sharma' }, { actor: 'Aarav Malhotra' }],
+              description: 'Seeded record without receipt.',
+              auditTrail: [{ actor: 'Operations Reviewer' }, { actor: 'Admin Approver' }],
             }
           : undefined,
       approveExpense: () => undefined,
@@ -281,7 +289,9 @@ describe('AdminApprovalsComponent with receiptless expense', () => {
 
   it('renders the receipt button in a disabled state when no attachment exists', () => {
     const content = fixture.nativeElement as HTMLElement;
-    const helper = fixture.componentInstance as unknown as ApprovalHarness;
+    const helper = fixture.componentInstance as unknown as {
+      selectedTab: { set(value: string): void };
+    };
 
     helper.selectedTab.set('approved');
     fixture.detectChanges();

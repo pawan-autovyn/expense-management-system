@@ -6,7 +6,7 @@
     </section>
 
     <section class="approval-tabs">
-      @for (tab of approvalTabs(); track tab.label) {
+      @for (tab of approvalTabs; track tab.label) {
         <button
           type="button"
           class="chip-button approval-tab"
@@ -31,27 +31,43 @@
     <div class="ref-approval-layout">
       <section class="glass-card approval-queue">
         <div class="approval-queue__header">
-          <h3>Expense Queue ({{ filteredRows().length }})</h3>
+          <div>
+            <h3>Expense Queue ({{ filteredRows().length }})</h3>
+            <p class="muted">Search by code, title, manager, vendor, category, or status.</p>
+          </div>
+          <label class="approval-queue__search">
+            <span>Search queue</span>
+            <input
+              type="search"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)"
+              placeholder="Search requests"
+            />
+          </label>
         </div>
 
         <div class="approval-queue__list">
-          @for (expense of filteredRows(); track expense.id) {
-            <button
-              type="button"
-              class="approval-queue__item"
-              [class.is-selected]="selectedRowId() === expense.id"
-              (click)="selectedId.set(expense.id)"
-            >
-              <div>
-                <span>{{ expense.expenseCode }}</span>
-                <strong>{{ expense.title }}</strong>
-                <p>{{ expense.manager }}</p>
-              </div>
-              <div class="approval-queue__meta">
-                <span class="approval-level-chip">{{ expense.level }}</span>
-                <strong>{{ expense.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-              </div>
-            </button>
+          @if (filteredRows().length) {
+            @for (expense of filteredRows(); track expense.id) {
+              <button
+                type="button"
+                class="approval-queue__item"
+                [class.is-selected]="selectedRowId() === expense.id"
+                (click)="selectedId.set(expense.id)"
+              >
+                <div>
+                  <span>{{ expense.expenseCode }}</span>
+                  <strong>{{ expense.title }}</strong>
+                  <p>{{ expense.manager }}</p>
+                </div>
+                <div class="approval-queue__meta">
+                  <span class="approval-level-chip">{{ expense.level }}</span>
+                  <strong>{{ expense.amount | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+                </div>
+              </button>
+            }
+          } @else {
+            <p class="muted approval-queue__empty">No requests match the current filter.</p>
           }
         </div>
       </section>
@@ -154,6 +170,11 @@
               </div>
             </section>
           }
+        } @else {
+          <section class="approval-empty-state">
+            <h3>No request selected</h3>
+            <p class="muted">Use the queue search or switch tabs to open a request.</p>
+          </section>
         }
       </section>
     </div>

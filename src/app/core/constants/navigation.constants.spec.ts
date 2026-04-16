@@ -8,6 +8,7 @@ describe('navigation constants', () => {
       '/operation-manager/add-expense',
       '/operation-manager/my-expenses',
       '/operation-manager/budget',
+      '/operation-manager/profile',
     ]);
     expect(SIDEBAR_CONFIG.recommender.map((item) => item.route)).toEqual([
       '/recommender/dashboard',
@@ -15,6 +16,7 @@ describe('navigation constants', () => {
       '/recommender/expenses',
       '/recommender/reports',
       '/recommender/budget',
+      '/recommender/profile',
     ]);
     expect(SIDEBAR_CONFIG.admin.map((item) => item.route)).toEqual([
       '/admin/dashboard',
@@ -24,6 +26,7 @@ describe('navigation constants', () => {
       '/admin/category',
       '/admin/reports',
       '/admin/audit',
+      '/admin/profile',
     ]);
   });
 

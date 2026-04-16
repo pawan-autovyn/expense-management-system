@@ -49,7 +49,7 @@
           <h3>{{ category.name }} - Yearly Budget</h3>
         </div>
         <p class="budget-editor__subtitle">
-          Current monthly budget {{ category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}
+          Monthly split updates automatically when you change the yearly total.
         </p>
       </div>
 
@@ -83,6 +83,21 @@
           (ngModelChange)="updateAnnualBudget($event)"
         />
       </label>
+
+      <div class="budget-quick-actions">
+        <button type="button" class="chip-button" (click)="setBudgetPreset(0.9)">
+          10% lower
+        </button>
+        <button type="button" class="chip-button" (click)="setBudgetPreset(1)">
+          Keep current
+        </button>
+        <button type="button" class="chip-button" (click)="setBudgetPreset(1.1)">
+          10% higher
+        </button>
+        <button type="button" class="chip-button" (click)="setBudgetPreset(1.25)">
+          25% higher
+        </button>
+      </div>
 
       <div class="budget-month-grid">
         @for (month of monthlyBreakdown(); track month.label) {

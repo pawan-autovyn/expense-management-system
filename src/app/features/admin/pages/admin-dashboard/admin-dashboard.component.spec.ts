@@ -24,5 +24,7 @@ describe('AdminDashboardComponent', () => {
     expect(content.textContent).toContain('Total Spent');
     expect(content.textContent).toContain('Remaining Amount');
     expect(content.textContent).not.toContain('Workflow counts');
+    expect(content.textContent).not.toContain('Decision Snapshot');
+    expect(content.textContent).not.toContain('Location-wise spend health');
   });
 });

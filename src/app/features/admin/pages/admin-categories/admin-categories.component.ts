@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { DirectoryService } from '../../../../core/services/directory.service';
@@ -21,6 +21,7 @@ export class AdminCategoriesComponent {
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
   protected readonly iconChoices = ['dashboard', 'wallet', 'receipt', 'layers', 'activity', 'settings'];
+  protected readonly categorySearchTerm = signal('');
   protected newCategory = {
     name: '',
     description: '',
@@ -33,6 +34,19 @@ export class AdminCategoriesComponent {
   protected readonly categories = computed(() =>
     buildCategoryBudgetViews(this.directoryService.categories(), this.expenseRepository.expenses()),
   );
+  protected readonly filteredCategories = computed(() => {
+    const term = this.categorySearchTerm().trim().toLowerCase();
+
+    if (!term) {
+      return this.categories();
+    }
+
+    return this.categories().filter((entry) =>
+      [entry.category.name, entry.category.description, entry.status].some((value) =>
+        value.toLowerCase().includes(term),
+      ),
+    );
+  });
 
   protected addCategory(): void {
     const name = this.newCategory.name.trim();
@@ -62,6 +76,7 @@ export class AdminCategoriesComponent {
       icon: 'wallet',
     };
     this.saveMessage = `${category.name} added to the category library.`;
+    this.categorySearchTerm.set('');
   }
 
   private buildCategoryId(name: string): string {

@@ -15,6 +15,8 @@ describe('AdminCategoriesComponent', () => {
       accent: string;
       icon: string;
     };
+    categorySearchTerm: { set(value: string): void };
+    filteredCategories: () => { category: { id: string; name: string; description: string } }[];
     addCategory(): void;
   };
 
@@ -49,5 +51,21 @@ describe('AdminCategoriesComponent', () => {
 
     expect(directoryService.categories().length).toBe(before + 1);
     expect(fixture.nativeElement.textContent).toContain('Courier added to the category library.');
+  });
+
+  it('filters the visible category cards by search term', () => {
+    const firstCategory = component.filteredCategories()[0];
+
+    component.categorySearchTerm.set(firstCategory.category.name.slice(0, 4));
+    fixture.detectChanges();
+
+    expect(component.filteredCategories().length).toBeGreaterThan(0);
+    expect(
+      component.filteredCategories().every((entry) =>
+        [entry.category.name, entry.category.description, entry.status].some((value) =>
+          value.toLowerCase().includes(firstCategory.category.name.slice(0, 4).toLowerCase()),
+        ),
+      ),
+    ).toBeTrue();
   });
 });

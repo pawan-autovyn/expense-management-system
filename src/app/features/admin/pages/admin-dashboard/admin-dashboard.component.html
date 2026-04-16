@@ -138,53 +138,6 @@
     </section>
 
     <section class="dashboard-grid dashboard-grid--wide">
-      <section class="glass-card">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Over-Budget Alerts</p>
-            <h3>Categories needing attention</h3>
-          </div>
-        </div>
-        <div class="alert-strip-list alert-strip-list--dashboard">
-          @for (category of overBudgetCategories(); track category.category.id) {
-            <article class="alert-strip">
-              <div>
-                <strong>{{ category.category.name }}</strong>
-                <p>
-                  {{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }} spent against
-                  {{ category.category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}
-                </p>
-              </div>
-              <app-status-badge [label]="category.status" />
-            </article>
-          }
-        </div>
-      </section>
-
-      <section class="glass-card admin-insights-panel">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Decision Snapshot</p>
-            <h3>Location-wise spend health</h3>
-          </div>
-        </div>
-        <div class="helper-list helper-list--dashboard">
-          @for (summary of managerSummary().slice(0, 3); track summary.user.id) {
-            <article class="insight-row">
-              <div>
-                <strong>{{ summary.user.name }}</strong>
-                <p>{{ summary.user.location }}</p>
-              </div>
-              <div>
-                <strong>{{ summary.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-                <p>{{ summary.approvedCount }} approvals closed</p>
-              </div>
-            </article>
-          }
-        </div>
-      </section>
-    </section>
-    <section class="dashboard-grid dashboard-grid--wide">
       <app-activity-timeline
         title="Recent Activity Timeline"
         subtitle="Latest approvals, submissions, and remarks"
@@ -229,6 +182,31 @@
               <p>active queue</p>
             </div>
           </article>
+        </div>
+      </section>
+    </section>
+
+    <section class="dashboard-grid dashboard-grid--wide dashboard-grid--single">
+      <section class="glass-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Over-Budget Alerts</p>
+            <h3>Categories needing attention</h3>
+          </div>
+        </div>
+        <div class="alert-strip-list alert-strip-list--dashboard">
+          @for (category of overBudgetCategories(); track category.category.id) {
+            <article class="alert-strip">
+              <div>
+                <strong>{{ category.category.name }}</strong>
+                <p>
+                  {{ category.spend | currency: 'INR' : 'symbol' : '1.0-0' }} spent against
+                  {{ category.category.monthlyBudget | currency: 'INR' : 'symbol' : '1.0-0' }}
+                </p>
+              </div>
+              <app-status-badge [label]="category.status" />
+            </article>
+          }
         </div>
       </section>
     </section>

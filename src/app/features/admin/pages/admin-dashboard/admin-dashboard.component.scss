@@ -20,6 +20,10 @@
   gap: 1.15rem;
 }
 
+:host .dashboard-grid--single {
+  grid-template-columns: 1fr;
+}
+
 :host .glass-card {
   border-radius: 30px;
 }

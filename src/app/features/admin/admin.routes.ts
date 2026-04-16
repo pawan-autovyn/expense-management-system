@@ -100,4 +100,11 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.AdminSettingsComponent,
       ),
   },
+  {
+    path: 'profile',
+    loadComponent: () =>
+      import('../manager/pages/manager-profile/manager-profile.component').then(
+        (m) => m.ManagerProfileComponent,
+      ),
+  },
 ];

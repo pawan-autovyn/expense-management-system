@@ -101,6 +101,11 @@ export class AdminBudgetsComponent {
     this.annualBudgetDraft.set(Number(value) || 0);
   }
 
+  protected setBudgetPreset(multiplier: number): void {
+    const currentAnnual = this.selectedCategory() ? this.selectedCategory()!.monthlyBudget * 12 : 0;
+    this.annualBudgetDraft.set(Math.max(0, Math.round(currentAnnual * multiplier)));
+  }
+
   protected setFinancialYear(value: string): void {
     this.selectedFinancialYear.set(value);
   }

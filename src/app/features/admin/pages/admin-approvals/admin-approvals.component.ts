@@ -10,6 +10,8 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
 import { ReceiptPreviewModalComponent } from '../../../../shared/components/receipt-preview-modal/receipt-preview-modal.component';
 import * as exportUtils from '../../../../shared/utils/export.utils';
 
+type ApprovalTabValue = 'l1' | 'l2' | 'rejected' | 'approved';
+
 interface ApprovalRow {
   id: string;
   expenseCode: string;
@@ -39,7 +41,8 @@ export class AdminApprovalsComponent {
   protected reviewNote = 'Reviewed after verifying the request and budget coverage.';
   protected readonly selectedId = signal<string | null>(null);
   protected readonly selectedReceipt = signal<Attachment | null>(null);
-  protected readonly selectedTab = signal('all');
+  protected readonly searchTerm = signal('');
+  protected readonly selectedTab = signal<ApprovalTabValue>('l2');
 
   protected readonly approvalRows = computed<ApprovalRow[]>(() =>
     this.expenseRepository
@@ -64,30 +67,35 @@ export class AdminApprovalsComponent {
       }),
   );
 
-  protected readonly approvalTabs = computed(() => [
-    { label: 'All Requests', value: 'all' },
+  protected readonly approvalTabs = [
     { label: 'L1 Operation Manager', value: 'l1' },
     { label: 'L2 Recommender', value: 'l2' },
-    { label: 'L3 Admin Approval', value: 'l3' },
     { label: 'Rejected', value: 'rejected' },
     { label: 'Approved', value: 'approved' },
-  ]);
+  ] as const;
 
   protected readonly filteredRows = computed(() =>
     this.approvalRows().filter((row) => {
-      if (this.selectedTab() === 'all') {
-        return row.status !== ExpenseStatus.Draft;
+      const tab = this.selectedTab();
+      const matchesTab =
+        tab === 'rejected'
+          ? row.status.startsWith('Rejected')
+          : tab === 'approved'
+            ? row.status.startsWith('Approved') || row.status === 'Final Approved'
+            : row.level === tab.toUpperCase();
+
+      if (!matchesTab || row.status === ExpenseStatus.Draft) {
+        return false;
       }
 
-      if (this.selectedTab() === 'rejected') {
-        return row.status.startsWith('Rejected');
+      const term = this.searchTerm().trim().toLowerCase();
+      if (!term) {
+        return true;
       }
 
-      if (this.selectedTab() === 'approved') {
-        return row.status.startsWith('Approved') || row.status === 'Final Approved';
-      }
-
-      return row.level === this.selectedTab().toUpperCase();
+      return [row.expenseCode, row.title, row.manager, row.category, row.vendor, row.status, row.level].some(
+        (value) => value.toLowerCase().includes(term),
+      );
     }),
   );
 
@@ -181,9 +189,7 @@ export class AdminApprovalsComponent {
       { label: 'Amount', getValue: (row) => row.amount.toFixed(2) },
     ]);
 
-    const suffix = this.selectedTab() === 'all' ? 'all' : this.selectedTab();
-
-    exportUtils.downloadCsv(`corework-approvals-${suffix}.csv`, csv);
+    exportUtils.downloadCsv(`corework-approvals-${this.selectedTab()}.csv`, csv);
   }
 
   private resolveLevel(expense: { status: ExpenseStatus; approvalStage?: ApprovalStage }): 'L1' | 'L2' | 'L3' {

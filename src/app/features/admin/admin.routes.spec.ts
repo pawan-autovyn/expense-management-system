@@ -19,6 +19,7 @@ describe('ADMIN_ROUTES', () => {
       'reports',
       'notifications',
       'settings',
+      'profile',
     ]);
 
     const resolved = await Promise.all(

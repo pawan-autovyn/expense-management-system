@@ -21,6 +21,11 @@
       </div>
     </div>
 
+    <button type="button" class="topbar__profile icon-button" (click)="openProfile()">
+      <app-icon name="user-circle" [size]="18" />
+      <span>Profile</span>
+    </button>
+
     <button type="button" class="topbar__logout icon-button" (click)="logout()">
       <app-icon name="logout" [size]="18" />
       <span>Logout</span>

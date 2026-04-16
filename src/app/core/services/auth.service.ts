@@ -76,6 +76,22 @@ export class AuthService {
     return '/operation-manager/dashboard';
   }
 
+  getProfileRouteForRole(role: Role | null): string {
+    if (role === Role.Admin) {
+      return '/admin/profile';
+    }
+
+    if (role === Role.Recommender) {
+      return '/recommender/profile';
+    }
+
+    if (role === Role.OperationManager) {
+      return '/operation-manager/profile';
+    }
+
+    return '/operation-manager/profile';
+  }
+
   private persistSession(user: User): void {
     this.sessionStore.set(user);
     localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(user));

@@ -23,7 +23,10 @@ describe('TopbarComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TopbarComponent],
       providers: [
-        provideRouter([{ path: 'admin/dashboard', component: EmptyRouteComponent }]),
+        provideRouter([
+          { path: 'admin/dashboard', component: EmptyRouteComponent },
+          { path: 'admin/profile', component: EmptyRouteComponent },
+        ]),
         AuthService,
         DirectoryService,
       ],
@@ -38,19 +41,23 @@ describe('TopbarComponent', () => {
   });
 
   it('shows the current page context and handles logout', () => {
+    const profileButton = fixture.nativeElement.querySelector('.topbar__profile') as HTMLElement;
     const logoutButton = fixture.nativeElement.querySelector('.topbar__logout') as HTMLElement;
     const content = fixture.nativeElement as HTMLElement;
+    const navigateSpy = spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
 
     expect(content.textContent).toContain('Workspace');
     expect(content.textContent).toContain('Admin');
     expect(content.textContent).not.toContain('Guest');
 
+    profileButton?.click();
+    expect(navigateSpy).toHaveBeenCalledWith('/admin/profile');
+
     spyOn(authService, 'signOut').and.callThrough();
-    spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
     logoutButton?.click();
     fixture.detectChanges();
 
     expect(authService.signOut).toHaveBeenCalled();
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/login');
+    expect(navigateSpy).toHaveBeenCalledWith('/login');
   });
 });
