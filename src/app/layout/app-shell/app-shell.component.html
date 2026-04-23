@@ -1,4 +1,4 @@
-    <div class="app-shell">
+    <div class="app-shell" [class.app-shell--dialog-open]="hasWorkspaceOverlay()">
       <app-sidebar />
 
       <main class="app-shell__main">
@@ -16,4 +16,14 @@
         <app-icon name="plus-circle" [size]="22" />
         <span>{{ quickActionLabel() }}</span>
       </a>
+
+      <app-toast-center />
+      <app-expense-workspace-dialog />
+      <app-confirm-dialog
+        [open]="expenseDialogService.deleteDialogOpen()"
+        title="Delete expense"
+        [message]="expenseDialogService.deleteDialogMessage()"
+        (cancelled)="expenseDialogService.cancelDelete()"
+        (confirmed)="expenseDialogService.confirmDelete()"
+      />
     </div>

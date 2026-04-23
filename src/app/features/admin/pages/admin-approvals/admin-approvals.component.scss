@@ -18,6 +18,15 @@
   min-height: 2.5rem;
 }
 
+.approval-error-banner {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(220, 38, 38, 0.16);
+  border-radius: 20px;
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--danger);
+}
+
 .ref-approval-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.9fr);
@@ -120,6 +129,7 @@
 .approval-level-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 2rem;
   padding: 0.25rem 0.7rem;
   border-radius: 999px;
@@ -127,6 +137,7 @@
   color: var(--primary);
   font-size: var(--font-size-caption);
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .approval-detail__header,
@@ -257,6 +268,10 @@
 
 .approval-detail textarea {
   min-height: 7.5rem;
+}
+
+.button-row .button {
+  white-space: nowrap;
 }
 
 @media (max-width: 1180px) {

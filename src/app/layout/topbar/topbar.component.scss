@@ -68,6 +68,163 @@
   flex-wrap: wrap;
 }
 
+.topbar__notifications {
+  position: relative;
+}
+
+.topbar__identity {
+  display: flex;
+  align-items: stretch;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.topbar__bell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(49, 78, 118, 0.12);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 246, 251, 0.96));
+  color: var(--text);
+}
+
+.topbar__bell--active {
+  border-color: rgba(45, 95, 159, 0.28);
+  box-shadow: 0 8px 24px rgba(45, 95, 159, 0.12);
+}
+
+.topbar__notification-count {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.topbar__notification-panel {
+  position: absolute;
+  top: calc(100% + 0.65rem);
+  right: 0;
+  display: grid;
+  gap: 0.9rem;
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 1rem;
+  z-index: 20;
+}
+
+.topbar__notification-header,
+.topbar__notification-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.topbar__notification-header p {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.topbar__notification-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.topbar__notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  max-height: 22rem;
+  overflow: auto;
+}
+
+.topbar__notification-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: start;
+  width: 100%;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--border-light);
+  border-radius: 18px;
+  background: var(--surface-soft);
+  text-align: left;
+}
+
+.topbar__notification-item.is-unread {
+  border-color: rgba(45, 95, 159, 0.22);
+  background: rgba(91, 159, 228, 0.08);
+}
+
+.topbar__notification-copy {
+  min-width: 0;
+}
+
+.topbar__notification-copy strong,
+.topbar__notification-copy p {
+  overflow-wrap: anywhere;
+}
+
+.topbar__notification-copy p {
+  margin: 0.2rem 0 0.35rem;
+  color: var(--text-muted);
+}
+
+.topbar__notification-copy span {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.topbar__notification-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.topbar__notification-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(45, 95, 159, 0.12);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.topbar__notification-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: var(--primary);
+  margin-top: 0.35rem;
+  box-shadow: 0 0 0 0.24rem rgba(45, 95, 159, 0.14);
+}
+
+.topbar__notification-empty {
+  padding: 1rem 0.4rem 0.2rem;
+}
+
+.topbar__notification-empty p {
+  margin: 0.25rem 0 0;
+  color: var(--text-muted);
+}
+
 .topbar__role {
   display: inline-flex;
   align-items: center;
@@ -85,7 +242,11 @@
   align-items: center;
   gap: 0.8rem;
   min-width: 0;
-  padding: 0.25rem 0.35rem;
+  min-height: 42px;
+  padding: 0.3rem 0.7rem 0.3rem 0.35rem;
+  border: 1px solid rgba(49, 78, 118, 0.12);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 246, 251, 0.94));
 }
 
 .topbar__avatar {
@@ -132,6 +293,7 @@
 .topbar__profile {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.45rem;
   min-height: 42px;
   padding: 0.65rem 1rem;
@@ -139,6 +301,7 @@
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 246, 251, 0.96));
   color: var(--text);
+  flex: 0 0 auto;
 }
 
 @media (max-width: 900px) {
@@ -148,6 +311,10 @@
 
   .topbar__right {
     justify-content: flex-start;
+  }
+
+  .topbar__identity {
+    width: 100%;
   }
 }
 
@@ -163,5 +330,14 @@
   .topbar__profile span,
   .topbar__logout span {
     display: none;
+  }
+
+  .topbar__identity {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .topbar__notification-panel {
+    right: -0.5rem;
   }
 }

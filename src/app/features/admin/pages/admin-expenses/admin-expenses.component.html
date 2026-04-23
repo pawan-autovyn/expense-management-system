@@ -27,21 +27,22 @@
           </button>
           <button type="button" class="button button--secondary" (click)="exportVisibleRows()">
             <app-icon name="download" [size]="16" />
-            <span>Export CSV</span>
+            <span>Download CSV</span>
           </button>
         </div>
       </div>
 
       <div class="ref-filter-panel__row">
-        <label class="search-field ref-search-field">
+        <div class="search-field ref-search-field">
           <app-icon name="search" [size]="18" />
           <input
             type="search"
             [ngModel]="filters().searchTerm"
             (ngModelChange)="patchFilter('searchTerm', $event)"
             placeholder="Search expenses..."
+            aria-label="Search expenses"
           />
-        </label>
+        </div>
 
         <select [ngModel]="filters().categoryId" (ngModelChange)="patchFilter('categoryId', $event)">
           <option value="all">Category</option>
@@ -126,9 +127,4 @@
       [actions]="actions"
       [rowTrackBy]="trackById"
       (actionTriggered)="handleAction($event)"
-    />
-
-    <app-receipt-preview-modal
-      [attachment]="selectedReceipt() ?? null"
-      (closeRequested)="selectedReceipt.set(null)"
     />

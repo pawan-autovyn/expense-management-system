@@ -7,6 +7,22 @@
 
     <div class="ref-add-layout">
       <form class="glass-card form-card form-card--ref" [formGroup]="form">
+        <section class="budget-guard" [class.budget-guard--locked]="budgetLockedMessage()">
+          <div>
+            <p class="eyebrow">Assigned Budget</p>
+            <h3>{{ remainingAssignedBudget() | currency: 'INR':'symbol':'1.0-0' }} remaining</h3>
+            <p class="muted">Used {{ committedSpend() | currency: 'INR':'symbol':'1.0-0' }} of {{ assignedBudget() | currency: 'INR':'symbol':'1.0-0' }}</p>
+          </div>
+
+          @if (budgetLockedMessage()) {
+            <p class="budget-guard__alert" role="alert">{{ budgetLockedMessage() }}</p>
+          }
+        </section>
+
+        @if (activeSubmitError()) {
+          <p class="form-error-banner" role="alert">{{ activeSubmitError() }}</p>
+        }
+
         <div class="form-grid">
           <label class="form-grid__full">
             <span>Expense Title *</span>
@@ -46,6 +62,8 @@
             <input type="number" formControlName="amount" placeholder="0.00" />
             @if (shouldShowError('amount')) {
               <small class="form-error">Amount should be greater than zero.</small>
+            } @else if (shouldWarnForAmount()) {
+              <small class="form-error">This amount is above your remaining assigned budget.</small>
             }
           </label>
 
@@ -91,8 +109,13 @@
         </div>
 
         <div class="form-actions">
-          <button type="button" class="button button--primary" (click)="submit()">
-            Submit for Approval
+          <button
+            type="button"
+            class="button button--primary"
+            [disabled]="isSubmitting()"
+            (click)="submit()"
+          >
+            {{ isSubmitting() ? 'Submitting...' : budgetLockedMessage() ? 'Budget Exhausted' : 'Submit for Approval' }}
           </button>
         </div>
       </form>
@@ -121,3 +144,32 @@
         </section>
       </aside>
     </div>
+
+    @if (budgetRejectDialogOpen()) {
+      <div class="budget-reject-dialog" aria-live="assertive">
+        <button
+          type="button"
+          class="budget-reject-dialog__backdrop"
+          aria-label="Close rejection popup"
+          (click)="closeBudgetRejectDialog()"
+        ></button>
+
+        <section class="budget-reject-dialog__panel glass-card" role="dialog" aria-modal="true">
+          <div class="budget-reject-dialog__icon">
+            <app-icon name="x" [size]="22" />
+          </div>
+
+          <div class="budget-reject-dialog__copy">
+            <p class="eyebrow">Request Rejected</p>
+            <h3>Budget Exhausted</h3>
+            <p>{{ budgetRejectDialogMessage() }}</p>
+          </div>
+
+          <div class="budget-reject-dialog__actions">
+            <button type="button" class="button button--danger" (click)="closeBudgetRejectDialog()">
+              Okay
+            </button>
+          </div>
+        </section>
+      </div>
+    }

@@ -4,10 +4,37 @@
   background: var(--bg);
 }
 
+.app-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.app-shell > app-sidebar,
 .app-shell__main {
   min-width: 0;
+  transition:
+    filter 220ms ease,
+    transform 220ms ease,
+    opacity 220ms ease;
 }
 
 .app-shell__content {
   min-width: 0;
+}
+
+.floating-action {
+  transition:
+    filter 220ms ease,
+    transform 220ms ease,
+    opacity 220ms ease;
+}
+
+.app-shell--dialog-open > app-sidebar,
+.app-shell--dialog-open > .app-shell__main,
+.app-shell--dialog-open > .floating-action {
+  filter: blur(10px) saturate(0.94);
+  transform: scale(0.995);
+  opacity: 0.92;
+  pointer-events: none;
+  user-select: none;
 }

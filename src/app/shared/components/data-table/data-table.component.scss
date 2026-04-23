@@ -28,6 +28,14 @@
   word-break: break-word;
 }
 
+.data-table__cell--nowrap {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
 .data-table thead th {
   color: var(--text-muted);
   font-size: var(--font-size-label);
@@ -68,30 +76,71 @@
   border-bottom-right-radius: 18px;
 }
 
-.table-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: flex-start;
+.table-actions-heading,
+.table-actions-cell {
   width: 8.5rem;
   min-width: 8.5rem;
   white-space: nowrap;
   overflow-wrap: normal;
 }
 
+.table-actions-cell {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+.table-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-start;
+  min-height: 2.5rem;
+  position: relative;
+  z-index: 1;
+}
+
 .table-action-button {
   display: inline-grid;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border: 1px solid rgba(118, 167, 255, 0.22);
   border-radius: 999px;
   background: rgba(118, 167, 255, 0.1);
   color: var(--text-primary);
   cursor: pointer;
   flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  touch-action: manipulation;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.table-action-button app-icon,
+.table-action-button app-icon svg {
+  pointer-events: none;
 }
 
 .table-action-button:hover {
   background: rgba(118, 167, 255, 0.18);
+  border-color: rgba(45, 95, 159, 0.28);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(45, 95, 159, 0.12);
+}
+
+.table-action-button:focus-visible {
+  outline: none;
+  border-color: rgba(45, 95, 159, 0.42);
+  box-shadow: 0 0 0 0.2rem rgba(45, 95, 159, 0.16);
+}
+
+.table-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }

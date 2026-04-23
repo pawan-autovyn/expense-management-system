@@ -4,6 +4,11 @@
   display: grid;
   place-items: center;
   z-index: 50;
+  pointer-events: none;
+}
+
+:host(.receipt-preview-modal--open) {
+  pointer-events: auto;
 }
 
 .overlay-backdrop {

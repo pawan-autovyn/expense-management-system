@@ -3,27 +3,52 @@
   inset: 0;
   display: grid;
   place-items: center;
-  z-index: 50;
+  z-index: 140;
+  pointer-events: none;
+}
+
+:host(.confirm-dialog--open) {
+  pointer-events: auto;
 }
 
 .overlay-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(8, 15, 28, 0.56);
+  background:
+    radial-gradient(circle at top, rgba(91, 159, 228, 0.2), transparent 34%),
+    rgba(8, 15, 28, 0.72);
+  backdrop-filter: blur(14px);
 }
 
 .overlay-panel {
   position: relative;
   display: grid;
   gap: var(--space-4);
-  width: min(100% - 2rem, 30rem);
-  padding: var(--space-6);
+  width: min(100% - 2rem, 32rem);
+  padding: clamp(1.3rem, 2vw, 1.8rem);
   z-index: 1;
+  border-radius: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 254, 0.96)),
+    rgba(255, 255, 255, 0.94);
+  box-shadow: 0 24px 60px rgba(8, 15, 28, 0.24);
+}
+
+.overlay-panel__copy {
+  display: grid;
+  gap: 0.55rem;
 }
 
 .overlay-panel h3 {
   font-size: var(--font-size-section-title);
   line-height: var(--line-height-snug);
+  margin: 0;
+}
+
+.overlay-panel__hint {
+  margin: 0;
+  color: var(--text-muted);
 }
 
 .overlay-panel__actions {

@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { ExpenseStatus } from '../../../../models/app.models';
+import { ApprovalStage, ExpenseStatus, Role } from '../../../../models/app.models';
 import { ManagerDashboardComponent } from './manager-dashboard.component';
 
 describe('ManagerDashboardComponent', () => {
@@ -26,20 +26,47 @@ describe('ManagerDashboardComponent', () => {
     await Promise.resolve(
       authService.loginWithCredentials('operations.manager.ems@gmail.com', 'SecurePass123!'),
     );
-    expenseRepository.createExpense(
+    const manager = authService.currentUser()!;
+
+    (
+      expenseRepository as unknown as {
+        expensesStore: {
+          update(
+            updateFn: (expenses: Array<Record<string, unknown>>) => Array<Record<string, unknown>>,
+          ): void;
+        };
+      }
+    ).expensesStore.update((expenses) => [
       {
+        id: 'manager-dashboard-spec-expense',
         title: 'Paper stock without bill',
         categoryId: 'paper',
         locationId: 'loc-hq',
+        employeeId: manager.id,
         amount: 180,
         date: '2026-04-01',
+        description: 'A receiptless expense to cover dashboard fallback states.',
         vendor: 'Stationery World',
         tags: ['paper'],
-        description: 'A receiptless expense to cover dashboard fallback states.',
+        managerId: manager.id,
+        status: ExpenseStatus.Draft,
+        createdAt: '2026-04-01T09:00:00.000Z',
+        updatedAt: '2026-04-01T09:00:00.000Z',
+        approvalStage: ApprovalStage.OperationManager,
+        auditTrail: [
+          {
+            id: 'audit-manager-dashboard-spec-expense',
+            action: 'Draft saved',
+            actor: manager.name,
+            actorRole: Role.OperationManager,
+            date: '2026-04-01T09:00:00.000Z',
+            note: 'A receiptless expense to cover dashboard fallback states.',
+            tone: 'info',
+          },
+        ],
       },
-      authService.currentUser()!,
-      ExpenseStatus.Draft,
-    );
+      ...expenses,
+    ]);
     fixture = TestBed.createComponent(ManagerDashboardComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -88,5 +115,59 @@ describe('ManagerDashboardComponent', () => {
     expect(fixture.nativeElement.querySelector('.dashboard-range-panel__note')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('View your dashboard by period');
     expect(state.visibleExpenses().length).toBeLessThanOrEqual(beforeCount);
+  });
+
+  it('keeps recent expenses and activity timeline in sync with live repository changes', async () => {
+    const state = component as unknown as {
+      recentExpenses: () => { title: string }[];
+      timelineItems: () => { title: string }[];
+    };
+    const manager = authService.currentUser()!;
+
+    (
+      expenseRepository as unknown as {
+        expensesStore: {
+          update(
+            updateFn: (expenses: Array<Record<string, unknown>>) => Array<Record<string, unknown>>,
+          ): void;
+        };
+      }
+    ).expensesStore.update((expenses) => [
+      {
+        id: 'manager-dashboard-live-expense',
+        title: 'Live dashboard refresh expense',
+        categoryId: 'tea-pantry',
+        locationId: 'loc-hq',
+        employeeId: manager.id,
+        amount: 220,
+        date: '2026-04-23',
+        description: 'Fresh expense created after dashboard render.',
+        vendor: 'Cafe Vendor',
+        tags: ['live'],
+        managerId: manager.id,
+        status: ExpenseStatus.Submitted,
+        createdAt: '2026-04-23T09:00:00.000Z',
+        updatedAt: '2026-04-23T09:00:00.000Z',
+        approvalStage: ApprovalStage.OperationManager,
+        auditTrail: [
+          {
+            id: 'audit-manager-dashboard-live-expense',
+            action: 'Expense submitted',
+            actor: manager.name,
+            actorRole: Role.OperationManager,
+            date: '2026-04-23T09:00:00.000Z',
+            note: 'Fresh expense created after dashboard render.',
+            tone: 'warning',
+          },
+        ],
+      },
+      ...expenses,
+    ]);
+    fixture.detectChanges();
+
+    expect(state.recentExpenses().some((expense) => expense.title === 'Live dashboard refresh expense')).toBeTrue();
+    expect(
+      state.timelineItems().some((item) => item.title.includes('Live dashboard refresh expense')),
+    ).toBeTrue();
   });
 });
