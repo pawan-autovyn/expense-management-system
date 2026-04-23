@@ -1,23 +1,41 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { Role } from '../../../../models/app.models';
+import { ExpenseStatus, Role } from '../../../../models/app.models';
 import { ManagerAddExpenseComponent } from './manager-add-expense.component';
 
 describe('ManagerAddExpenseComponent', () => {
   let authService: AuthService;
   let expenseRepository: ExpenseRepositoryService;
   let router: Router;
+  let editExpenseId: string | null;
 
   beforeEach(async () => {
     localStorage.clear();
+    editExpenseId = null;
 
     await TestBed.configureTestingModule({
       imports: [ManagerAddExpenseComponent],
-      providers: [provideRouter([]), AuthService, DirectoryService, ExpenseRepositoryService],
+      providers: [
+        provideRouter([]),
+        AuthService,
+        DirectoryService,
+        ExpenseRepositoryService,
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: () => editExpenseId,
+              },
+            },
+          },
+        },
+      ],
     }).compileComponents();
 
     authService = TestBed.inject(AuthService);
@@ -77,8 +95,6 @@ describe('ManagerAddExpenseComponent', () => {
       };
       shouldShowError: (controlName: 'title') => boolean;
       currentTags: () => string[];
-      selectedCategoryView: () => { category: { monthlyBudget: number } } | undefined;
-      budgetStatus: () => string;
     };
 
     component.form.controls.title.reset('');
@@ -94,11 +110,9 @@ describe('ManagerAddExpenseComponent', () => {
 
     expect(component.shouldShowError('title')).toBeFalse();
     expect(component.currentTags()).toEqual(['one', 'two']);
-    expect(component.selectedCategoryView()).toBeUndefined();
-    expect(component.budgetStatus()).toBe('Over Budget');
   });
 
-  it('saves a draft when the form is valid and a user is logged in', () => {
+  it('submits an expense when the form is valid and a user is logged in', () => {
     const fixture = TestBed.createComponent(ManagerAddExpenseComponent);
     const component = fixture.componentInstance as unknown as {
       form: {
@@ -106,10 +120,7 @@ describe('ManagerAddExpenseComponent', () => {
         valid: boolean;
       };
       currentTags: () => string[];
-      remainingAfterThisExpense: () => number;
-      selectedCategoryView: () => { category: { monthlyBudget: number } } | undefined;
-      budgetStatus: () => string;
-      saveDraft: () => void;
+      submit: () => void;
     };
     const createSpy = spyOn(expenseRepository, 'createExpense').and.callThrough();
     const navigateSpy = spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
@@ -127,14 +138,17 @@ describe('ManagerAddExpenseComponent', () => {
 
     expect(component.form.valid).toBeTrue();
     expect(component.currentTags()).toEqual(['pantry']);
-    expect(component.budgetStatus()).toContain('Budget');
-    expect(component.remainingAfterThisExpense()).toBeLessThan(
-      component.selectedCategoryView()?.category.monthlyBudget ?? 0,
+
+    component.submit();
+
+    expect(createSpy).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        title: 'Pantry refill',
+        vendor: 'Fresh Brew Traders',
+      }),
+      jasmine.anything(),
+      ExpenseStatus.Submitted,
     );
-
-    component.saveDraft();
-
-    expect(createSpy).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith('/operation-manager/expenses');
   });
 
@@ -191,5 +205,60 @@ describe('ManagerAddExpenseComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.upload-preview img')).not.toBeNull();
+  });
+
+  it('updates an existing draft when edit query param is present', () => {
+    const manager = authService.currentUser();
+    const created = expenseRepository.createExpense(
+      {
+        title: 'Editable draft',
+        categoryId: 'tea-pantry',
+        locationId: 'loc-hq',
+        amount: 900,
+        date: '2026-04-06',
+        vendor: 'Office Vendor',
+        tags: ['draft'],
+        description: 'Draft created for edit flow.',
+      },
+      manager!,
+      ExpenseStatus.Draft,
+    );
+    editExpenseId = created.id;
+    const updateSpy = spyOn(expenseRepository, 'updateDraft').and.callThrough();
+    const navigateSpy = spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
+    const fixture = TestBed.createComponent(ManagerAddExpenseComponent);
+    const component = fixture.componentInstance as unknown as {
+      form: {
+        controls: {
+          title: { value: string };
+        };
+        patchValue: (value: Record<string, unknown>) => void;
+      };
+      submit: () => void;
+    };
+
+    expect(component.form.controls.title.value).toBe('Editable draft');
+
+    component.form.patchValue({
+      title: 'Editable draft updated',
+      categoryId: 'tea-pantry',
+      locationId: 'loc-hq',
+      amount: 950,
+      date: '2026-04-06',
+      vendor: 'Office Vendor',
+      tags: 'draft, update',
+      description: 'Draft updated through edit mode.',
+    });
+    component.submit();
+
+    expect(updateSpy).toHaveBeenCalledWith(
+      created.id,
+      jasmine.objectContaining({
+        title: 'Editable draft updated',
+        vendor: 'Office Vendor',
+      }),
+      ExpenseStatus.Submitted,
+    );
+    expect(navigateSpy).toHaveBeenCalledWith('/operation-manager/expenses');
   });
 });

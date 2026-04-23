@@ -9,25 +9,49 @@
 <div class="card-grid manager-profile-grid">
   <article class="glass-card report-card">
     <p class="eyebrow">User</p>
-    <h3>{{ authService.currentUser()?.name }}</h3>
-    <p>{{ authService.currentUser()?.title }} • {{ authService.currentUser()?.department }}</p>
+    <h3>{{ currentUser()?.name }}</h3>
+    <p>{{ currentUser()?.title }} • {{ currentUser()?.department }}</p>
   </article>
 
   <article class="glass-card report-card">
     <p class="eyebrow">Assigned Budget</p>
-    <h3>{{ authService.currentUser()?.assignedBudget | currency:'INR':'symbol':'1.0-0' }}</h3>
-    <p>Assigned allocation stored locally for your current role.</p>
+    <h3>{{ totalBudget() | currency:'INR':'symbol':'1.0-0' }}</h3>
+    <p>Live budget derived from the location budget API data.</p>
   </article>
 
   <article class="glass-card report-card">
     <p class="eyebrow">Workflow Access</p>
-    <h3>Submit, track, re-open, and re-submit expenses</h3>
-    <p>
-      All actions stay in the frontend and can later be connected to real APIs without changing
-      the screen structure.
-    </p>
+    <h3>{{ profileAccessSummary() }}</h3>
+    <p>Your role access is derived from the API session and route guards.</p>
   </article>
 </div>
+
+<section class="glass-card profile-security-card">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Profile</p>
+      <h3>Account information</h3>
+    </div>
+    <app-icon name="user-circle" [size]="18" />
+  </div>
+
+  <div class="profile-security-grid">
+    <label>
+      <span>Email</span>
+      <input type="text" [ngModel]="currentUser()?.email ?? ''" readonly />
+    </label>
+
+    <label>
+      <span>Phone</span>
+      <input type="text" [ngModel]="currentUser()?.phone ?? ''" readonly />
+    </label>
+
+    <label>
+      <span>Location</span>
+      <input type="text" [ngModel]="currentUser()?.location ?? ''" readonly />
+    </label>
+  </div>
+</section>
 
 <section class="glass-card profile-security-card">
   <div class="section-heading">

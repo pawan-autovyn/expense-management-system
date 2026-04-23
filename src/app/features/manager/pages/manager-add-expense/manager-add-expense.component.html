@@ -5,15 +5,6 @@
       </div>
     </section>
 
-    <section class="alert-banner alert-banner--warning">
-      <app-icon name="alert" [size]="18" />
-      <strong>
-        {{ budgetStatus() === 'Over Budget' ? 'Over budget risk' : 'Near limit' }} -
-        only {{ remainingAfterThisExpense() | currency: 'INR' : 'symbol' : '1.0-0' }} remaining in
-        {{ selectedCategoryView()?.category?.name ?? 'selected' }} budget
-      </strong>
-    </section>
-
     <div class="ref-add-layout">
       <form class="glass-card form-card form-card--ref" [formGroup]="form">
         <div class="form-grid">
@@ -100,9 +91,6 @@
         </div>
 
         <div class="form-actions">
-          <button type="button" class="button button--ghost" (click)="saveDraft()">
-            Save as Draft
-          </button>
           <button type="button" class="button button--primary" (click)="submit()">
             Submit for Approval
           </button>
@@ -130,34 +118,6 @@
               <span>No receipt uploaded yet</span>
             </div>
           }
-        </section>
-
-        <section class="glass-card ref-side-card">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Budget Status</p>
-              <h3>Live check</h3>
-            </div>
-            <app-status-badge [label]="budgetStatus()" />
-          </div>
-
-          <div class="metric-pair">
-            <span>Current spend</span>
-            <strong>{{
-              selectedCategoryView()?.spend ?? 0 | currency: 'INR' : 'symbol' : '1.0-0'
-            }}</strong>
-          </div>
-          <div class="metric-pair">
-            <span>Budget</span>
-            <strong>{{
-              selectedCategoryView()?.category?.monthlyBudget ?? 0
-                | currency: 'INR' : 'symbol' : '1.0-0'
-            }}</strong>
-          </div>
-          <div class="metric-pair">
-            <span>Remaining</span>
-            <strong>{{ remainingAfterThisExpense() | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
-          </div>
         </section>
       </aside>
     </div>

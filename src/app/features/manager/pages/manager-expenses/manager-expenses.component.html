@@ -8,7 +8,7 @@
     <app-expense-filter-bar
       [filters]="filters()"
       [categories]="directoryService.categories()"
-      (filtersChange)="filters.set($event)"
+      (filtersChange)="updateFilters($event)"
     />
 
     <div class="page-toolbar">
@@ -23,11 +23,28 @@
 
     <app-data-table
       [columns]="columns"
-      [rows]="rows()"
+      [rows]="pagedRows()"
       [actions]="actions"
       [rowTrackBy]="trackById"
       (actionTriggered)="handleAction($event)"
     />
+
+    <div class="page-toolbar">
+      <p class="muted">Page {{ page() }} of {{ totalPages() }}</p>
+      <div class="page-toolbar__actions">
+        <button type="button" class="button button--secondary" [disabled]="page() === 1" (click)="previousPage()">
+          Previous
+        </button>
+        <button
+          type="button"
+          class="button button--secondary"
+          [disabled]="page() === totalPages()"
+          (click)="nextPage()"
+        >
+          Next
+        </button>
+      </div>
+    </div>
 
     <app-confirm-dialog
       [open]="deleteDialogOpen()"

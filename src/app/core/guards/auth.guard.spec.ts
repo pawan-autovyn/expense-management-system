@@ -20,8 +20,8 @@ describe('authGuard', () => {
     router = TestBed.inject(Router);
   });
 
-  it('redirects anonymous users to login', () => {
-    const result = TestBed.runInInjectionContext(() =>
+  it('redirects anonymous users to login', async () => {
+    const result = await TestBed.runInInjectionContext(() =>
       authGuard({} as never, {} as never),
     );
 
@@ -29,10 +29,10 @@ describe('authGuard', () => {
     expect(router.serializeUrl(result as UrlTree)).toBe('/login');
   });
 
-  it('allows authenticated users', () => {
+  it('allows authenticated users', async () => {
     authService.loginAs(Role.Admin);
 
-    const result = TestBed.runInInjectionContext(() =>
+    const result = await TestBed.runInInjectionContext(() =>
       authGuard({} as never, {} as never),
     );
 

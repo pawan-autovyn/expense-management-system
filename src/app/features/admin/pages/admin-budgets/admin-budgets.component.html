@@ -109,11 +109,20 @@
       </div>
 
       <div class="budget-editor__actions">
-        <button type="button" class="button button--primary" (click)="saveBudget()">
+        <button
+          type="button"
+          class="button button--primary"
+          [disabled]="isSaving()"
+          (click)="saveBudget()"
+        >
           <app-icon name="check-circle" [size]="16" />
-          <span>Save Budget</span>
+          <span>{{ isSaving() ? 'Saving...' : 'Save Budget' }}</span>
         </button>
       </div>
+
+      @if (saveMessage()) {
+        <p class="form-note">{{ saveMessage() }}</p>
+      }
     }
   </section>
 </section>

@@ -10,6 +10,7 @@ describe('Recommender routes', () => {
       'recommendation',
       'review',
       'expenses',
+      'expenses/:id',
       'reports',
       'budget',
       'profile',

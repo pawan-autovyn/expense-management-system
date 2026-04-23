@@ -78,6 +78,7 @@ export interface Budget {
 
 export interface Attachment {
   id: string;
+  key?: string;
   name: string;
   url: string;
   mimeType: string;

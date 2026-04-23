@@ -1,7 +1,9 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
+import { AnalyticsApiService, AdminReportRow } from '../../../../core/services/analytics-api.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
 import { ExpenseStatus } from '../../../../models/app.models';
@@ -30,9 +32,9 @@ interface TemplateReportRow {
   remarks: string;
   branch: string;
   status: 'Pending' | 'Approved' | 'Rejected' | 'Draft';
-  approver1: string;
-  approver2: string;
-  approver3: string;
+  requester: string;
+  recommender: string;
+  adminApprover: string;
   description: string;
   itemAmount: number;
   vendor: string;
@@ -72,19 +74,30 @@ const DEFAULT_REPORT_FILTERS: ReportFilters = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminReportsComponent {
+  private readonly analyticsApi = inject(AnalyticsApiService);
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
   protected readonly filters = signal<ReportFilters>({ ...DEFAULT_REPORT_FILTERS });
+  private readonly apiReportRows = signal<AdminReportRow[]>([]);
 
-  protected readonly reportRows = computed<TemplateReportRow[]>(() =>
-    this.expenseRepository
+  constructor() {
+    void this.directoryService.loadUsers();
+    void this.loadReports();
+  }
+
+  protected readonly reportRows = computed<TemplateReportRow[]>(() => {
+    if (this.apiReportRows().length > 0) {
+      return this.apiReportRows();
+    }
+
+    return this.expenseRepository
       .expenses()
       .map((expense) => {
         const category = this.directoryService.getCategoryById(expense.categoryId);
         const manager = this.directoryService.getUserById(expense.managerId);
         const branch = this.resolveBranch(manager?.location ?? manager?.department ?? 'Head Office');
         const status = this.normalizeStatus(expense.status);
-        const approvers = this.resolveApprovers(expense, manager?.name ?? 'Operations Manager');
+        const workflowActors = this.resolveWorkflowActors(expense, manager?.name ?? 'Operations Manager');
         const remarks = expense.auditTrail[0]?.note ?? expense.description;
 
         return {
@@ -97,9 +110,9 @@ export class AdminReportsComponent {
           remarks,
           branch,
           status,
-          approver1: approvers[0],
-          approver2: approvers[1],
-          approver3: approvers[2],
+          requester: workflowActors[0],
+          recommender: workflowActors[1],
+          adminApprover: workflowActors[2],
           description: expense.description,
           itemAmount: expense.amount,
           vendor: expense.vendor,
@@ -112,7 +125,7 @@ export class AdminReportsComponent {
             branch,
             status,
             remarks,
-            ...approvers,
+            ...workflowActors,
           ]
             .join(' ')
             .toLowerCase(),
@@ -124,8 +137,8 @@ export class AdminReportsComponent {
         }
 
         return right.date.localeCompare(left.date);
-      }),
-  );
+      });
+  });
 
   protected readonly visibleRows = computed(() =>
     this.reportRows()
@@ -262,9 +275,9 @@ export class AdminReportsComponent {
       { label: 'Remarks', key: 'remarks' },
       { label: 'Branch', key: 'branch' },
       { label: 'Status', key: 'status' },
-      { label: 'Approver 1', key: 'approver1' },
-      { label: 'Approver 2', key: 'approver2' },
-      { label: 'Approver 3', key: 'approver3' },
+      { label: 'Requester', key: 'requester' },
+      { label: 'Recommender', key: 'recommender' },
+      { label: 'Admin Approval', key: 'adminApprover' },
       { label: 'Description', key: 'description' },
       {
         label: 'Item Amount',
@@ -280,7 +293,22 @@ export class AdminReportsComponent {
     downloadCsv('corework-reports.csv', csv);
   }
 
-  private normalizeStatus(status: ExpenseStatus): TemplateReportRow['status'] {
+  protected readonly workflowLegend = [
+    {
+      label: 'Requester',
+      description: 'Expense submitted by the employee or operation owner.',
+    },
+    {
+      label: 'Recommender',
+      description: 'Second review step before final admin approval.',
+    },
+    {
+      label: 'Admin Approval',
+      description: 'Final approval or rejection step.',
+    },
+  ] as const;
+
+  protected normalizeStatus(status: ExpenseStatus): TemplateReportRow['status'] {
     if (status === ExpenseStatus.Approved) {
       return 'Approved';
     }
@@ -296,30 +324,42 @@ export class AdminReportsComponent {
     return 'Pending';
   }
 
-  private resolveApprovers(expense: { auditTrail: { actor: string }[] }, managerName: string): string[] {
+  protected resolveWorkflowActors(
+    expense: { auditTrail: { actor?: string }[] },
+    managerName: string,
+  ): string[] {
     const fallback = ['Finance Desk', 'Audit Lead', 'Leadership Review'];
-    const approvers = [managerName];
+    const actors = [managerName];
 
-    for (const actor of expense.auditTrail.map((entry) => entry.actor)) {
-      if (approvers.length === 3) {
+    for (const actor of expense.auditTrail.map((entry) => entry.actor).filter(Boolean) as string[]) {
+      if (actors.length === 3) {
         break;
       }
 
-      if (!approvers.includes(actor)) {
-        approvers.push(actor);
+      if (!actors.includes(actor)) {
+        actors.push(actor);
       }
     }
 
-    while (approvers.length < 3) {
-      approvers.push(fallback[approvers.length - 1]);
+    while (actors.length < 3) {
+      actors.push(fallback[actors.length - 1]);
     }
 
-    return approvers.slice(0, 3);
+    return actors.slice(0, 3);
   }
 
   private resolveBranch(location: string): string {
     const [branch] = location.split(',');
 
     return branch.trim();
+  }
+
+  private async loadReports(): Promise<void> {
+    try {
+      const response = await firstValueFrom(this.analyticsApi.getAdminReports());
+      this.apiReportRows.set(response.rows);
+    } catch {
+      return;
+    }
   }
 }

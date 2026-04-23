@@ -4,6 +4,11 @@
   gap: 1.5rem;
 }
 
+.page-hero__actions {
+  display: flex;
+  align-items: center;
+}
+
 :host .stats-grid {
   align-items: stretch;
 }

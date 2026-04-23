@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 
 import { Attachment } from '../../../models/app.models';
+import { UploadApiService } from '../../../core/services/upload-api.service';
 import { IconComponent } from '../icon/icon.component';
 
 @Component({
@@ -12,10 +13,13 @@ import { IconComponent } from '../icon/icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadComponent {
+  private readonly uploadApi = inject(UploadApiService);
+
   readonly existingAttachment = input<Attachment | undefined>(undefined);
   readonly attachmentChange = output<Attachment>();
+  protected readonly isUploading = signal(false);
 
-  protected onFileSelected(event: Event): void {
+  protected async onFileSelected(event: Event): Promise<void> {
     const inputElement = event.target as HTMLInputElement;
     const file = inputElement.files?.[0];
 
@@ -23,15 +27,14 @@ export class FileUploadComponent {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.attachmentChange.emit({
-        id: `att-${Date.now()}`,
-        name: file.name,
-        url: String(reader.result),
-        mimeType: file.type,
-      });
-    };
-    reader.readAsDataURL(file);
+    this.isUploading.set(true);
+
+    try {
+      const attachment = await this.uploadApi.uploadReceipt(file);
+      this.attachmentChange.emit(attachment);
+    } finally {
+      this.isUploading.set(false);
+      inputElement.value = '';
+    }
   }
 }

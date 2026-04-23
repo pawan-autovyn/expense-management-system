@@ -23,7 +23,9 @@ describe('ManagerDashboardComponent', () => {
 
     authService = TestBed.inject(AuthService);
     expenseRepository = TestBed.inject(ExpenseRepositoryService);
-    authService.loginWithCredentials('operations.manager.a@demo.com', 'SecurePass123!');
+    await Promise.resolve(
+      authService.loginWithCredentials('operations.manager.ems@gmail.com', 'SecurePass123!'),
+    );
     expenseRepository.createExpense(
       {
         title: 'Paper stock without bill',
@@ -50,7 +52,6 @@ describe('ManagerDashboardComponent', () => {
     expect(content.textContent).toContain('My Remaining Budget');
     expect(content.textContent).toContain('My current status mix');
     expect(content.textContent).toContain('Recent 5 expense items');
-    expect(content.textContent).toContain('Top 5 vendors');
     expect(content.textContent).toContain('Budget Out');
     expect(content.querySelectorAll('app-stat-card').length).toBe(4);
     expect(content.querySelectorAll('app-status-badge').length).toBeGreaterThan(0);

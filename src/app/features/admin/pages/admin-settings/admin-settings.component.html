@@ -1,24 +1,176 @@
-    <section class="section-heading section-heading--page">
-      <div>
-        <p class="eyebrow">Settings</p>
-        <h1>Workspace configuration and presentation controls</h1>
-      </div>
-    </section>
+<section class="section-heading section-heading--page">
+  <div>
+    <p class="eyebrow">Admin Settings</p>
+    <h1>User access and EMS workspace administration</h1>
+  </div>
+</section>
 
-    <div class="card-grid">
-      <article class="glass-card report-card">
-        <p class="eyebrow">Approval Preferences</p>
-        <h3>The three-step approval workflow remains active.</h3>
-        <p>Escalation, remark capture, and bill preview are configured visually and ready for API integration later.</p>
-      </article>
-      <article class="glass-card report-card">
-        <p class="eyebrow">Theme Settings</p>
-        <h3>The product uses one consistent presentation system.</h3>
-        <p>Palette tokens, surfaces, and chart accents are centralized for a clean, production-ready look.</p>
-      </article>
-      <article class="glass-card report-card">
-        <p class="eyebrow">Integration Readiness</p>
-        <h3>Core services are structured for future backend integration.</h3>
-        <p>Replace static repositories with API-backed services and keep the same screen contracts.</p>
-      </article>
+<section class="settings-summary-grid">
+  <article class="glass-card report-card">
+    <p class="eyebrow">Directory</p>
+    <h3>{{ users().length }} total users</h3>
+    <p>Loaded from the live `/api/users` endpoint for the admin workspace.</p>
+  </article>
+  <article class="glass-card report-card">
+    <p class="eyebrow">Active Users</p>
+    <h3>{{ activeUserCount() }}</h3>
+    <p>Currently active accounts across requester, recommender, and admin roles.</p>
+  </article>
+  <article class="glass-card report-card">
+    <p class="eyebrow">Role Mix</p>
+    <h3>{{ adminCount() }} admin / {{ recommenderCount() }} recommender</h3>
+    <p>Role options are loaded from `/api/masters` and creation uses `/api/users`.</p>
+  </article>
+</section>
+
+@if (errorMessage()) {
+  <section class="glass-card settings-banner settings-banner--error">
+    <strong>{{ errorMessage() }}</strong>
+  </section>
+}
+
+@if (successMessage()) {
+  <section class="glass-card settings-banner settings-banner--success">
+    <strong>{{ successMessage() }}</strong>
+  </section>
+}
+
+<section class="settings-grid">
+  <form class="glass-card settings-form" [formGroup]="settingsForm" (ngSubmit)="createUser()">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Create User</p>
+        <h3>Bind frontend form to the user API</h3>
+      </div>
     </div>
+
+    <div class="settings-form__grid">
+      <label>
+        <span>First Name</span>
+        <input type="text" formControlName="firstName" />
+        @if (shouldShowError('firstName')) {
+          <small>Please enter a valid first name.</small>
+        }
+      </label>
+
+      <label>
+        <span>Last Name</span>
+        <input type="text" formControlName="lastName" />
+        @if (shouldShowError('lastName')) {
+          <small>Please enter a valid last name.</small>
+        }
+      </label>
+
+      <label>
+        <span>Email</span>
+        <input type="email" formControlName="email" />
+        @if (shouldShowError('email')) {
+          <small>Please enter a valid email address.</small>
+        }
+      </label>
+
+      <label>
+        <span>Phone</span>
+        <input type="text" formControlName="phoneNumber" />
+        @if (shouldShowError('phoneNumber')) {
+          <small>Please enter the user phone number.</small>
+        }
+      </label>
+
+      <label>
+        <span>Role</span>
+        <select formControlName="role">
+          @for (roleLabel of roleLabels().role; track roleLabel) {
+            <option [value]="roleValueFromLabel(roleLabel)">{{ roleLabel }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Status</span>
+        <select formControlName="status">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="blocked">Blocked</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Department</span>
+        <input type="text" formControlName="department" />
+        @if (shouldShowError('department')) {
+          <small>Please enter the department.</small>
+        }
+      </label>
+
+      <label>
+        <span>Title</span>
+        <input type="text" formControlName="title" />
+        @if (shouldShowError('title')) {
+          <small>Please enter the designation/title.</small>
+        }
+      </label>
+
+      <label>
+        <span>Location</span>
+        <select formControlName="locationId">
+          @for (location of locationOptions(); track location.id) {
+            <option [value]="location.id">{{ location.name }}</option>
+          }
+        </select>
+        @if (shouldShowError('locationId')) {
+          <small>Please select a location.</small>
+        }
+      </label>
+
+      <label>
+        <span>Password</span>
+        <input type="password" formControlName="password" />
+        @if (shouldShowError('password')) {
+          <small>Password must be at least 8 characters.</small>
+        }
+      </label>
+
+      <label class="settings-form__full">
+        <span>Avatar URL</span>
+        <input type="text" formControlName="avatarUrl" />
+      </label>
+    </div>
+
+    <div class="settings-form__actions">
+      <button type="submit" class="button button--primary" [disabled]="saving() || loading()">
+        {{ saving() ? 'Creating User...' : 'Create User' }}
+      </button>
+    </div>
+  </form>
+
+  <section class="glass-card settings-directory">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">User Directory</p>
+        <h3>Latest users from the API</h3>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="muted">Loading users from API...</p>
+    } @else if (recentUsers().length === 0) {
+      <p class="muted">No users available from the API yet.</p>
+    } @else {
+      <div class="stack-list">
+        @for (user of recentUsers(); track user.id) {
+          <article class="stack-list__item">
+            <div>
+              <strong>{{ user.name }}</strong>
+              <p>{{ user.department }} • {{ user.location }}</p>
+            </div>
+            <div class="settings-directory__meta">
+              <strong>{{ user.role }}</strong>
+              <p>{{ user.status }}</p>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</section>

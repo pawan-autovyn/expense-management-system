@@ -15,10 +15,10 @@ Note: Angular `21.x` was not usable in this workspace because the local Node run
 
 ## Demo Credentials
 
-- Admin: `admin@auroraledger.demo`
-- Operation Manager: `manager@auroraledger.demo`
+- Admin: `admin.ems@gmail.com`
+- Operation Manager: `operations.manager.ems@gmail.com`
 
-No password is required. Login is simulated and persisted in local storage.
+Default password: `SecurePass123!`
 
 ## Features
 

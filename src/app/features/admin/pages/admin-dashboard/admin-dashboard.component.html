@@ -1,15 +1,19 @@
     <section class="page-hero">
-      <div>
-        <h1>Control Dashboard</h1>
-        <p>Enterprise control center with approval flow, budgets, and expense health in one place</p>
+    <div>
+      <h1>Control Dashboard</h1>
+      <p>Enterprise control center with approval flow, budgets, and expense health in one place</p>
+    </div>
+      <div class="page-hero__actions">
+        <a class="button button--primary" routerLink="/admin/expenses">View Expenses</a>
       </div>
-      <section class="smart-banner glass-card smart-banner--hero">
-        <app-icon name="alert" [size]="18" />
-        <div>
-          <strong>{{ overBudgetCategories().length }} categories need intervention</strong>
-          <span>Overspend and near-limit alerts are highlighted for today’s review round.</span>
-        </div>
-      </section>
+    </section>
+
+    <section class="smart-banner glass-card smart-banner--hero">
+      <app-icon name="alert" [size]="18" />
+      <div>
+        <strong>{{ overBudgetCategories().length }} categories need intervention</strong>
+        <span>Overspend and near-limit alerts are highlighted for today’s review round.</span>
+      </div>
     </section>
 
     <section class="glass-card dashboard-range-panel">
@@ -101,7 +105,7 @@
         title="Monthly Expense Trends"
         headline="Budget versus actual"
         subtitle="Last six months"
-        [data]="directoryService.trends()"
+        [data]="trendData()"
       />
 
       <app-donut-chart

@@ -103,34 +103,6 @@
         }
       </article>
 
-      <article class="glass-card dashboard-panel">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Vendor Mix</p>
-            <h3>Top 5 vendors</h3>
-          </div>
-        </div>
-
-        @if (topVendors().length) {
-          <div class="stack-list dashboard-list">
-            @for (vendor of topVendors(); track vendor.vendor) {
-              <article class="stack-list__item dashboard-list__item">
-                <div class="dashboard-list__main">
-                  <strong>{{ vendor.vendor }}</strong>
-                  <p>{{ vendor.count }} expense{{ vendor.count === 1 ? '' : 's' }}</p>
-                </div>
-
-                <div class="dashboard-list__meta">
-                  <span>{{ vendor.spend | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
-                  <small class="muted">Total spend</small>
-                </div>
-              </article>
-            }
-          </div>
-        } @else {
-          <p class="muted dashboard-panel__empty">No vendor data available yet.</p>
-        }
-      </article>
     </section>
 
     <section class="glass-card">

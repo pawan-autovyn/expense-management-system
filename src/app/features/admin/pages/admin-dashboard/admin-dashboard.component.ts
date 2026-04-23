@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
+import { AdminDashboardResponse, AnalyticsApiService } from '../../../../core/services/analytics-api.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
 import { buildCategoryBudgetViews, buildManagerSpendSummary } from '../../../../shared/utils/expense.utils';
@@ -21,6 +24,7 @@ type DashboardRange = 'all' | 'current-year' | 'last-year' | 'last-2-years' | 'c
   imports: [
     CurrencyPipe,
     FormsModule,
+    RouterLink,
     ActivityTimelineComponent,
     DonutChartComponent,
     IconComponent,
@@ -33,8 +37,10 @@ type DashboardRange = 'all' | 'current-year' | 'last-year' | 'last-2-years' | 'c
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminDashboardComponent {
+  private readonly analyticsApi = inject(AnalyticsApiService);
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
+  protected readonly dashboardData = signal<AdminDashboardResponse | null>(null);
   protected readonly expenses = this.expenseRepository.expenses;
   protected readonly dashboardRangeOptions = [
     { label: 'Current year', value: 'current-year' },
@@ -59,14 +65,14 @@ export class AdminDashboardComponent {
       return expenseDate >= bounds.start.getTime() && expenseDate <= bounds.end.getTime();
     });
   });
-  protected readonly totalExpenseAmount = computed(() =>
-    this.visibleExpenses().reduce((total, expense) => total + expense.amount, 0),
+  protected readonly totalExpenseAmount = computed(
+    () => this.dashboardData()?.totalExpenseAmount ?? this.visibleExpenses().reduce((total, expense) => total + expense.amount, 0),
   );
-  protected readonly allocatedBudget = computed(() =>
-    this.directoryService.categories().reduce((total, category) => total + category.monthlyBudget, 0),
+  protected readonly allocatedBudget = computed(
+    () => this.dashboardData()?.allocatedBudget ?? this.directoryService.categories().reduce((total, category) => total + category.monthlyBudget, 0),
   );
-  protected readonly remainingBudget = computed(() =>
-    Math.max(
+  protected readonly remainingBudget = computed(
+    () => this.dashboardData()?.remainingBudget ?? Math.max(
       this.allocatedBudget() -
         this.visibleExpenses()
           .filter((expense) => expense.status !== ExpenseStatus.Rejected)
@@ -75,64 +81,109 @@ export class AdminDashboardComponent {
     ),
   );
   protected readonly pendingCount = computed(
-    () =>
-      this.visibleExpenses().filter((expense) =>
-        [
-          ExpenseStatus.Submitted,
-          ExpenseStatus.Recommended,
-          ExpenseStatus.Reopened,
-          ExpenseStatus.UnderReview,
-          ExpenseStatus.OverBudget,
-        ].includes(expense.status),
-      ).length,
+    () => this.dashboardData()?.pendingCount ?? this.visibleExpenses().filter((expense) =>
+      [
+        ExpenseStatus.Submitted,
+        ExpenseStatus.Recommended,
+        ExpenseStatus.Reopened,
+        ExpenseStatus.UnderReview,
+        ExpenseStatus.OverBudget,
+      ].includes(expense.status),
+    ).length,
   );
   protected readonly approvedCount = computed(
-    () => this.visibleExpenses().filter((expense) => expense.status === ExpenseStatus.Approved).length,
+    () => this.dashboardData()?.approvedCount ?? this.visibleExpenses().filter((expense) => expense.status === ExpenseStatus.Approved).length,
   );
   protected readonly rejectedCount = computed(
-    () => this.visibleExpenses().filter((expense) => expense.status === ExpenseStatus.Rejected).length,
+    () => this.dashboardData()?.rejectedCount ?? this.visibleExpenses().filter((expense) => expense.status === ExpenseStatus.Rejected).length,
   );
   protected readonly operationManagerCount = computed(
-    () =>
-      this.visibleExpenses().filter(
-        (expense) =>
-          expense.status === ExpenseStatus.Draft ||
-          expense.approvalStage === ApprovalStage.OperationManager,
-      ).length,
+    () => this.dashboardData()?.operationManagerCount ?? this.visibleExpenses().filter(
+      (expense) =>
+        expense.status === ExpenseStatus.Draft ||
+        expense.approvalStage === ApprovalStage.OperationManager,
+    ).length,
   );
   protected readonly recommenderCount = computed(
-    () =>
-      this.visibleExpenses().filter(
-        (expense) =>
-          expense.status === ExpenseStatus.Submitted ||
-          expense.status === ExpenseStatus.Recommended ||
-          expense.approvalStage === ApprovalStage.Recommender,
-      ).length,
+    () => this.dashboardData()?.recommenderCount ?? this.visibleExpenses().filter(
+      (expense) =>
+        expense.status === ExpenseStatus.Submitted ||
+        expense.status === ExpenseStatus.Recommended ||
+        expense.approvalStage === ApprovalStage.Recommender,
+    ).length,
   );
   protected readonly approverCount = computed(
-    () =>
-      this.visibleExpenses().filter(
-        (expense) =>
-          expense.status === ExpenseStatus.Recommended ||
-          expense.status === ExpenseStatus.Reopened ||
-          expense.status === ExpenseStatus.UnderReview ||
-          expense.approvalStage === ApprovalStage.Approver,
-      ).length,
+    () => this.dashboardData()?.approverCount ?? this.visibleExpenses().filter(
+      (expense) =>
+        expense.status === ExpenseStatus.Recommended ||
+        expense.status === ExpenseStatus.Reopened ||
+        expense.status === ExpenseStatus.UnderReview ||
+        expense.approvalStage === ApprovalStage.Approver,
+    ).length,
   );
-  protected readonly statusSegments = computed(() => [
+  protected readonly statusSegments = computed(() => this.dashboardData()?.statusSegments ?? [
     { label: 'Approved', value: this.approvedCount(), color: '#22C55E' },
     { label: 'Pending', value: this.pendingCount(), color: '#F59E0B' },
     { label: 'Rejected', value: this.rejectedCount(), color: '#EF4444' },
   ]);
   protected readonly managerSummary = computed(() =>
-    buildManagerSpendSummary(this.visibleExpenses(), this.directoryService.users()),
+    this.dashboardData()?.managerSummary ??
+    buildManagerSpendSummary(
+      this.visibleExpenses(),
+      this.directoryService.users(),
+      this.directoryService.budgets(),
+    ),
   );
+  protected readonly trendData = computed(() => {
+    const now = new Date();
+    const labels = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+
+      return {
+        key: `${date.getFullYear()}-${date.getMonth()}`,
+        label: date.toLocaleString('en-IN', { month: 'short' }),
+      };
+    });
+    const monthlyBudget = this.directoryService.categories().reduce(
+      (total, category) => total + category.monthlyBudget,
+      0,
+    );
+
+    return labels.map(({ key, label }, index) => {
+      const total = this.visibleExpenses()
+        .filter((expense) => {
+          const expenseDate = new Date(expense.date);
+
+          return `${expenseDate.getFullYear()}-${expenseDate.getMonth()}` === key;
+        })
+        .reduce((sum, expense) => sum + expense.amount, 0);
+      const previous = index === 0 ? 0 : labels[index - 1]
+        ? this.visibleExpenses()
+            .filter((expense) => {
+              const expenseDate = new Date(expense.date);
+
+              return `${expenseDate.getFullYear()}-${expenseDate.getMonth()}` ===
+                labels[index - 1].key;
+            })
+            .reduce((sum, expense) => sum + expense.amount, 0)
+        : 0;
+
+      return {
+        label,
+        total,
+        budget: monthlyBudget,
+        comparison: previous ? Number((((total - previous) / previous) * 100).toFixed(1)) : 0,
+      };
+    });
+  });
   protected readonly overBudgetCategories = computed(() =>
+    this.dashboardData()?.overBudgetCategories ??
     buildCategoryBudgetViews(this.directoryService.categories(), this.visibleExpenses()).filter(
       (category) => category.status !== 'Within Budget',
     ),
   );
   protected readonly timelineItems = computed<TimelineItem[]>(() =>
+    this.dashboardData()?.timelineItems ??
     this.visibleExpenses()
       .flatMap((expense) =>
         expense.auditTrail.map((entry) => ({
@@ -146,6 +197,11 @@ export class AdminDashboardComponent {
       .sort((left, right) => right.date.localeCompare(left.date))
       .slice(0, 5),
   );
+
+  constructor() {
+    void this.directoryService.loadUsers();
+    void this.loadDashboard();
+  }
 
   protected setDashboardRange(value: DashboardRange): void {
     this.dashboardRange.set(value);
@@ -161,7 +217,7 @@ export class AdminDashboardComponent {
 
   private resolveDashboardBounds(): { start: Date; end: Date } | null {
     const range = this.dashboardRange();
-    const now = new Date('2026-04-02T23:59:59+05:30');
+    const now = new Date();
 
     if (range === 'all') {
       return null;
@@ -202,5 +258,13 @@ export class AdminDashboardComponent {
       : now;
 
     return { start, end };
+  }
+
+  private async loadDashboard(): Promise<void> {
+    try {
+      this.dashboardData.set(await firstValueFrom(this.analyticsApi.getAdminDashboard()));
+    } catch {
+      return;
+    }
   }
 }

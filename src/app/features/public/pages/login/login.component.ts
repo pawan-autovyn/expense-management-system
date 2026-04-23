@@ -34,10 +34,10 @@ export class LoginComponent {
     this.rememberMe.set(checked);
   }
 
-  protected login(): void {
+  protected async login(): Promise<void> {
     const userId = this.userId().trim();
     const password = this.password();
-    const user = this.authService.loginWithCredentials(userId, password);
+    const user = await Promise.resolve(this.authService.loginWithCredentials(userId, password));
 
     if (!user) {
       this.loginError.set('Enter a valid user ID and password.');

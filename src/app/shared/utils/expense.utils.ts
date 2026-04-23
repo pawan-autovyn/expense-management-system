@@ -1,4 +1,5 @@
 import {
+  Budget,
   BudgetStatus,
   Category,
   CategoryBudgetView,
@@ -11,14 +12,13 @@ import {
 } from '../../models/app.models';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DEMO_NOW = new Date('2026-04-02T23:59:59+05:30');
 
 export const DEFAULT_EXPENSE_FILTERS: ExpenseFilters = {
   searchTerm: '',
   categoryId: 'all',
   status: 'all',
   managerId: 'all',
-  dateRange: 'last-month',
+  dateRange: '30d',
   sortBy: 'date-desc',
 };
 
@@ -69,7 +69,7 @@ export function buildCategoryBudgetViews(
 }
 
 export function filterExpenses(expenses: Expense[], filters: ExpenseFilters): Expense[] {
-  const now = DEMO_NOW;
+  const now = new Date();
   const searchTerm = filters.searchTerm.trim().toLowerCase();
   const rangeBounds = resolveDateBounds(filters, now);
 
@@ -193,7 +193,11 @@ function startOfYear(value: Date): Date {
   return new Date(value.getFullYear(), 0, 1, 0, 0, 0, 0);
 }
 
-export function buildManagerSpendSummary(expenses: Expense[], users: User[]): ManagerSpendSummary[] {
+export function buildManagerSpendSummary(
+  expenses: Expense[],
+  users: User[],
+  budgets: Budget[] = [],
+): ManagerSpendSummary[] {
   return users
     .filter((user) => user.role === Role.OperationManager)
     .map((user) => {
@@ -202,11 +206,15 @@ export function buildManagerSpendSummary(expenses: Expense[], users: User[]): Ma
           expense.managerId === user.id &&
           ![ExpenseStatus.Rejected, ExpenseStatus.Cancelled].includes(expense.status),
       );
+      const locationId = user.location.trim().toLowerCase().replace(/\s+/g, '-');
+      const totalBudget = budgets
+        .filter((budget) => budget.locationId === locationId)
+        .reduce((total, budget) => total + budget.annualBudget, 0);
 
       return {
         user,
         spend: userExpenses.reduce((total, expense) => total + expense.amount, 0),
-        budget: user.assignedBudget,
+        budget: totalBudget,
         approvedCount: userExpenses.filter((expense) => expense.status === ExpenseStatus.Approved)
           .length,
       };
@@ -241,7 +249,10 @@ export function computeExpenseStatus(
 
   const currentSpend = expenses
     .filter((expense) => expense.categoryId === categoryId)
-    .filter((expense) => expense.status !== ExpenseStatus.Rejected)
+    .filter(
+      (expense) =>
+        ![ExpenseStatus.Rejected, ExpenseStatus.Cancelled].includes(expense.status),
+    )
     .reduce((total, expense) => total + expense.amount, 0);
 
   return currentSpend + amount > category.monthlyBudget

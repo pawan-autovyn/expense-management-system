@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
+import { AnalyticsApiService, RecommenderWorkspaceResponse } from '../../../../core/services/analytics-api.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
@@ -36,7 +38,9 @@ type DashboardRange = 'current-year' | 'last-year' | 'last-2-years' | 'custom' |
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HrWorkspaceComponent {
+  private readonly analyticsApi = inject(AnalyticsApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
@@ -59,9 +63,10 @@ export class HrWorkspaceComponent {
   protected readonly dashboardRange = signal<DashboardRange>('current-year');
   protected readonly dashboardDateFrom = signal('');
   protected readonly dashboardDateTo = signal('');
+  protected readonly workspaceData = signal<RecommenderWorkspaceResponse | null>(null);
 
   protected readonly currentUser = computed(() => this.authService.currentUser());
-  protected readonly expenses = this.expenseRepository.expenses;
+  protected readonly expenses = computed(() => this.workspaceData()?.queueExpenses ?? this.expenseRepository.expenses());
   protected readonly dashboardExpenses = computed(() => {
     const bounds = this.resolveDashboardBounds();
 
@@ -121,72 +126,24 @@ export class HrWorkspaceComponent {
     () => this.queueExpenses().find((expense) => expense.id === this.selectedExpenseId()) ?? this.queueExpenses()[0],
   );
 
-  protected readonly dashboardCards = computed<ReportSummary[]>(() => [
-    {
-      label: 'Submitted',
-      count: this.dashboardExpenses().filter((expense) => expense.status === ExpenseStatus.Submitted).length,
-      tone: 'info',
-    },
-    {
-      label: 'Pending recommendation',
-      count: this.dashboardExpenses().filter((expense) => expense.status === ExpenseStatus.Submitted).length,
-      tone: 'warning',
-    },
-    {
-      label: 'Recommended',
-      count: this.dashboardExpenses().filter((expense) => expense.status === ExpenseStatus.Recommended).length,
-      tone: 'success',
-    },
-    {
-      label: 'Rejected',
-      count: this.dashboardExpenses().filter((expense) => expense.status === ExpenseStatus.Rejected).length,
-      tone: 'danger',
-    },
-  ]);
-
-  protected readonly recentActivity = computed(() =>
-    this.dashboardExpenses()
-      .flatMap((expense) =>
-        expense.auditTrail.slice(0, 1).map((entry) => ({
-          id: `${expense.id}-${entry.id}`,
-          title: expense.title,
-          action: entry.action,
-          note: entry.note,
-          date: entry.date,
-          tone: entry.tone,
-        })),
-      )
-      .slice(0, 6),
+  protected readonly dashboardCards = computed<ReportSummary[]>(
+    () => this.workspaceData()?.dashboardCards ?? [],
   );
 
-  protected readonly reportRows = computed(() => {
-    const categoryMap = new Map<string, number>();
-    const statusMap = new Map<string, number>();
-
-    for (const expense of this.expenses()) {
-      categoryMap.set(expense.categoryId, (categoryMap.get(expense.categoryId) ?? 0) + expense.amount);
-      statusMap.set(expense.status, (statusMap.get(expense.status) ?? 0) + 1);
-    }
-
-    return {
-      categories: [...categoryMap.entries()]
-        .map(([categoryId, amount]) => ({
-          label: this.directoryService.getCategoryById(categoryId)?.name ?? categoryId,
-          amount,
-        }))
-        .sort((left, right) => right.amount - left.amount)
-        .slice(0, 5),
-      statuses: [...statusMap.entries()].map(([label, count]) => ({ label, count })),
-    };
-  });
-
-  protected readonly trendData = computed(() =>
-    this.directoryService.trends().map((item) => ({
-      ...item,
-      total: Math.round(item.total * 0.6),
-      budget: Math.round(item.budget * 0.6),
-    })),
+  protected readonly recentActivity = computed(
+    () => this.workspaceData()?.recentActivity ?? [],
   );
+
+  protected readonly reportRows = computed(
+    () => this.workspaceData()?.reportRows ?? { categories: [], statuses: [] },
+  );
+
+  protected readonly trendData = computed(() => this.workspaceData()?.trendData ?? []);
+
+  constructor() {
+    void this.directoryService.loadUsers();
+    void this.loadWorkspace();
+  }
 
   protected get title(): string {
     switch (this.page()) {
@@ -236,6 +193,10 @@ export class HrWorkspaceComponent {
 
   protected selectExpense(expense: Expense): void {
     this.selectedExpenseId.set(expense.id);
+  }
+
+  protected openExpenseDetails(expense: Expense): void {
+    void this.router.navigate(['/recommender/expenses', expense.id]);
   }
 
   protected setStatusFilter(value: string): void {
@@ -289,10 +250,9 @@ export class HrWorkspaceComponent {
   protected setDashboardDateTo(value: string): void {
     this.dashboardDateTo.set(value);
   }
-
   private resolveDashboardBounds(): { start: Date; end: Date } | null {
     const range = this.dashboardRange();
-    const now = new Date('2026-04-02T23:59:59+05:30');
+    const now = new Date();
 
     if (range === 'all') {
       return null;
@@ -333,5 +293,13 @@ export class HrWorkspaceComponent {
       : now;
 
     return { start, end };
+  }
+
+  private async loadWorkspace(): Promise<void> {
+    try {
+      this.workspaceData.set(await firstValueFrom(this.analyticsApi.getRecommenderWorkspace()));
+    } catch {
+      return;
+    }
   }
 }

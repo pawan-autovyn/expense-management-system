@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 
+import { ProfileApiService } from '../../../../core/services/profile-api.service';
 import { ManagerProfileComponent } from './manager-profile.component';
 
 describe('ManagerProfileComponent', () => {
@@ -20,7 +22,15 @@ describe('ManagerProfileComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ManagerProfileComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ProfileApiService,
+          useValue: {
+            updatePassword: () => of({ message: 'Password updated successfully.' }),
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ManagerProfileComponent);
@@ -32,17 +42,17 @@ describe('ManagerProfileComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('shows password controls and accepts a secure update flow', () => {
+  it('shows password controls and accepts a secure update flow', async () => {
     component.currentPassword.set('OldPass123!');
     component.newPassword.set('NewPass123!');
     component.confirmPassword.set('NewPass123!');
     component.requirePasswordReset.set(true);
     component.signOutOtherDevices.set(true);
 
-    component.updatePassword();
+    await component.updatePassword();
     fixture.detectChanges();
 
-    expect(component.passwordMessage()).toContain('Password settings saved');
+    expect(component.passwordMessage()).toContain('Password updated successfully');
     expect(fixture.nativeElement.textContent).toContain('Password change options');
   });
 

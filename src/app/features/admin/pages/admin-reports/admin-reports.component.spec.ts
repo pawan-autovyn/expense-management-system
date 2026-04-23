@@ -12,6 +12,9 @@ interface ReportRow {
   templateName: string;
   branch: string;
   vendor: string;
+  requester?: string;
+  recommender?: string;
+  adminApprover?: string;
 }
 
 interface AdminReportsHarness {
@@ -23,7 +26,7 @@ interface AdminReportsHarness {
   patchFilter(filterName: string, value: string): void;
   resetFilters(): void;
   normalizeStatus(status: ExpenseStatus): string;
-  resolveApprovers(expense: { auditTrail: { actor?: string }[] }, fallback: string): string[];
+  resolveWorkflowActors(expense: { auditTrail: { actor?: string }[] }, fallback: string): string[];
 }
 
 describe('AdminReportsComponent', () => {
@@ -82,7 +85,7 @@ describe('AdminReportsComponent', () => {
     expect(helper.branchSummaries()).toEqual([]);
   });
 
-  it('normalizes statuses and resolves approvers with duplicate and empty audit trails', () => {
+  it('normalizes statuses and resolves workflow actors with duplicate and empty audit trails', () => {
     const helper = component;
 
     expect(helper.normalizeStatus(ExpenseStatus.Approved)).toBe('Approved');
@@ -92,7 +95,7 @@ describe('AdminReportsComponent', () => {
     expect(helper.normalizeStatus(ExpenseStatus.OverBudget)).toBe('Pending');
 
     expect(
-      helper.resolveApprovers(
+      helper.resolveWorkflowActors(
         {
           auditTrail: [
             { actor: 'Aarav Malhotra' },
@@ -105,7 +108,7 @@ describe('AdminReportsComponent', () => {
       ),
     ).toEqual(['Rhea Sharma', 'Aarav Malhotra', 'Finance Desk']);
 
-    expect(helper.resolveApprovers({ auditTrail: [] }, 'Rhea Sharma')).toEqual([
+    expect(helper.resolveWorkflowActors({ auditTrail: [] }, 'Rhea Sharma')).toEqual([
       'Rhea Sharma',
       'Finance Desk',
       'Audit Lead',

@@ -1,38 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Attachment } from '../../../models/app.models';
+import { UploadApiService } from '../../../core/services/upload-api.service';
 import { FileUploadComponent } from './file-upload.component';
-
-class MockFileReader {
-  onload: ((event: ProgressEvent<FileReader>) => void) | null = null;
-  result: string | ArrayBuffer | null = 'data:image/png;base64,MOCK';
-
-  readAsDataURL(): void {
-    this.onload?.({
-      target: {
-        result: this.result,
-      },
-    } as unknown as ProgressEvent<FileReader>);
-  }
-}
 
 describe('FileUploadComponent', () => {
   let fixture: ComponentFixture<FileUploadComponent>;
   let component: FileUploadComponent;
-  let originalFileReader: typeof FileReader;
+  let uploadApi: jasmine.SpyObj<UploadApiService>;
 
   beforeEach(async () => {
+    uploadApi = jasmine.createSpyObj<UploadApiService>('UploadApiService', ['uploadReceipt']);
+
     await TestBed.configureTestingModule({
       imports: [FileUploadComponent],
+      providers: [{ provide: UploadApiService, useValue: uploadApi }],
     }).compileComponents();
 
-    originalFileReader = window.FileReader;
     fixture = TestBed.createComponent(FileUploadComponent);
     component = fixture.componentInstance;
-  });
-
-  afterEach(() => {
-    window.FileReader = originalFileReader;
   });
 
   it('renders the preview when an attachment already exists', () => {
@@ -63,13 +49,17 @@ describe('FileUploadComponent', () => {
     expect(emitSpy).not.toHaveBeenCalled();
   });
 
-  it('emits an attachment when the user selects a file', () => {
+  it('emits an attachment when the user selects a file', async () => {
     const emitSpy = spyOn(component.attachmentChange, 'emit');
     const file = new File(['bill'], 'receipt.png', { type: 'image/png' });
+    uploadApi.uploadReceipt.and.resolveTo({
+      id: 'att-async',
+      name: 'receipt.png',
+      url: 'https://example.com/receipt.png',
+      mimeType: 'image/png',
+    });
 
-    window.FileReader = MockFileReader as unknown as typeof FileReader;
-
-    (component as unknown as { onFileSelected: (event: Event) => void }).onFileSelected({
+    await (component as unknown as { onFileSelected: (event: Event) => Promise<void> }).onFileSelected({
       target: { files: [file] },
     } as unknown as Event);
 
@@ -77,7 +67,7 @@ describe('FileUploadComponent', () => {
       jasmine.objectContaining({
         name: 'receipt.png',
         mimeType: 'image/png',
-        url: 'data:image/png;base64,MOCK',
+        url: 'https://example.com/receipt.png',
       }),
     );
   });

@@ -1,8 +1,11 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from '../../../../core/services/auth.service';
+import { DirectoryService } from '../../../../core/services/directory.service';
+import { ProfileApiService } from '../../../../core/services/profile-api.service';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
 @Component({
@@ -15,14 +18,18 @@ import { IconComponent } from '../../../../shared/components/icon/icon.component
 })
 export class ManagerProfileComponent {
   protected readonly authService = inject(AuthService);
+  private readonly directoryService = inject(DirectoryService);
+  private readonly profileApi = inject(ProfileApiService);
+  protected readonly currentUser = this.authService.currentUser;
   protected readonly currentPassword = signal('');
   protected readonly newPassword = signal('');
   protected readonly confirmPassword = signal('');
   protected readonly requirePasswordReset = signal(true);
   protected readonly signOutOtherDevices = signal(true);
   protected readonly passwordMessage = signal('');
+  protected readonly passwordSaving = signal(false);
 
-  protected updatePassword(): void {
+  protected async updatePassword(): Promise<void> {
     const nextPassword = this.newPassword().trim();
 
     if (!nextPassword || nextPassword.length < 8) {
@@ -40,12 +47,29 @@ export class ManagerProfileComponent {
       return;
     }
 
-    this.passwordMessage.set(
-      `Password settings saved${this.requirePasswordReset() ? ' with next-login reset enabled' : ''}.`,
-    );
-    this.currentPassword.set('');
-    this.newPassword.set('');
-    this.confirmPassword.set('');
+    this.passwordSaving.set(true);
+
+    try {
+      const response = await firstValueFrom(
+        this.profileApi.updatePassword({
+          currentPassword: this.currentPassword().trim(),
+          newPassword: nextPassword,
+          requirePasswordReset: this.requirePasswordReset(),
+          signOutOtherDevices: this.signOutOtherDevices(),
+        }),
+      );
+
+      this.passwordMessage.set(
+        `${response.message}${this.requirePasswordReset() ? ' Next-login reset is enabled.' : ''}`,
+      );
+      this.currentPassword.set('');
+      this.newPassword.set('');
+      this.confirmPassword.set('');
+    } catch {
+      this.passwordMessage.set('Unable to update the password right now. Please verify the current password.');
+    } finally {
+      this.passwordSaving.set(false);
+    }
   }
 
   protected applyStrongPreset(): void {
@@ -69,5 +93,30 @@ export class ManagerProfileComponent {
     this.passwordMessage.set('');
     this.requirePasswordReset.set(true);
     this.signOutOtherDevices.set(true);
+  }
+
+  protected profileAccessSummary(): string {
+    const user = this.currentUser();
+
+    if (!user) {
+      return 'No active session.';
+    }
+
+    if (user.role === 'admin') {
+      return 'Full approval, reporting, and user management access.';
+    }
+
+    if (user.role === 'recommender') {
+      return 'Recommendation queue, review, and workflow routing access.';
+    }
+
+    return 'Expense submission, tracking, reopen, and resubmission access.';
+  }
+
+  protected totalBudget(): number {
+    const locationName = this.currentUser()?.location ?? '';
+    const locationId = this.directoryService.getLocationByName(locationName)?.id ?? '';
+
+    return locationId ? this.directoryService.getTotalBudgetForLocation(locationId) : 0;
   }
 }

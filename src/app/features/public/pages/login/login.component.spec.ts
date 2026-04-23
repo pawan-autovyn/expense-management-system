@@ -3,6 +3,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
+import { Role } from '../../../../models/app.models';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {
@@ -31,12 +32,14 @@ describe('LoginComponent', () => {
     expect(passwordInput.value).toBe('');
   });
 
-  it('routes an operation manager user ID to the operation manager dashboard', () => {
-    spyOn(authService, 'loginWithCredentials').and.callThrough();
+  it('routes an operation manager user ID to the operation manager dashboard', async () => {
+    spyOn(authService, 'loginWithCredentials').and.returnValue(
+      Promise.resolve(authService.loginAs(Role.OperationManager)),
+    );
     spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
 
     const userIdInput = fixture.nativeElement.querySelector('input[name="userId"]') as HTMLInputElement;
-    userIdInput.value = 'operations.manager.a@demo.com';
+    userIdInput.value = 'operations.manager.ems@gmail.com';
     userIdInput.dispatchEvent(new Event('input'));
     const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
     passwordInput.value = 'SecurePass123!';
@@ -44,21 +47,24 @@ describe('LoginComponent', () => {
     fixture.detectChanges();
 
     fixture.nativeElement.querySelector('.login-submit')?.click();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(authService.loginWithCredentials).toHaveBeenCalledWith(
-      'operations.manager.a@demo.com',
+      'operations.manager.ems@gmail.com',
       'SecurePass123!',
     );
     expect(router.navigateByUrl).toHaveBeenCalledWith('/operation-manager/dashboard');
   });
 
-  it('routes the recommender user ID to the recommender dashboard', () => {
-    spyOn(authService, 'loginWithCredentials').and.callThrough();
+  it('routes the recommender user ID to the recommender dashboard', async () => {
+    spyOn(authService, 'loginWithCredentials').and.returnValue(
+      Promise.resolve(authService.loginAs(Role.Recommender)),
+    );
     spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
 
     const userIdInput = fixture.nativeElement.querySelector('input[name="userId"]') as HTMLInputElement;
-    userIdInput.value = 'recommender@demo.com';
+    userIdInput.value = 'recommender.ems@gmail.com';
     userIdInput.dispatchEvent(new Event('input'));
     const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
     passwordInput.value = 'SecurePass123!';
@@ -66,20 +72,23 @@ describe('LoginComponent', () => {
     fixture.detectChanges();
 
     fixture.nativeElement.querySelector('.login-submit')?.click();
+    await fixture.whenStable();
 
     expect(authService.loginWithCredentials).toHaveBeenCalledWith(
-      'recommender@demo.com',
+      'recommender.ems@gmail.com',
       'SecurePass123!',
     );
     expect(router.navigateByUrl).toHaveBeenCalledWith('/recommender/dashboard');
   });
 
-  it('routes the admin user ID to the admin dashboard', () => {
-    spyOn(authService, 'loginWithCredentials').and.callThrough();
+  it('routes the admin user ID to the admin dashboard', async () => {
+    spyOn(authService, 'loginWithCredentials').and.returnValue(
+      Promise.resolve(authService.loginAs(Role.Admin)),
+    );
     spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
 
     const userIdInput = fixture.nativeElement.querySelector('input[name="userId"]') as HTMLInputElement;
-    userIdInput.value = 'admin@demo.com';
+    userIdInput.value = 'admin.ems@gmail.com';
     userIdInput.dispatchEvent(new Event('input'));
     const passwordInput = fixture.nativeElement.querySelector('input[name="password"]') as HTMLInputElement;
     passwordInput.value = 'SecurePass123!';
@@ -87,8 +96,12 @@ describe('LoginComponent', () => {
     fixture.detectChanges();
 
     fixture.nativeElement.querySelector('.login-submit')?.click();
+    await fixture.whenStable();
 
-    expect(authService.loginWithCredentials).toHaveBeenCalledWith('admin@demo.com', 'SecurePass123!');
+    expect(authService.loginWithCredentials).toHaveBeenCalledWith(
+      'admin.ems@gmail.com',
+      'SecurePass123!',
+    );
     expect(router.navigateByUrl).toHaveBeenCalledWith('/admin/dashboard');
   });
 

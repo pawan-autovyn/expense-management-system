@@ -18,4 +18,8 @@ export class ManagerNotificationsComponent {
   protected readonly notifications = computed(() =>
     this.notificationService.getNotificationsForRole(Role.OperationManager),
   );
+
+  constructor() {
+    void this.notificationService.loadNotifications();
+  }
 }

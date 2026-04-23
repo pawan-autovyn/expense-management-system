@@ -11,6 +11,15 @@ import {
 } from './expense.utils';
 
 describe('expense utils', () => {
+  beforeEach(() => {
+    jasmine.clock().install();
+    jasmine.clock().mockDate(new Date('2026-04-02T23:59:59+05:30'));
+  });
+
+  afterEach(() => {
+    jasmine.clock().uninstall();
+  });
+
   it('resolves budget status by thresholds', () => {
     expect(resolveBudgetStatus(50, 100)).toBe('Within Budget');
     expect(resolveBudgetStatus(85, 100)).toBe('Near Limit');

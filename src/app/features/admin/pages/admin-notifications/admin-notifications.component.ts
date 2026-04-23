@@ -18,4 +18,8 @@ export class AdminNotificationsComponent {
   protected readonly notifications = computed(() =>
     this.notificationService.getNotificationsForRole(Role.Admin),
   );
+
+  constructor() {
+    void this.notificationService.loadNotifications();
+  }
 }

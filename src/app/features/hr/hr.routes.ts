@@ -37,6 +37,13 @@ export const HR_ROUTES: Routes = [
       import('./pages/hr-workspace/hr-workspace.component').then((m) => m.HrWorkspaceComponent),
   },
   {
+    path: 'expenses/:id',
+    loadComponent: () =>
+      import('../shared/expense-details/expense-details.component').then(
+        (m) => m.ExpenseDetailsComponent,
+      ),
+  },
+  {
     path: 'reports',
     data: { page: 'reports' },
     loadComponent: () =>

@@ -1,12 +1,14 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
 import { ActivityTimelineComponent, TimelineItem } from '../../../../shared/components/activity-timeline/activity-timeline.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { AnalyticsApiService, AuditEntryView } from '../../../../core/services/analytics-api.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
 import { AuditTrailEntry, Expense, ExpenseStatus, NotificationTone, Role } from '../../../../models/app.models';
@@ -19,25 +21,6 @@ interface AuditFilters {
   searchTerm: string;
   actionGroup: AuditActionGroup;
   role: AuditRoleFilter;
-}
-
-interface AuditEntryView {
-  id: string;
-  expenseId: string;
-  expenseCode: string;
-  title: string;
-  vendor: string;
-  category: string;
-  amount: number;
-  action: string;
-  actionGroup: Exclude<AuditActionGroup, 'all'>;
-  userName: string;
-  actorRole: Role;
-  actorRoleLabel: string;
-  date: string;
-  note: string;
-  tone: NotificationTone;
-  searchBlob: string;
 }
 
 interface AuditSummaryCard {
@@ -80,18 +63,29 @@ const DEFAULT_FILTERS: AuditFilters = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminAuditTrailComponent {
+  private readonly analyticsApi = inject(AnalyticsApiService);
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
   protected readonly filters = signal<AuditFilters>({ ...DEFAULT_FILTERS });
   protected readonly page = signal(1);
   protected readonly pageSize = 6;
+  private readonly apiAuditEntries = signal<AuditEntryView[]>([]);
 
-  protected readonly auditEntries = computed<AuditEntryView[]>(() =>
-    this.expenseRepository
+  constructor() {
+    void this.directoryService.loadUsers();
+    void this.loadAuditTrail();
+  }
+
+  protected readonly auditEntries = computed<AuditEntryView[]>(() => {
+    if (this.apiAuditEntries().length > 0) {
+      return this.apiAuditEntries();
+    }
+
+    return this.expenseRepository
       .expenses()
       .flatMap((expense, expenseIndex) => this.mapExpenseAuditEntries(expense, expenseIndex))
-      .sort((left, right) => right.date.localeCompare(left.date)),
-  );
+      .sort((left, right) => right.date.localeCompare(left.date));
+  });
 
   protected readonly visibleEntries = computed(() =>
     this.auditEntries().filter((entry) => {
@@ -261,6 +255,24 @@ export class AdminAuditTrailComponent {
 
     downloadCsv(`corework-audit-trail-${suffix}.csv`, csv);
   }
+  private buildActionBreakdown(
+    label: string,
+    description: string,
+    group: Exclude<AuditActionGroup, 'all'>,
+    entries: AuditEntryView[],
+    total: number,
+    tone: NotificationTone,
+  ): ActionBreakdownItem {
+    const value = entries.filter((entry) => entry.actionGroup === group).length;
+
+    return {
+      label,
+      description,
+      value,
+      percent: (value / total) * 100,
+      tone,
+    };
+  }
 
   private mapExpenseAuditEntries(expense: Expense, expenseIndex: number): AuditEntryView[] {
     const category = this.directoryService.getCategoryById(expense.categoryId);
@@ -270,50 +282,24 @@ export class AdminAuditTrailComponent {
       ? expense.auditTrail
       : [this.buildFallbackEntry(expense, manager?.name ?? 'Operation Manager')];
 
-    return auditTrail.map((entry, auditIndex) => this.mapAuditEntry(entry, expense, expenseCode, category?.name ?? 'Unknown', auditIndex));
-  }
-
-  private mapAuditEntry(
-    entry: AuditTrailEntry,
-    expense: Expense,
-    expenseCode: string,
-    category: string,
-    auditIndex: number,
-  ): AuditEntryView {
-    const actionGroup = this.classifyAction(entry.action);
-    const actorRoleLabel = this.resolveRoleLabel(entry.actorRole);
-
-    return {
+    return auditTrail.map((entry, auditIndex) => ({
       id: `${expense.id}-${entry.id}-${auditIndex}`,
       expenseId: expense.id,
       expenseCode,
       title: expense.title,
       vendor: expense.vendor,
-      category,
+      category: category?.name ?? 'Unknown',
       amount: expense.amount,
       action: entry.action,
-      actionGroup,
+      actionGroup: this.classifyAction(entry.action),
       userName: entry.actor,
       actorRole: entry.actorRole,
-      actorRoleLabel,
+      actorRoleLabel: this.resolveRoleLabel(entry.actorRole),
       date: entry.date,
       note: entry.note,
       tone: entry.tone,
-      searchBlob: [
-        expenseCode,
-        expense.title,
-        expense.vendor,
-        category,
-        String(expense.amount),
-        entry.action,
-        entry.actor,
-        actorRoleLabel,
-        entry.note,
-        actionGroup,
-      ]
-        .join(' ')
-        .toLowerCase(),
-    };
+      searchBlob: '',
+    }));
   }
 
   private buildFallbackEntry(expense: Expense, actor: string): AuditTrailEntry {
@@ -376,22 +362,12 @@ export class AdminAuditTrailComponent {
     return 'Operation Manager';
   }
 
-  private buildActionBreakdown(
-    label: string,
-    description: string,
-    group: Exclude<AuditActionGroup, 'all'>,
-    entries: AuditEntryView[],
-    total: number,
-    tone: NotificationTone,
-  ): ActionBreakdownItem {
-    const value = entries.filter((entry) => entry.actionGroup === group).length;
-
-    return {
-      label,
-      description,
-      value,
-      percent: (value / total) * 100,
-      tone,
-    };
+  private async loadAuditTrail(): Promise<void> {
+    try {
+      const response = await firstValueFrom(this.analyticsApi.getAdminAuditTrail());
+      this.apiAuditEntries.set(response.entries);
+    } catch {
+      return;
+    }
   }
 }

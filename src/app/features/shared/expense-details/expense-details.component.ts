@@ -44,4 +44,12 @@ export class ExpenseDetailsComponent {
       tone: entry.tone,
     })),
   );
+
+  constructor() {
+    const expenseId = this.route.snapshot.paramMap.get('id');
+
+    if (expenseId) {
+      void this.expenseRepository.fetchExpenseById(expenseId);
+    }
+  }
 }

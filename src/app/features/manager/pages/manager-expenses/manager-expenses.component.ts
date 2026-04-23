@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
@@ -38,14 +38,17 @@ interface MyExpenseRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ManagerExpensesComponent {
+  private static readonly PAGE_SIZE = 8;
   private readonly authService = inject(AuthService);
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected readonly filters = signal({ ...DEFAULT_EXPENSE_FILTERS, managerId: 'all' });
   protected readonly selectedReceipt = signal<Attachment | null>(null);
   protected readonly deleteDialogOpen = signal(false);
   protected readonly draftToDelete = signal<string | null>(null);
+  protected readonly page = signal(1);
   protected readonly rows = computed<MyExpenseRow[]>(() => {
     const managerId = this.authService.currentUser()?.id ?? '';
 
@@ -61,6 +64,14 @@ export class ManagerExpensesComponent {
       }),
     );
   });
+  protected readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.rows().length / ManagerExpensesComponent.PAGE_SIZE)),
+  );
+  protected readonly pagedRows = computed(() => {
+    const start = (this.page() - 1) * ManagerExpensesComponent.PAGE_SIZE;
+
+    return this.rows().slice(start, start + ManagerExpensesComponent.PAGE_SIZE);
+  });
 
   protected readonly columns: TableColumn[] = [
     { key: 'title', label: 'Expense' },
@@ -71,6 +82,15 @@ export class ManagerExpensesComponent {
   ];
   protected readonly actions: TableAction[] = [
     { id: 'view', label: 'View', icon: 'eye' },
+    {
+      id: 'edit',
+      label: 'Edit',
+      icon: 'edit',
+      visible: (row) =>
+        [ExpenseStatus.Draft, ExpenseStatus.Reopened].includes(
+          (row as Record<string, unknown>)['status'] as ExpenseStatus,
+        ),
+    },
     {
       id: 'receipt',
       label: 'Bill',
@@ -88,14 +108,17 @@ export class ManagerExpensesComponent {
 
   protected handleAction(event: { actionId: string; row: unknown }): void {
     const row = event.row as unknown as MyExpenseRow;
-    const currentUser = this.authService.currentUser();
-    const listRoute =
-      currentUser?.role === Role.OperationManager
-        ? '/operation-manager/my-expenses'
-        : '/operation-manager/expenses';
 
     if (event.actionId === 'view') {
-      void this.router.navigate([listRoute, row.id]);
+      void this.router.navigate([this.resolveDetailRoute(), row.id]);
+
+      return;
+    }
+
+    if (event.actionId === 'edit') {
+      void this.router.navigate([this.resolveCreateRoute()], {
+        queryParams: { edit: row.id },
+      });
 
       return;
     }
@@ -110,16 +133,17 @@ export class ManagerExpensesComponent {
     this.selectedReceipt.set(this.expenseRepository.getExpenseById(row.id)?.receipt ?? null);
   }
 
-  protected deleteDraft(): void {
+  protected async deleteDraft(): Promise<void> {
     const expenseId = this.draftToDelete();
 
     if (!expenseId) {
       return;
     }
 
-    this.expenseRepository.deleteDraft(expenseId);
+    await this.expenseRepository.deleteDraft(expenseId);
     this.deleteDialogOpen.set(false);
     this.draftToDelete.set(null);
+    this.page.set(Math.min(this.page(), this.totalPages()));
   }
 
   protected exportVisibleRows(): void {
@@ -141,5 +165,46 @@ export class ManagerExpensesComponent {
     ]);
 
     downloadCsv('my-expenses.csv', csv);
+  }
+
+  protected previousPage(): void {
+    this.page.set(Math.max(1, this.page() - 1));
+  }
+
+  protected nextPage(): void {
+    this.page.set(Math.min(this.totalPages(), this.page() + 1));
+  }
+
+  protected updateFilters(filters: typeof DEFAULT_EXPENSE_FILTERS): void {
+    this.filters.set(filters);
+    this.page.set(1);
+  }
+
+  private resolveBaseRoute(): string {
+    const role = this.authService.currentUser()?.role;
+
+    if (role === Role.Admin) {
+      return '/admin';
+    }
+
+    if (role === Role.Recommender) {
+      return '/recommender';
+    }
+
+    return '/operation-manager';
+  }
+
+  private resolveDetailRoute(): string {
+    const currentPath = this.route.snapshot.routeConfig?.path ?? '';
+
+    if (currentPath === 'my-expenses') {
+      return `${this.resolveBaseRoute()}/my-expenses`;
+    }
+
+    return `${this.resolveBaseRoute()}/expenses`;
+  }
+
+  private resolveCreateRoute(): string {
+    return `${this.resolveBaseRoute()}/add-expense`;
   }
 }

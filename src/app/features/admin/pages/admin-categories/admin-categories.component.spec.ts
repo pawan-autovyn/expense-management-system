@@ -17,7 +17,7 @@ describe('AdminCategoriesComponent', () => {
     };
     categorySearchTerm: { set(value: string): void };
     filteredCategories: () => { category: { id: string; name: string; description: string } }[];
-    addCategory(): void;
+    addCategory(): Promise<void>;
   };
 
   beforeEach(async () => {
@@ -36,7 +36,7 @@ describe('AdminCategoriesComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('adds a new category into the shared directory store', () => {
+  it('adds a new category into the shared directory store', async () => {
     const before = directoryService.categories().length;
 
     component.newCategory = {
@@ -46,11 +46,13 @@ describe('AdminCategoriesComponent', () => {
       accent: '#1d4ed8',
       icon: 'receipt',
     };
-    component.addCategory();
+    await component.addCategory();
     fixture.detectChanges();
 
     expect(directoryService.categories().length).toBe(before + 1);
-    expect(fixture.nativeElement.textContent).toContain('Courier added to the category library.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Courier added to the live category library.',
+    );
   });
 
   it('filters the visible category cards by search term', () => {

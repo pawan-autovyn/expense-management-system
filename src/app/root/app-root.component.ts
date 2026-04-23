@@ -1,6 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 
+import { AuthService } from '../core/services/auth.service';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -10,6 +12,7 @@ import { Router, RouterOutlet } from '@angular/router';
 })
 export class AppRootComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   ngOnInit(): void {
     const currentUrl = this.router.url.split('?')[0].split('#')[0];
@@ -17,7 +20,6 @@ export class AppRootComponent implements OnInit {
     if (
       currentUrl === '/' ||
       currentUrl === '' ||
-      currentUrl === '/ems/login' ||
       currentUrl.startsWith('/hub')
     ) {
       void this.router.navigateByUrl('/login', { replaceUrl: true });

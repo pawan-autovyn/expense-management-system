@@ -1,6 +1,7 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 
-import { DEMO_EXPENSES } from '../../mock-data/demo-data';
 import {
   Attachment,
   ApprovalStage,
@@ -10,22 +11,62 @@ import {
   Role,
   User,
 } from '../../models/app.models';
+import { DEMO_EXPENSES } from '../../mock-data/demo-data';
+import { cloneData } from '../../shared/utils/clone-data.util';
 import { computeExpenseStatus } from '../../shared/utils/expense.utils';
+import { API_CONFIG } from '../constants/api.constants';
 import { STORAGE_KEYS } from '../constants/app.constants';
+import { isKarmaTestEnvironment } from '../utils/runtime-mode.util';
 import { DirectoryService } from './directory.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ExpenseRepositoryService {
+  private readonly http = inject(HttpClient, { optional: true });
   private readonly expensesStore = signal<Expense[]>(this.restoreExpenses());
   private readonly directoryService = inject(DirectoryService);
 
   readonly expenses = this.expensesStore.asReadonly();
   readonly totalExpenseCount = computed(() => this.expenses().length);
 
+  async loadExpenses(): Promise<Expense[]> {
+    if (!this.http) {
+      return this.expenses();
+    }
+
+    try {
+      const expenses = await firstValueFrom(
+        this.http.get<Expense[]>(`${API_CONFIG.baseUrl}/expenses`),
+      );
+      this.expensesStore.set(expenses);
+      this.persist();
+
+      return expenses;
+    } catch {
+      return this.expenses();
+    }
+  }
+
   getExpenseById(expenseId: string): Expense | undefined {
     return this.expenses().find((expense) => expense.id === expenseId);
+  }
+
+  async fetchExpenseById(expenseId: string): Promise<Expense | undefined> {
+    if (!this.http) {
+      return this.getExpenseById(expenseId);
+    }
+
+    try {
+      const expense = await firstValueFrom(
+        this.http.get<Expense>(`${API_CONFIG.baseUrl}/expenses/${expenseId}`),
+      );
+      this.replaceExpense(expenseId, expense);
+
+      return expense;
+    } catch {
+      return this.getExpenseById(expenseId);
+    }
   }
 
   getExpensesForManager(managerId: string): Expense[] {
@@ -52,41 +93,74 @@ export class ExpenseRepositoryService {
     const currentStage = expense.approvalStage ?? ApprovalStage.OperationManager;
 
     if (reviewer.role === Role.Recommender && currentStage === ApprovalStage.OperationManager) {
-      return this.updateExpenseWorkflow(expenseId, reviewer, note, {
+      const updatedExpense = this.updateExpenseWorkflow(expenseId, reviewer, note, {
         status: ExpenseStatus.Recommended,
         approvalStage: ApprovalStage.Recommender,
         action: 'Recommended by recommender',
         notePrefix: 'Recommendation completed and forwarded to admin.',
         tone: 'warning',
       });
+      this.syncAction(expenseId, 'recommend', note);
+
+      return updatedExpense;
     }
 
     if (
       reviewer.role === Role.Admin &&
       (currentStage === ApprovalStage.Recommender || expense.status === ExpenseStatus.Recommended)
     ) {
-      return this.updateExpenseWorkflow(expenseId, reviewer, note, {
+      const updatedExpense = this.updateExpenseWorkflow(expenseId, reviewer, note, {
         status: ExpenseStatus.Approved,
         approvalStage: ApprovalStage.Approver,
         action: 'Approved by admin',
         notePrefix: 'Final approval completed.',
         tone: 'success',
       });
+      this.syncAction(expenseId, 'approve', note);
+
+      return updatedExpense;
     }
 
     return expense;
   }
 
   rejectExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
-    return this.updateExpenseStatus(expenseId, ExpenseStatus.Rejected, reviewer, note, 'danger');
+    const updatedExpense = this.updateExpenseStatus(
+      expenseId,
+      ExpenseStatus.Rejected,
+      reviewer,
+      note,
+      'danger',
+    );
+    this.syncAction(expenseId, 'reject', note);
+
+    return updatedExpense;
   }
 
   reopenExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
-    return this.updateExpenseStatus(expenseId, ExpenseStatus.Reopened, reviewer, note, 'warning');
+    const updatedExpense = this.updateExpenseStatus(
+      expenseId,
+      ExpenseStatus.Reopened,
+      reviewer,
+      note,
+      'warning',
+    );
+    this.syncAction(expenseId, 'reopen', note);
+
+    return updatedExpense;
   }
 
   cancelExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
-    return this.updateExpenseStatus(expenseId, ExpenseStatus.Cancelled, reviewer, note, 'danger');
+    const updatedExpense = this.updateExpenseStatus(
+      expenseId,
+      ExpenseStatus.Cancelled,
+      reviewer,
+      note,
+      'danger',
+    );
+    this.syncAction(expenseId, 'cancel', note);
+
+    return updatedExpense;
   }
 
   createExpense(
@@ -103,7 +177,7 @@ export class ExpenseRepositoryService {
     );
     const timestamp = new Date().toISOString();
     const expense: Expense = {
-      id: `exp-${Date.now()}`,
+      id: `tmp-${Date.now()}`,
       title: value.title,
       categoryId: value.categoryId,
       locationId: value.locationId,
@@ -126,9 +200,9 @@ export class ExpenseRepositoryService {
           actor: manager.name,
           actorRole: manager.role,
           date: timestamp,
-            note:
-              mode === ExpenseStatus.Draft
-                ? 'Saved locally for later review.'
+          note:
+            mode === ExpenseStatus.Draft
+              ? 'Saved locally for later review.'
               : 'Submitted into the approval workflow.',
           tone: mode === ExpenseStatus.Draft ? 'info' : 'success',
         },
@@ -137,6 +211,7 @@ export class ExpenseRepositoryService {
 
     this.expensesStore.update((expenses) => [expense, ...expenses]);
     this.persist();
+    this.syncCreateExpense(expense.id, value, mode);
 
     return expense;
   }
@@ -191,11 +266,12 @@ export class ExpenseRepositoryService {
     );
 
     this.persist();
+    this.syncUpdateDraft(expenseId, value, mode);
 
     return updatedExpense;
   }
 
-  deleteDraft(expenseId: string): void {
+  async deleteDraft(expenseId: string): Promise<void> {
     this.expensesStore.update((expenses) =>
       expenses.filter(
         (expense) =>
@@ -206,6 +282,7 @@ export class ExpenseRepositoryService {
       ),
     );
     this.persist();
+    await this.syncDeleteDraft(expenseId);
   }
 
   attachReceipt(name: string, dataUrl: string): Attachment {
@@ -221,7 +298,7 @@ export class ExpenseRepositoryService {
     const value = localStorage.getItem(STORAGE_KEYS.expenses);
 
     if (!value) {
-      return DEMO_EXPENSES;
+      return isKarmaTestEnvironment() ? cloneData(DEMO_EXPENSES) : [];
     }
 
     try {
@@ -229,7 +306,7 @@ export class ExpenseRepositoryService {
     } catch {
       localStorage.removeItem(STORAGE_KEYS.expenses);
 
-      return DEMO_EXPENSES;
+      return isKarmaTestEnvironment() ? cloneData(DEMO_EXPENSES) : [];
     }
   }
 
@@ -322,7 +399,7 @@ export class ExpenseRepositoryService {
               actor: reviewer.name,
               actorRole: reviewer.role,
               date: timestamp,
-              note: `${workflow.notePrefix} ${note}`.trim(),
+              note: note ? `${workflow.notePrefix} ${note}` : workflow.notePrefix,
               tone: workflow.tone,
             },
             ...expense.auditTrail,
@@ -336,5 +413,106 @@ export class ExpenseRepositoryService {
     this.persist();
 
     return updatedExpense;
+  }
+
+  private async syncCreateExpense(
+    temporaryId: string,
+    value: ExpenseFormValue,
+    mode: ExpenseStatus.Draft | ExpenseStatus.Submitted,
+  ): Promise<void> {
+    if (!this.http) {
+      return;
+    }
+
+    try {
+      const createdExpense = await firstValueFrom(
+        this.http.post<Expense>(`${API_CONFIG.baseUrl}/expenses`, {
+          ...value,
+          mode,
+        }),
+      );
+      this.replaceExpense(temporaryId, createdExpense);
+    } catch {
+      this.persist();
+    }
+  }
+
+  private async syncAction(
+    expenseId: string,
+    action: 'recommend' | 'approve' | 'reject' | 'reopen' | 'cancel',
+    note: string,
+  ): Promise<void> {
+    if (!this.http) {
+      return;
+    }
+
+    try {
+      const updatedExpense = await firstValueFrom(
+        this.http.post<Expense>(`${API_CONFIG.baseUrl}/expenses/${expenseId}/actions/${action}`, {
+          note,
+        }),
+      );
+      this.replaceExpense(expenseId, updatedExpense);
+    } catch {
+      this.persist();
+    }
+  }
+
+  private async syncUpdateDraft(
+    expenseId: string,
+    value: ExpenseFormValue,
+    mode: ExpenseStatus.Draft | ExpenseStatus.Submitted,
+  ): Promise<void> {
+    if (!this.http) {
+      return;
+    }
+
+    try {
+      const updatedExpense = await firstValueFrom(
+        this.http.patch<Expense>(`${API_CONFIG.baseUrl}/expenses/${expenseId}`, {
+          ...value,
+          mode,
+        }),
+      );
+      this.replaceExpense(expenseId, updatedExpense);
+    } catch {
+      this.persist();
+    }
+  }
+
+  private async syncDeleteDraft(expenseId: string): Promise<void> {
+    if (!this.http) {
+      return;
+    }
+
+    try {
+      await firstValueFrom(
+        this.http.delete<Expense>(`${API_CONFIG.baseUrl}/expenses/${expenseId}`),
+      );
+    } catch {
+      this.persist();
+    }
+  }
+
+  private replaceExpense(expenseId: string, expense: Expense): void {
+    let found = false;
+
+    this.expensesStore.update((expenses) =>
+      expenses.map((entry) => {
+        if (entry.id !== expenseId) {
+          return entry;
+        }
+
+        found = true;
+
+        return expense;
+      }),
+    );
+
+    if (!found) {
+      this.expensesStore.update((expenses) => [expense, ...expenses]);
+    }
+
+    this.persist();
   }
 }

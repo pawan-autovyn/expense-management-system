@@ -12,6 +12,10 @@
           <span class="hero-pill">Approval chain</span>
           <span class="hero-pill">Branch visibility</span>
         </div>
+        <p class="muted">
+          This report uses the real 3-step workflow labels: Requester, Recommender, and Admin
+          Approval.
+        </p>
       </div>
 
       <section class="smart-banner glass-card smart-banner--hero report-hero-card">
@@ -135,9 +139,9 @@
               <th class="report-table__remarks">Remarks</th>
               <th class="report-table__branch">Branch</th>
               <th>Status</th>
-              <th>Approver 1</th>
-              <th>Approver 2</th>
-              <th>Approver 3</th>
+              <th>Requester</th>
+              <th>Recommender</th>
+              <th>Admin Approval</th>
               <th class="report-table__description">Description</th>
               <th>Item Amount</th>
             </tr>
@@ -158,9 +162,9 @@
                 <td>
                   <app-status-badge [label]="row.status" />
                 </td>
-                <td>{{ row.approver1 }}</td>
-                <td>{{ row.approver2 }}</td>
-                <td>{{ row.approver3 }}</td>
+                <td>{{ row.requester }}</td>
+                <td>{{ row.recommender }}</td>
+                <td>{{ row.adminApprover }}</td>
                 <td class="report-table__description">{{ row.description }}</td>
                 <td>{{ row.itemAmount | currency: 'INR' : 'symbol' : '1.0-0' }}</td>
               </tr>
@@ -193,7 +197,18 @@
               </div>
               <div>
                 <strong>{{ row.status }}</strong>
-                <p>{{ row.approver1 }} → {{ row.approver2 }} → {{ row.approver3 }}</p>
+                <p>{{ row.requester }} → {{ row.recommender }} → {{ row.adminApprover }}</p>
+              </div>
+            </article>
+          }
+        </div>
+
+        <div class="helper-list helper-list--workflow">
+          @for (step of workflowLegend; track step.label) {
+            <article class="insight-row">
+              <div>
+                <strong>{{ step.label }}</strong>
+                <p>{{ step.description }}</p>
               </div>
             </article>
           }

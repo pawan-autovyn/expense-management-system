@@ -1,7 +1,9 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
+import { AdminBudgetsResponse, AnalyticsApiService } from '../../../../core/services/analytics-api.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
@@ -32,11 +34,17 @@ const FINANCIAL_MONTHS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminBudgetsComponent {
+  private readonly analyticsApi = inject(AnalyticsApiService);
   private readonly directoryService = inject(DirectoryService);
+  private readonly budgetsData = signal<AdminBudgetsResponse | null>(null);
+  protected readonly isSaving = signal(false);
+  protected readonly saveMessage = signal('');
 
   protected readonly financialYearOptions = ['2025-26', '2024-25', '2023-24'];
   protected readonly selectedFinancialYear = signal(this.financialYearOptions[0]);
-  protected readonly categories = this.directoryService.categories;
+  protected readonly categories = computed(
+    () => this.budgetsData()?.categories ?? this.directoryService.categories(),
+  );
   protected readonly selectedCategoryId = signal(this.categories()[0]?.id ?? '');
   protected readonly annualBudgetDraft = signal(
     this.categories()[0] ? this.categories()[0].monthlyBudget * 12 : 0,
@@ -59,7 +67,7 @@ export class AdminBudgetsComponent {
   });
 
   protected readonly featuredBudgets = computed<BudgetCardView[]>(() =>
-    this.categories().map((category) => {
+    this.budgetsData()?.featuredBudgets ?? this.categories().map((category) => {
       const annualBudget = category.monthlyBudget * 12;
       const used = category.previousSpend;
       const usage = annualBudget ? used / annualBudget : 0;
@@ -76,6 +84,10 @@ export class AdminBudgetsComponent {
     }),
   );
 
+  constructor() {
+    void this.loadBudgets();
+  }
+
   protected selectCategory(categoryId: string): void {
     const category = this.categories().find((entry) => entry.id === categoryId);
 
@@ -87,14 +99,34 @@ export class AdminBudgetsComponent {
     this.annualBudgetDraft.set(category.monthlyBudget * 12);
   }
 
-  protected saveBudget(): void {
+  protected async saveBudget(): Promise<void> {
     const category = this.selectedCategory();
 
     if (!category) {
       return;
     }
 
-    this.directoryService.updateCategoryBudget(category.id, Number(this.annualBudgetDraft()) || 0);
+    this.isSaving.set(true);
+    this.saveMessage.set('');
+
+    try {
+      const annualBudget = Number(this.annualBudgetDraft()) || 0;
+      const updatedCategory = await this.directoryService.saveCategoryBudget(
+        category.id,
+        annualBudget,
+      );
+
+      if (!updatedCategory) {
+        this.saveMessage.set('Budget could not be saved. Please try again.');
+        return;
+      }
+
+      await this.directoryService.loadWorkspaceData();
+      await this.loadBudgets();
+      this.saveMessage.set(`${updatedCategory.name} budget updated from live data.`);
+    } finally {
+      this.isSaving.set(false);
+    }
   }
 
   protected updateAnnualBudget(value: string | number): void {
@@ -108,5 +140,13 @@ export class AdminBudgetsComponent {
 
   protected setFinancialYear(value: string): void {
     this.selectedFinancialYear.set(value);
+  }
+
+  private async loadBudgets(): Promise<void> {
+    try {
+      this.budgetsData.set(await firstValueFrom(this.analyticsApi.getAdminBudgets()));
+    } catch {
+      this.budgetsData.set(null);
+    }
   }
 }

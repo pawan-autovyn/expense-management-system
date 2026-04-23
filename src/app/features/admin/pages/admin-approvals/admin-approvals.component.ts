@@ -39,6 +39,7 @@ export class AdminApprovalsComponent {
   private readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
   protected reviewNote = 'Reviewed after verifying the request and budget coverage.';
+  protected readonly isRefreshing = signal(false);
   protected readonly selectedId = signal<string | null>(null);
   protected readonly selectedReceipt = signal<Attachment | null>(null);
   protected readonly searchTerm = signal('');
@@ -139,7 +140,11 @@ export class AdminApprovalsComponent {
     this.authService.currentUser()?.role === Role.Admin ? 'Approve' : 'Recommend',
   );
 
-  protected approve(): void {
+  constructor() {
+    void this.refreshApprovalQueue();
+  }
+
+  protected async approve(): Promise<void> {
     const expense = this.selectedExpense();
     const reviewer = this.authService.currentUser();
 
@@ -148,9 +153,10 @@ export class AdminApprovalsComponent {
     }
 
     this.expenseRepository.approveExpense(expense.id, reviewer, this.reviewNote);
+    await this.refreshApprovalQueue();
   }
 
-  protected reject(): void {
+  protected async reject(): Promise<void> {
     const expense = this.selectedExpense();
     const reviewer = this.authService.currentUser();
 
@@ -159,9 +165,10 @@ export class AdminApprovalsComponent {
     }
 
     this.expenseRepository.rejectExpense(expense.id, reviewer, this.reviewNote);
+    await this.refreshApprovalQueue();
   }
 
-  protected reopen(): void {
+  protected async reopen(): Promise<void> {
     const expense = this.selectedExpense();
     const reviewer = this.authService.currentUser();
 
@@ -174,6 +181,7 @@ export class AdminApprovalsComponent {
       reviewer,
       'Expense has been moved back into the review stream for reassessment.',
     );
+    await this.refreshApprovalQueue();
   }
 
   protected exportVisibleRows(): void {
@@ -190,6 +198,20 @@ export class AdminApprovalsComponent {
     ]);
 
     exportUtils.downloadCsv(`corework-approvals-${this.selectedTab()}.csv`, csv);
+  }
+
+  protected async refreshApprovalQueue(): Promise<void> {
+    this.isRefreshing.set(true);
+
+    try {
+      await Promise.all([
+        this.directoryService.loadWorkspaceData(),
+        this.directoryService.loadUsers(),
+      ]);
+      await this.expenseRepository.loadExpenses();
+    } finally {
+      this.isRefreshing.set(false);
+    }
   }
 
   private resolveLevel(expense: { status: ExpenseStatus; approvalStage?: ApprovalStage }): 'L1' | 'L2' | 'L3' {

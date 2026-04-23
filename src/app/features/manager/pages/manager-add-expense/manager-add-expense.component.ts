@@ -1,26 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { Attachment, BudgetStatus, ExpenseStatus, Role } from '../../../../models/app.models';
+import { Attachment, ExpenseStatus, Role } from '../../../../models/app.models';
 import { FileUploadComponent } from '../../../../shared/components/file-upload/file-upload.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
-import { buildCategoryBudgetViews, resolveBudgetStatus } from '../../../../shared/utils/expense.utils';
 
 @Component({
   selector: 'app-manager-add-expense',
   standalone: true,
   imports: [
-    CurrencyPipe,
     ReactiveFormsModule,
     FileUploadComponent,
     IconComponent,
-    StatusBadgeComponent,
   ],
   templateUrl: './manager-add-expense.component.html',
   styleUrl: './manager-add-expense.component.scss',
@@ -32,41 +27,21 @@ export class ManagerAddExpenseComponent {
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly attachment = signal<Attachment | undefined>(undefined);
+  protected readonly editingExpenseId = signal<string | null>(null);
   protected readonly form = this.formBuilder.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
     categoryId: ['', Validators.required],
     locationId: [this.directoryService.locations()[0]?.id ?? '', Validators.required],
     amount: [null as number | null, [Validators.required, Validators.min(1)]],
-    date: ['2026-04-06', Validators.required],
+    date: [this.getTodayValue(), Validators.required],
     vendor: ['', Validators.required],
     tags: [''],
     description: ['', [Validators.required, Validators.minLength(8)]],
   });
   protected readonly locations = computed(() => this.directoryService.locations());
-  protected readonly categoryViews = computed(() =>
-    buildCategoryBudgetViews(
-      this.directoryService.categories(),
-      this.expenseRepository.expenses(),
-      this.authService.currentUser()?.id,
-    ),
-  );
-  protected readonly selectedCategoryView = computed(() =>
-    this.categoryViews().find((item) => item.category.id === this.form.controls.categoryId.value),
-  );
-  protected readonly budgetStatus = computed(() =>
-    this.resolveStatusLabel(
-      resolveBudgetStatus(
-        (this.selectedCategoryView()?.spend ?? 0) + Number(this.form.controls.amount.value ?? 0),
-        this.selectedCategoryView()?.category.monthlyBudget ?? 0,
-      ),
-    ),
-  );
-  protected readonly remainingAfterThisExpense = computed(() =>
-    (this.selectedCategoryView()?.category.monthlyBudget ?? 0) -
-    ((this.selectedCategoryView()?.spend ?? 0) + Number(this.form.controls.amount.value ?? 0)),
-  );
   protected readonly currentTags = computed(() =>
     (this.form.controls.tags.value ?? '')
       .split(',')
@@ -74,8 +49,31 @@ export class ManagerAddExpenseComponent {
       .filter(Boolean),
   );
 
-  protected saveDraft(): void {
-    this.persistExpense(ExpenseStatus.Draft);
+  constructor() {
+    const expenseId = this.route.snapshot.queryParamMap.get('edit');
+
+    if (!expenseId) {
+      return;
+    }
+
+    const expense = this.expenseRepository.getExpenseById(expenseId);
+
+    if (!expense || ![ExpenseStatus.Draft, ExpenseStatus.Reopened].includes(expense.status)) {
+      return;
+    }
+
+    this.editingExpenseId.set(expenseId);
+    this.attachment.set(expense.receipt);
+    this.form.patchValue({
+      title: expense.title,
+      categoryId: expense.categoryId,
+      locationId: expense.locationId,
+      amount: expense.amount,
+      date: expense.date,
+      vendor: expense.vendor,
+      tags: expense.tags.join(', '),
+      description: expense.description,
+    });
   }
 
   protected submit(): void {
@@ -95,24 +93,27 @@ export class ManagerAddExpenseComponent {
       return;
     }
 
-    this.expenseRepository.createExpense(
-      {
-        title: this.form.controls.title.value ?? '',
-        categoryId: this.form.controls.categoryId.value ?? '',
-        locationId: this.form.controls.locationId.value ?? this.directoryService.locations()[0]?.id ?? '',
-        amount: Number(this.form.controls.amount.value ?? 0),
-        date: this.form.controls.date.value ?? '',
-        vendor: this.form.controls.vendor.value ?? '',
-        tags: (this.form.controls.tags.value ?? '')
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-        description: this.form.controls.description.value ?? '',
-        receipt: this.attachment(),
-      },
-      user,
-      mode,
-    );
+    const payload = {
+      title: this.form.controls.title.value ?? '',
+      categoryId: this.form.controls.categoryId.value ?? '',
+      locationId: this.form.controls.locationId.value ?? this.directoryService.locations()[0]?.id ?? '',
+      amount: Number(this.form.controls.amount.value ?? 0),
+      date: this.form.controls.date.value ?? '',
+      vendor: this.form.controls.vendor.value ?? '',
+      tags: (this.form.controls.tags.value ?? '')
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      description: this.form.controls.description.value ?? '',
+      receipt: this.attachment(),
+    };
+    const editingExpenseId = this.editingExpenseId();
+
+    if (editingExpenseId) {
+      this.expenseRepository.updateDraft(editingExpenseId, payload, mode);
+    } else {
+      this.expenseRepository.createExpense(payload, user, mode);
+    }
 
     const prefix =
       user.role === Role.OperationManager
@@ -130,15 +131,15 @@ export class ManagerAddExpenseComponent {
     void this.router.navigateByUrl(`${prefix}/${listRoute}`);
   }
 
-  private resolveStatusLabel(status: BudgetStatus): string {
-    return status;
-  }
-
   protected shouldShowError(
     controlName: 'title' | 'categoryId' | 'locationId' | 'amount' | 'date' | 'vendor' | 'description',
   ): boolean {
     const control = this.form.controls[controlName];
 
     return Boolean(control.invalid && (control.dirty || control.touched));
+  }
+
+  private getTodayValue(): string {
+    return new Date().toISOString().slice(0, 10);
   }
 }

@@ -65,9 +65,14 @@
         </div>
 
         <div class="form-actions">
-          <button type="button" class="button button--primary" (click)="addCategory()">
+          <button
+            type="button"
+            class="button button--primary"
+            [disabled]="isRefreshing()"
+            (click)="addCategory()"
+          >
             <app-icon name="plus-circle" [size]="16" />
-            <span>Add Category</span>
+            <span>{{ isRefreshing() ? 'Saving...' : 'Add Category' }}</span>
           </button>
         </div>
 
@@ -80,8 +85,8 @@
         <p class="eyebrow">How it works</p>
         <h3>New categories update the shared directory instantly.</h3>
         <p>
-          Once added, the category appears in expense forms, filters, dashboards, and category
-          reports without any backend wiring.
+          Once saved, the category is refreshed from backend APIs and appears in expense forms,
+          filters, dashboards, and reports.
         </p>
       </section>
     </section>

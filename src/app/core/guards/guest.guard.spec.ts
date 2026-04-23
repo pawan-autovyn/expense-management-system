@@ -38,4 +38,16 @@ describe('guestGuard', () => {
     expect(result instanceof UrlTree).toBeTrue();
     expect(router.serializeUrl(result as UrlTree)).toBe('/operation-manager/dashboard');
   });
+
+  it('redirects users when a stored session exists in local storage', () => {
+    spyOn(authService, 'hasStoredSession').and.returnValue(true);
+    spyOn(authService, 'currentRole').and.returnValue(Role.Admin);
+
+    const result = TestBed.runInInjectionContext(() =>
+      guestGuard({} as never, {} as never),
+    );
+
+    expect(result instanceof UrlTree).toBeTrue();
+    expect(router.serializeUrl(result as UrlTree)).toBe('/admin/dashboard');
+  });
 });

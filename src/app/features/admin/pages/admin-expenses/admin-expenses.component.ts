@@ -40,6 +40,7 @@ export class AdminExpensesComponent {
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
   private readonly router = inject(Router);
+  protected readonly isRefreshing = signal(false);
   protected readonly filters = signal({ ...DEFAULT_EXPENSE_FILTERS });
   protected readonly selectedReceipt = signal<Expense['receipt'] | null>(null);
   protected readonly budgetFilter = signal('all');
@@ -84,8 +85,6 @@ export class AdminExpensesComponent {
 
   protected readonly actions: TableAction[] = [
     { id: 'view', label: 'View', icon: 'eye' },
-    { id: 'edit', label: 'Edit', icon: 'pencil' },
-    { id: 'delete', label: 'Delete', icon: 'trash' },
     {
       id: 'receipt',
       label: 'Receipt',
@@ -96,16 +95,16 @@ export class AdminExpensesComponent {
 
   protected readonly trackById = (row: unknown) => String((row as Record<string, unknown>)['id']);
 
+  constructor() {
+    void this.refreshExpenseRegister();
+  }
+
   protected handleAction(event: { actionId: string; row: unknown }): void {
     const row = event.row as unknown as ExpenseRow;
 
-    if (event.actionId === 'view' || event.actionId === 'edit') {
+    if (event.actionId === 'view') {
       void this.router.navigate(['/admin/expenses', row.id]);
 
-      return;
-    }
-
-    if (event.actionId === 'delete') {
       return;
     }
 
@@ -166,5 +165,19 @@ export class AdminExpensesComponent {
     ]);
 
     downloadCsv('expenses.csv', csv);
+  }
+
+  protected async refreshExpenseRegister(): Promise<void> {
+    this.isRefreshing.set(true);
+
+    try {
+      await Promise.all([
+        this.directoryService.loadWorkspaceData(),
+        this.directoryService.loadUsers(),
+      ]);
+      await this.expenseRepository.loadExpenses();
+    } finally {
+      this.isRefreshing.set(false);
+    }
   }
 }

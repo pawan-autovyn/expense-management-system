@@ -53,8 +53,6 @@ describe('AdminExpensesComponent', () => {
     component.patchFilter('searchTerm', 'tea');
 
     component.handleAction({ actionId: 'view', row: firstRow });
-    component.handleAction({ actionId: 'edit', row: firstRow });
-    component.handleAction({ actionId: 'delete', row: firstRow });
     const selectedRow = receiptRow ?? firstRow;
 
     component.handleAction({ actionId: 'receipt', row: selectedRow });

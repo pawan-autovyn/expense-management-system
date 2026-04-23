@@ -1,9 +1,9 @@
 <label class="upload-field">
-  <input type="file" accept="image/*" (change)="onFileSelected($event)" />
+  <input type="file" accept="image/*" [disabled]="isUploading()" (change)="onFileSelected($event)" />
   <span class="upload-field__content">
     <app-icon name="upload" [size]="18" />
     <strong>{{ existingAttachment()?.name ?? 'Upload bill or receipt' }}</strong>
-    <small>PNG, JPG or SVG preview supported</small>
+    <small>{{ isUploading() ? 'Uploading receipt...' : 'PNG, JPG or SVG preview supported' }}</small>
   </span>
 </label>
 
