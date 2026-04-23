@@ -112,7 +112,7 @@ describe('ManagerAddExpenseComponent', () => {
     expect(component.currentTags()).toEqual(['one', 'two']);
   });
 
-  it('submits an expense when the form is valid and a user is logged in', async () => {
+  it('submits an expense when the form is valid and a user is logged in', () => {
     const fixture = TestBed.createComponent(ManagerAddExpenseComponent);
     const component = fixture.componentInstance as unknown as {
       form: {
@@ -120,10 +120,9 @@ describe('ManagerAddExpenseComponent', () => {
         valid: boolean;
       };
       currentTags: () => string[];
-      remainingAssignedBudget: () => number;
-      submit: () => Promise<void>;
+      submit: () => void;
     };
-    const createSpy = spyOn(expenseRepository, 'createExpense').and.resolveTo({} as never);
+    const createSpy = spyOn(expenseRepository, 'createExpense').and.callThrough();
     const navigateSpy = spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
 
     component.form.patchValue({
@@ -139,9 +138,8 @@ describe('ManagerAddExpenseComponent', () => {
 
     expect(component.form.valid).toBeTrue();
     expect(component.currentTags()).toEqual(['pantry']);
-    expect(component.remainingAssignedBudget()).toBeGreaterThan(0);
 
-    await component.submit();
+    component.submit();
 
     expect(createSpy).toHaveBeenCalledWith(
       jasmine.objectContaining({
@@ -184,139 +182,6 @@ describe('ManagerAddExpenseComponent', () => {
     expect(navigateSpy).not.toHaveBeenCalled();
   });
 
-  it('blocks submission when the manager has no remaining assigned budget', async () => {
-    const manager = authService.currentUser();
-
-    (
-      expenseRepository as unknown as {
-        expensesStore: {
-          update(
-            updateFn: (expenses: Array<Record<string, unknown>>) => Array<Record<string, unknown>>,
-          ): void;
-        };
-      }
-    ).expensesStore.update((expenses) => [
-      {
-        id: 'budget-fully-used-spec',
-        title: 'Budget fully used',
-        categoryId: 'tea-pantry',
-        locationId: 'loc-hq',
-        employeeId: manager?.id,
-        amount: manager?.assignedBudget ?? 85000,
-        date: '2026-04-05',
-        description: 'Existing submitted expense that uses the entire assigned budget.',
-        vendor: 'Existing Vendor',
-        tags: ['budget'],
-        managerId: manager?.id ?? '',
-        status: ExpenseStatus.Submitted,
-        createdAt: '2026-04-05T09:00:00.000Z',
-        updatedAt: '2026-04-05T09:00:00.000Z',
-        auditTrail: [],
-      },
-      ...expenses,
-    ]);
-
-    const fixture = TestBed.createComponent(ManagerAddExpenseComponent);
-    const component = fixture.componentInstance as unknown as {
-      form: {
-        patchValue: (value: Record<string, unknown>) => void;
-      };
-      activeSubmitError: () => string;
-      budgetRejectDialogOpen: () => boolean;
-      budgetRejectDialogMessage: () => string;
-      submit: () => void;
-    };
-    const createSpy = spyOn(expenseRepository, 'createExpense').and.callThrough();
-
-    component.form.patchValue({
-      title: 'Blocked pantry refill',
-      categoryId: 'tea-pantry',
-      locationId: 'loc-hq',
-      amount: 500,
-      date: '2026-04-06',
-      vendor: 'Fresh Brew Traders',
-      tags: 'pantry',
-      description: 'Blocked because the manager budget is exhausted.',
-    });
-
-    component.submit();
-
-    expect(createSpy).not.toHaveBeenCalled();
-    expect(component.activeSubmitError()).toContain('assigned budget');
-    expect(component.budgetRejectDialogOpen()).toBeTrue();
-    expect(component.budgetRejectDialogMessage()).toContain('cannot raise a new bill');
-  });
-
-  it('opens the rejection popup when the amount exceeds the remaining assigned budget', async () => {
-    const manager = authService.currentUser();
-    const existingCommittedSpend =
-      expenseRepository
-        .getExpensesForManager(manager?.id ?? '')
-        .reduce((total, expense) => total + expense.amount, 0);
-    if (manager) {
-      manager.assignedBudget = existingCommittedSpend + 2000;
-    }
-
-    (
-      expenseRepository as unknown as {
-        expensesStore: {
-          update(
-            updateFn: (expenses: Array<Record<string, unknown>>) => Array<Record<string, unknown>>,
-          ): void;
-        };
-      }
-    ).expensesStore.update((expenses) => [
-      {
-        id: 'partial-budget-usage-spec',
-        title: 'Partial budget usage',
-        categoryId: 'tea-pantry',
-        locationId: 'loc-hq',
-        employeeId: manager?.id,
-        amount: 1500,
-        date: '2026-04-05',
-        description: 'Existing submitted expense using most of the assigned budget.',
-        vendor: 'Existing Vendor',
-        tags: ['budget'],
-        managerId: manager?.id ?? '',
-        status: ExpenseStatus.Submitted,
-        createdAt: '2026-04-05T09:00:00.000Z',
-        updatedAt: '2026-04-05T09:00:00.000Z',
-        auditTrail: [],
-      },
-      ...expenses,
-    ]);
-
-    const fixture = TestBed.createComponent(ManagerAddExpenseComponent);
-    const component = fixture.componentInstance as unknown as {
-      form: {
-        patchValue: (value: Record<string, unknown>) => void;
-      };
-      remainingAssignedBudget: () => number;
-      budgetRejectDialogOpen: () => boolean;
-      budgetRejectDialogMessage: () => string;
-      submit: () => void;
-    };
-    const createSpy = spyOn(expenseRepository, 'createExpense').and.callThrough();
-    const blockedAmount = component.remainingAssignedBudget() + 1;
-
-    component.form.patchValue({
-      title: 'Blocked travel claim',
-      categoryId: 'travel',
-      locationId: 'loc-hq',
-      amount: blockedAmount,
-      date: '2026-04-06',
-      vendor: 'Travel Desk',
-      tags: 'travel',
-      description: 'Blocked because it exceeds the remaining assigned budget.',
-    });
-
-    component.submit();
-
-    expect(createSpy).not.toHaveBeenCalled();
-    expect(component.budgetRejectDialogOpen()).toBeTrue();
-    expect(component.budgetRejectDialogMessage()).toContain('exceeds your remaining budget');
-  });
-
   it('shows and hides the receipt preview based on the attachment state', () => {
     const fixture = TestBed.createComponent(ManagerAddExpenseComponent);
     const component = fixture.componentInstance as unknown as {
@@ -342,38 +207,24 @@ describe('ManagerAddExpenseComponent', () => {
     expect(fixture.nativeElement.querySelector('.upload-preview img')).not.toBeNull();
   });
 
-  it('updates an existing draft when edit query param is present', async () => {
+  it('updates an existing draft when edit query param is present', () => {
     const manager = authService.currentUser();
-    editExpenseId = 'editable-draft-spec';
-    (
-      expenseRepository as unknown as {
-        expensesStore: {
-          update(
-            updateFn: (expenses: Array<Record<string, unknown>>) => Array<Record<string, unknown>>,
-          ): void;
-        };
-      }
-    ).expensesStore.update((expenses) => [
+    const created = expenseRepository.createExpense(
       {
-        id: editExpenseId,
         title: 'Editable draft',
         categoryId: 'tea-pantry',
         locationId: 'loc-hq',
-        employeeId: manager?.id,
         amount: 900,
         date: '2026-04-06',
-        description: 'Draft created for edit flow.',
         vendor: 'Office Vendor',
         tags: ['draft'],
-        managerId: manager?.id ?? '',
-        status: ExpenseStatus.Draft,
-        createdAt: '2026-04-06T09:00:00.000Z',
-        updatedAt: '2026-04-06T09:00:00.000Z',
-        auditTrail: [],
+        description: 'Draft created for edit flow.',
       },
-      ...expenses,
-    ]);
-    const updateSpy = spyOn(expenseRepository, 'updateDraft').and.resolveTo(undefined);
+      manager!,
+      ExpenseStatus.Draft,
+    );
+    editExpenseId = created.id;
+    const updateSpy = spyOn(expenseRepository, 'updateDraft').and.callThrough();
     const navigateSpy = spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
     const fixture = TestBed.createComponent(ManagerAddExpenseComponent);
     const component = fixture.componentInstance as unknown as {
@@ -383,7 +234,7 @@ describe('ManagerAddExpenseComponent', () => {
         };
         patchValue: (value: Record<string, unknown>) => void;
       };
-      submit: () => Promise<void>;
+      submit: () => void;
     };
 
     expect(component.form.controls.title.value).toBe('Editable draft');
@@ -398,10 +249,10 @@ describe('ManagerAddExpenseComponent', () => {
       tags: 'draft, update',
       description: 'Draft updated through edit mode.',
     });
-    await component.submit();
+    component.submit();
 
     expect(updateSpy).toHaveBeenCalledWith(
-      editExpenseId,
+      created.id,
       jasmine.objectContaining({
         title: 'Editable draft updated',
         vendor: 'Office Vendor',

@@ -590,7 +590,6 @@ label {
   gap: 0.85rem;
   width: 100%;
   min-width: 0;
-  min-height: 3.25rem;
   padding: 0.95rem 1rem;
   border-radius: 18px;
   color: var(--sidebar-text);
@@ -612,8 +611,6 @@ label {
 
 .sidebar__link-icon {
   flex: 0 0 auto;
-  width: 1.25rem;
-  height: 1.25rem;
 }
 
 .sidebar__link-icon,

@@ -5,13 +5,10 @@ import { AdminAuditTrailComponent } from './admin-audit-trail.component';
 
 interface AuditTrailHarness {
   visibleEntries(): { id: string; actionGroup: string }[];
-  pagedEntries(): { id: string; userName: string; expenseId: string }[];
+  pagedEntries(): { id: string; userName: string }[];
   summaryCards(): { title: string; value: string }[];
   pageWindow(): { start: number; end: number; total: number };
   totalPages(): number;
-  timelineItems(): { id: string }[];
-  timelineSubtitle(): string;
-  selectExpense(expenseId: string): void;
   exportVisibleRows(): void;
   patchFilter<Key extends 'searchTerm' | 'actionGroup' | 'role'>(key: Key, value: string): void;
   previousPage(): void;
@@ -49,17 +46,6 @@ describe('AdminAuditTrailComponent', () => {
 
     expect(component.visibleEntries().every((entry) => entry.actionGroup === 'approval')).toBeTrue();
     expect(component.pagedEntries().every((entry) => Boolean(entry.userName))).toBeTrue();
-  });
-
-  it('updates the recent activity stream when a specific expense is selected', () => {
-    const firstEntry = component.pagedEntries()[0];
-
-    component.selectExpense(firstEntry.expenseId);
-    fixture.detectChanges();
-
-    expect(component.timelineItems().length).toBeGreaterThan(0);
-    expect(component.timelineSubtitle()).toContain('Tracking');
-    expect(fixture.nativeElement.querySelector('.audit-table__row--active')).not.toBeNull();
   });
 
   it('paginates the visible audit entries', () => {

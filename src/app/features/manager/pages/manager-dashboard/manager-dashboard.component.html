@@ -64,7 +64,7 @@
         icon="wallet"
         tone="success"
       />
-      <app-stat-card title="My Total Budget" [value]="(totalBudget() | currency:'INR':'symbol':'1.0-0') ?? ''" subtitle="Live category budget synced from admin" icon="wallet" tone="success" />
+      <app-stat-card title="My Total Budget" [value]="(totalBudget() | currency:'INR':'symbol':'1.0-0') ?? ''" subtitle="Full assigned allocation" icon="wallet" tone="success" />
       <app-stat-card title="This Month vs Last Month" [value]="monthDelta() + '%'" subtitle="Smart comparison insight" icon="activity" tone="warning" />
       <app-stat-card title="Pending Actions" [value]="pendingCount().toString()" subtitle="Awaiting finance review" icon="clock" tone="warning" />
     </section>

@@ -202,15 +202,6 @@
   line-height: var(--line-height-body);
 }
 
-.hr-workspace__error-banner {
-  margin: 0;
-  padding: 0.8rem 1rem;
-  border: 1px solid rgba(220, 38, 38, 0.16);
-  border-radius: var(--radius-2xl);
-  background: rgba(220, 38, 38, 0.08);
-  color: var(--danger);
-}
-
 .queue-layout__table {
   overflow: auto;
 }
@@ -290,19 +281,6 @@ th {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
-
-.detail-card--action {
-  border-color: rgba(45, 95, 159, 0.18);
-  background:
-    linear-gradient(135deg, rgba(91, 159, 228, 0.1), rgba(255, 255, 255, 0.94)),
-    var(--surface-soft);
-}
-
-.detail-card--action strong {
-  display: block;
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-snug);
 }
 
 .detail-grid strong,

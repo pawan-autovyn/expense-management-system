@@ -56,13 +56,6 @@ export const REQUESTER_ROUTES: Routes = [
       ),
   },
   {
-    path: 'notifications',
-    loadComponent: () =>
-      import('../manager/pages/manager-notifications/manager-notifications.component').then(
-        (m) => m.ManagerNotificationsComponent,
-      ),
-  },
-  {
     path: 'profile',
     loadComponent: () =>
       import('../manager/pages/manager-profile/manager-profile.component').then(

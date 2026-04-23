@@ -2,41 +2,21 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
-import { ExpenseDialogService } from '../../core/services/expense-dialog.service';
 import { Role } from '../../models/app.models';
-import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { ExpenseWorkspaceDialogComponent } from '../../shared/components/expense-workspace-dialog/expense-workspace-dialog.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
 import { TopbarComponent } from '../topbar/topbar.component';
-import { ToastCenterComponent } from '../../shared/components/toast-center/toast-center.component';
 
 @Component({
   selector: 'app-app-shell',
   standalone: true,
-  imports: [
-    ConfirmDialogComponent,
-    ExpenseWorkspaceDialogComponent,
-    RouterLink,
-    RouterOutlet,
-    SidebarComponent,
-    TopbarComponent,
-    IconComponent,
-    ToastCenterComponent,
-  ],
+  imports: [RouterLink, RouterOutlet, SidebarComponent, TopbarComponent, IconComponent],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppShellComponent {
   private readonly authService = inject(AuthService);
-  protected readonly expenseDialogService = inject(ExpenseDialogService);
-  protected readonly hasWorkspaceOverlay = computed(
-    () =>
-      Boolean(
-        this.expenseDialogService.dialogRequest() || this.expenseDialogService.deleteDialogOpen(),
-      ),
-  );
   protected readonly quickActionRoute = computed(() => {
     const role = this.authService.currentRole();
 
@@ -67,4 +47,5 @@ export class AppShellComponent {
 
     return 'New expense';
   });
+
 }

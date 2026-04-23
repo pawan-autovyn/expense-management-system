@@ -8,7 +8,6 @@ describe('navigation constants', () => {
       '/operation-manager/add-expense',
       '/operation-manager/my-expenses',
       '/operation-manager/budget',
-      '/operation-manager/notifications',
       '/operation-manager/profile',
     ]);
     expect(SIDEBAR_CONFIG.recommender.map((item) => item.route)).toEqual([
@@ -24,7 +23,6 @@ describe('navigation constants', () => {
       '/admin/approval',
       '/admin/expenses',
       '/admin/budget',
-      '/admin/notifications',
       '/admin/category',
       '/admin/reports',
       '/admin/audit',

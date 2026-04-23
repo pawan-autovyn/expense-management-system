@@ -51,7 +51,7 @@
       </button>
       <button type="button" class="button button--secondary" (click)="exportVisibleRows()">
         <app-icon name="download" [size]="16" />
-        <span>Download CSV</span>
+        <span>Export CSV</span>
       </button>
     </div>
   </div>
@@ -107,14 +107,7 @@
         </thead>
         <tbody>
           @for (entry of pagedEntries(); track entry.id) {
-            <tr
-              class="audit-table__row"
-              [class.audit-table__row--active]="selectedExpenseId() === entry.expenseId"
-              tabindex="0"
-              (click)="selectExpense(entry.expenseId)"
-              (keydown.enter)="selectExpense(entry.expenseId)"
-              (keydown.space)="$event.preventDefault(); selectExpense(entry.expenseId)"
-            >
+            <tr>
               <td class="audit-table__time">{{ entry.date | date: 'd MMM yyyy, h:mm a' }}</td>
               <td class="audit-table__expense">
                 <strong>{{ entry.expenseCode }}</strong>
@@ -154,8 +147,8 @@
 
     <div class="audit-side-column">
       <app-activity-timeline
-        [title]="timelineTitle()"
-        [subtitle]="timelineSubtitle()"
+        title="Recent activity stream"
+        subtitle="Latest approvals, submissions, and user notes"
         [items]="timelineItems()"
       />
 

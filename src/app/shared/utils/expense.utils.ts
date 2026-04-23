@@ -12,11 +12,6 @@ import {
 } from '../../models/app.models';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const NON_COMMITTED_EXPENSE_STATUSES = [
-  ExpenseStatus.Rejected,
-  ExpenseStatus.Cancelled,
-  ExpenseStatus.Draft,
-];
 
 export const DEFAULT_EXPENSE_FILTERS: ExpenseFilters = {
   searchTerm: '',
@@ -55,13 +50,16 @@ export function buildCategoryBudgetViews(
       const spend = expenses
         .filter((expense) => expense.categoryId === category.id)
         .filter((expense) => !managerId || expense.managerId === managerId)
-        .filter((expense) => countsAgainstBudget(expense))
+        .filter(
+          (expense) =>
+            ![ExpenseStatus.Rejected, ExpenseStatus.Cancelled].includes(expense.status),
+        )
         .reduce((total, expense) => total + expense.amount, 0);
 
       return {
         category,
         spend,
-        remaining: Math.max(category.monthlyBudget - spend, 0),
+        remaining: category.monthlyBudget - spend,
         usage: category.monthlyBudget ? Math.min(spend / category.monthlyBudget, 1.25) : 0,
         status: resolveBudgetStatus(spend, category.monthlyBudget),
         previousSpend: category.previousSpend,
@@ -251,20 +249,13 @@ export function computeExpenseStatus(
 
   const currentSpend = expenses
     .filter((expense) => expense.categoryId === categoryId)
-    .filter((expense) => countsAgainstBudget(expense))
+    .filter(
+      (expense) =>
+        ![ExpenseStatus.Rejected, ExpenseStatus.Cancelled].includes(expense.status),
+    )
     .reduce((total, expense) => total + expense.amount, 0);
 
   return currentSpend + amount > category.monthlyBudget
     ? ExpenseStatus.OverBudget
     : ExpenseStatus.Submitted;
-}
-
-export function countsAgainstBudget(expense: Pick<Expense, 'status'>): boolean {
-  return !NON_COMMITTED_EXPENSE_STATUSES.includes(expense.status);
-}
-
-export function calculateCommittedSpend(expenses: Expense[]): number {
-  return expenses
-    .filter((expense) => countsAgainstBudget(expense))
-    .reduce((total, expense) => total + expense.amount, 0);
 }

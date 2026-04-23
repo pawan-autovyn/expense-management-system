@@ -15,7 +15,6 @@ export const SIDEBAR_CONFIG: Record<SidebarRoleKey, SidebarNavItem[]> = {
     { label: 'Add Expense', icon: 'plus-circle', route: '/operation-manager/add-expense' },
     { label: 'My Expenses', icon: 'receipt', route: '/operation-manager/my-expenses' },
     { label: 'Budget Overview', icon: 'wallet', route: '/operation-manager/budget' },
-    { label: 'Notifications', icon: 'bell', route: '/operation-manager/notifications' },
     { label: 'Profile', icon: 'user-circle', route: '/operation-manager/profile' },
   ],
   recommender: [
@@ -31,7 +30,6 @@ export const SIDEBAR_CONFIG: Record<SidebarRoleKey, SidebarNavItem[]> = {
     { label: 'Approval Queue', icon: 'check-circle', route: '/admin/approval' },
     { label: 'View Expenses', icon: 'receipt', route: '/admin/expenses' },
     { label: 'Budget Management', icon: 'wallet', route: '/admin/budget' },
-    { label: 'Notifications', icon: 'bell', route: '/admin/notifications' },
     { label: 'Category Management', icon: 'settings', route: '/admin/category' },
     { label: 'Reports', icon: 'layers', route: '/admin/reports' },
     { label: 'Audit Trail', icon: 'activity', route: '/admin/audit' },

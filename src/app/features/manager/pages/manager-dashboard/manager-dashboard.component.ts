@@ -8,11 +8,7 @@ import { AnalyticsApiService, ManagerDashboardResponse } from '../../../../core/
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import {
-  buildCategoryBudgetViews,
-  calculateCommittedSpend,
-  calculatePercentageDelta,
-} from '../../../../shared/utils/expense.utils';
+import { buildCategoryBudgetViews, calculatePercentageDelta } from '../../../../shared/utils/expense.utils';
 import { ActivityTimelineComponent, TimelineItem } from '../../../../shared/components/activity-timeline/activity-timeline.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { StatCardComponent } from '../../../../shared/components/stat-card/stat-card.component';
@@ -101,29 +97,24 @@ export class ManagerDashboardComponent {
   );
   protected readonly recentExpenses = computed(
     () =>
-      this.visibleExpenses().length
-        ? [...this.visibleExpenses()]
-            .sort(
-              (left, right) =>
-                new Date(right.updatedAt ?? right.date).getTime() -
-                new Date(left.updatedAt ?? left.date).getTime(),
-            )
-            .slice(0, 5)
-        : this.dashboardData()?.recentExpenses ?? [],
+      this.dashboardData()?.recentExpenses ??
+      [...this.visibleExpenses()]
+        .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
+        .slice(0, 5),
   );
   protected readonly totalBudget = computed(() => {
     if (this.dashboardData()) {
       return this.dashboardData()!.totalBudget;
     }
 
-    return this.directoryService.categories().reduce(
-      (total, category) => total + category.monthlyBudget,
-      0,
-    );
+    const locationName = this.authService.currentUser()?.location ?? '';
+    const locationId = this.directoryService.getLocationByName(locationName)?.id ?? '';
+
+    return locationId ? this.directoryService.getTotalBudgetForLocation(locationId) : 0;
   });
   protected readonly remainingBudget = computed(() =>
     this.dashboardData()?.remainingBudget ??
-    Math.max(this.totalBudget() - calculateCommittedSpend(this.visibleExpenses()), 0),
+    (this.totalBudget() - this.visibleExpenses().reduce((total, expense) => total + expense.amount, 0)),
   );
   protected readonly pendingCount = computed(
     () =>
@@ -135,42 +126,15 @@ export class ManagerDashboardComponent {
       ).length,
   );
   protected readonly monthDelta = computed(
-    () => {
-      if (this.dashboardData()) {
-        return this.dashboardData()!.monthDelta;
-      }
-
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      const previousMonthDate = new Date(currentYear, currentMonth - 1, 1);
-      const currentMonthSpend = this.myExpenses()
-        .filter((expense) => {
-          const expenseDate = new Date(expense.date);
-
-          return (
-            expenseDate.getMonth() === currentMonth &&
-            expenseDate.getFullYear() === currentYear
-          );
-        })
-        .reduce((total, expense) => total + expense.amount, 0);
-      const previousMonthSpend = this.myExpenses()
-        .filter((expense) => {
-          const expenseDate = new Date(expense.date);
-
-          return (
-            expenseDate.getMonth() === previousMonthDate.getMonth() &&
-            expenseDate.getFullYear() === previousMonthDate.getFullYear()
-          );
-        })
-        .reduce((total, expense) => total + expense.amount, 0);
-
-      return calculatePercentageDelta(currentMonthSpend, previousMonthSpend);
-    },
+    () => this.dashboardData()?.monthDelta ?? calculatePercentageDelta(15400, 13220),
   );
   protected readonly approvalSummary = computed(
     () =>
       this.dashboardData()?.approvalSummary ?? [
+        {
+          label: 'Draft',
+          value: this.visibleExpenses().filter((expense) => expense.status === 'Draft').length,
+        },
         {
           label: 'Pending',
           value: this.visibleExpenses().filter((expense) =>
@@ -191,20 +155,18 @@ export class ManagerDashboardComponent {
   );
   protected readonly timelineItems = computed<TimelineItem[]>(
     () =>
-      this.visibleExpenses().length
-        ? this.visibleExpenses()
-            .flatMap((expense) =>
-              expense.auditTrail.map((entry) => ({
-                id: entry.id,
-                title: `${expense.title} • ${entry.action}`,
-                description: entry.note,
-                date: entry.date,
-                tone: entry.tone,
-              })),
-            )
-            .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime())
-            .slice(0, 5)
-        : this.dashboardData()?.timelineItems ?? [],
+      this.dashboardData()?.timelineItems ??
+      this.visibleExpenses()
+        .flatMap((expense) =>
+          expense.auditTrail.map((entry) => ({
+            id: entry.id,
+            title: `${expense.title} • ${entry.action}`,
+            description: entry.note,
+            date: entry.date,
+            tone: entry.tone,
+          })),
+        )
+        .slice(0, 5),
   );
 
   constructor() {

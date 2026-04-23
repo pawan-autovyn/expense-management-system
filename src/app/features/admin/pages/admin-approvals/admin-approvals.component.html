@@ -32,14 +32,10 @@
         </button>
         <button type="button" class="button button--secondary" (click)="exportVisibleRows()">
           <app-icon name="download" [size]="16" />
-          <span>Download CSV</span>
+          <span>Export CSV</span>
         </button>
       </div>
     </div>
-
-    @if (actionError()) {
-      <p class="approval-error-banner" role="alert">{{ actionError() }}</p>
-    }
 
     <div class="ref-approval-layout">
       <section class="glass-card approval-queue">
@@ -175,11 +171,11 @@
               ></textarea>
 
               <div class="button-row">
-                <button type="button" class="button button--primary" [disabled]="actionInFlight()" (click)="approve()">
-                  {{ actionInFlight() ? 'Saving...' : primaryActionLabel() }}
+                <button type="button" class="button button--primary" (click)="approve()">
+                  {{ primaryActionLabel() }}
                 </button>
-                <button type="button" class="button button--danger" [disabled]="actionInFlight()" (click)="reject()">Reject</button>
-                <button type="button" class="button button--ghost" [disabled]="actionInFlight()" (click)="reopen()">Re-open</button>
+                <button type="button" class="button button--danger" (click)="reject()">Reject</button>
+                <button type="button" class="button button--ghost" (click)="reopen()">Re-open</button>
               </div>
             </section>
           }

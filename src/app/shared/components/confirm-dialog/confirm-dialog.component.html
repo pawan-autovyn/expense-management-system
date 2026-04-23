@@ -6,11 +6,8 @@
     (keydown.enter)="cancelled.emit()"
   ></div>
   <section class="overlay-panel glass-card" role="dialog" aria-modal="true">
-    <div class="overlay-panel__copy">
-      <p class="eyebrow">{{ title() }}</p>
-      <h3>{{ message() }}</h3>
-      <p class="overlay-panel__hint">This action will permanently remove the selected record.</p>
-    </div>
+    <p class="eyebrow">{{ title() }}</p>
+    <h3>{{ message() }}</h3>
     <div class="overlay-panel__actions">
       <button type="button" class="button button--ghost" (click)="cancelled.emit()">Cancel</button>
       <button type="button" class="button button--danger" (click)="confirmed.emit()">Confirm</button>

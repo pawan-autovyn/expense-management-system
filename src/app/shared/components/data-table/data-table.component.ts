@@ -9,7 +9,6 @@ export interface TableColumn {
   key: string;
   label: string;
   type?: 'text' | 'currency' | 'date' | 'badge';
-  noWrap?: boolean;
   cell?: (row: unknown) => string | number;
 }
 

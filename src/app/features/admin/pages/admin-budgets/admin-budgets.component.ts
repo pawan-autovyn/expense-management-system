@@ -5,8 +5,6 @@ import { firstValueFrom } from 'rxjs';
 
 import { AdminBudgetsResponse, AnalyticsApiService } from '../../../../core/services/analytics-api.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
-import { NotificationService } from '../../../../core/services/notification.service';
-import { Role } from '../../../../models/app.models';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
 interface BudgetCardView {
@@ -38,7 +36,6 @@ const FINANCIAL_MONTHS = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'
 export class AdminBudgetsComponent {
   private readonly analyticsApi = inject(AnalyticsApiService);
   private readonly directoryService = inject(DirectoryService);
-  private readonly notificationService = inject(NotificationService);
   private readonly budgetsData = signal<AdminBudgetsResponse | null>(null);
   protected readonly isSaving = signal(false);
   protected readonly saveMessage = signal('');
@@ -114,7 +111,6 @@ export class AdminBudgetsComponent {
 
     try {
       const annualBudget = Number(this.annualBudgetDraft()) || 0;
-      const previousAnnualBudget = Math.round(category.monthlyBudget * 12);
       const updatedCategory = await this.directoryService.saveCategoryBudget(
         category.id,
         annualBudget,
@@ -127,21 +123,7 @@ export class AdminBudgetsComponent {
 
       await this.directoryService.loadWorkspaceData();
       await this.loadBudgets();
-      this.notificationService.createNotification({
-        title: 'Budget updated by admin',
-        message: this.buildBudgetNotificationMessage(
-          updatedCategory.name,
-          previousAnnualBudget,
-          annualBudget,
-        ),
-        tone: annualBudget >= previousAnnualBudget ? 'success' : 'warning',
-        audience: Role.OperationManager,
-      });
-      this.saveMessage.set(
-        `${updatedCategory.name} budget saved. Managers now see ${this.formatCurrency(
-          annualBudget,
-        )} yearly and ${this.formatCurrency(Math.round(annualBudget / 12))} monthly.`,
-      );
+      this.saveMessage.set(`${updatedCategory.name} budget updated from live data.`);
     } finally {
       this.isSaving.set(false);
     }
@@ -166,33 +148,5 @@ export class AdminBudgetsComponent {
     } catch {
       this.budgetsData.set(null);
     }
-  }
-
-  private buildBudgetNotificationMessage(
-    categoryName: string,
-    previousAnnualBudget: number,
-    nextAnnualBudget: number,
-  ): string {
-    const monthlyBudget = Math.round(nextAnnualBudget / 12);
-
-    if (previousAnnualBudget === nextAnnualBudget) {
-      return `Admin kept ${categoryName} at ${this.formatCurrency(
-        nextAnnualBudget,
-      )} yearly. Your live monthly limit is ${this.formatCurrency(monthlyBudget)}.`;
-    }
-
-    return `Admin updated ${categoryName} from ${this.formatCurrency(
-      previousAnnualBudget,
-    )} to ${this.formatCurrency(nextAnnualBudget)} yearly. Your live monthly limit is ${this.formatCurrency(
-      monthlyBudget,
-    )}.`;
-  }
-
-  private formatCurrency(value: number): string {
-    return value.toLocaleString('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    });
   }
 }

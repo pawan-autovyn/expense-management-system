@@ -8,9 +8,7 @@ import { AnalyticsApiService, RecommenderWorkspaceResponse } from '../../../../c
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { ToastService } from '../../../../core/services/toast.service';
 import { Expense, ExpenseStatus, Role } from '../../../../models/app.models';
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { LineChartComponent } from '../../../../shared/components/line-chart/line-chart.component';
 import { SearchInputComponent } from '../../../../shared/components/search-input/search-input.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
@@ -22,7 +20,6 @@ interface ReportSummary {
 }
 
 type DashboardRange = 'current-year' | 'last-year' | 'last-2-years' | 'custom' | 'all';
-type PendingQueueAction = 'recommend' | 'reject' | 'reopen';
 
 @Component({
   selector: 'app-hr-workspace',
@@ -32,7 +29,6 @@ type PendingQueueAction = 'recommend' | 'reject' | 'reopen';
     DatePipe,
     NgClass,
     FormsModule,
-    ConfirmDialogComponent,
     LineChartComponent,
     SearchInputComponent,
     StatusBadgeComponent,
@@ -46,16 +42,12 @@ export class HrWorkspaceComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
-  private readonly toastService = inject(ToastService);
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
 
   protected readonly ExpenseStatus = ExpenseStatus;
   protected readonly Role = Role;
   protected readonly reviewNote = signal('Reviewed in the recommendation queue with policy and bill check.');
-  protected readonly actionInFlight = signal(false);
-  protected readonly confirmDialogOpen = signal(false);
-  protected readonly pendingAction = signal<PendingQueueAction | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly statusFilter = signal<'all' | ExpenseStatus>('all');
   protected readonly categoryFilter = signal('all');
@@ -72,14 +64,9 @@ export class HrWorkspaceComponent {
   protected readonly dashboardDateFrom = signal('');
   protected readonly dashboardDateTo = signal('');
   protected readonly workspaceData = signal<RecommenderWorkspaceResponse | null>(null);
-  protected readonly actionError = this.expenseRepository.mutationError;
 
   protected readonly currentUser = computed(() => this.authService.currentUser());
-  protected readonly expenses = computed(() =>
-    this.isQueuePage()
-      ? this.expenseRepository.expenses()
-      : this.workspaceData()?.queueExpenses ?? this.expenseRepository.expenses(),
-  );
+  protected readonly expenses = computed(() => this.workspaceData()?.queueExpenses ?? this.expenseRepository.expenses());
   protected readonly dashboardExpenses = computed(() => {
     const bounds = this.resolveDashboardBounds();
 
@@ -152,43 +139,6 @@ export class HrWorkspaceComponent {
   );
 
   protected readonly trendData = computed(() => this.workspaceData()?.trendData ?? []);
-  protected readonly pendingActionTitle = computed(() => {
-    const action = this.pendingAction();
-
-    if (action === 'recommend') {
-      return 'Confirm recommendation';
-    }
-
-    if (action === 'reject') {
-      return 'Confirm rejection';
-    }
-
-    if (action === 'reopen') {
-      return 'Confirm reopen';
-    }
-
-    return 'Confirm workflow action';
-  });
-  protected readonly pendingActionMessage = computed(() => {
-    const expense = this.selectedExpense();
-
-    if (!expense) {
-      return 'Choose an expense before continuing.';
-    }
-
-    const employee = this.expenseEmployee(expense);
-
-    switch (this.pendingAction()) {
-      case 'recommend':
-        return `Forward ${expense.title} from ${employee} to admin for final approval?`;
-      case 'reject':
-        return `Reject ${expense.title} for ${employee} and notify the requester right away?`;
-      case 'reopen':
-        return `Send ${expense.title} back to ${employee} so the requester can update and resubmit it?`;
-      default:
-        return 'Confirm the selected workflow action.';
-    }
-  });
 
   constructor() {
     void this.directoryService.loadUsers();
@@ -208,7 +158,7 @@ export class HrWorkspaceComponent {
     }
   }
 
-  protected async recommend(): Promise<void> {
+  protected recommend(): void {
     const expense = this.selectedExpense();
     const reviewer = this.currentUser();
 
@@ -216,14 +166,10 @@ export class HrWorkspaceComponent {
       return;
     }
 
-    await this.runAction(
-      () => this.expenseRepository.approveExpense(expense.id, reviewer, this.reviewNote()),
-      'Recommendation sent',
-      'The bill was forwarded to admin for final approval.',
-    );
+    this.expenseRepository.approveExpense(expense.id, reviewer, this.reviewNote());
   }
 
-  protected async reject(): Promise<void> {
+  protected reject(): void {
     const expense = this.selectedExpense();
     const reviewer = this.currentUser();
 
@@ -231,14 +177,10 @@ export class HrWorkspaceComponent {
       return;
     }
 
-    await this.runAction(
-      () => this.expenseRepository.rejectExpense(expense.id, reviewer, this.reviewNote()),
-      'Expense rejected',
-      'The requester has been informed that the bill was rejected.',
-    );
+    this.expenseRepository.rejectExpense(expense.id, reviewer, this.reviewNote());
   }
 
-  protected async reopen(): Promise<void> {
+  protected reopen(): void {
     const expense = this.selectedExpense();
     const reviewer = this.currentUser();
 
@@ -246,11 +188,7 @@ export class HrWorkspaceComponent {
       return;
     }
 
-    await this.runAction(
-      () => this.expenseRepository.reopenExpense(expense.id, reviewer, this.reviewNote()),
-      'Expense reopened',
-      'The bill was moved back to the requester for changes.',
-    );
+    this.expenseRepository.reopenExpense(expense.id, reviewer, this.reviewNote());
   }
 
   protected selectExpense(expense: Expense): void {
@@ -259,44 +197,6 @@ export class HrWorkspaceComponent {
 
   protected openExpenseDetails(expense: Expense): void {
     void this.router.navigate(['/recommender/expenses', expense.id]);
-  }
-
-  protected requestRecommend(): void {
-    this.openActionDialog('recommend');
-  }
-
-  protected requestReject(): void {
-    this.openActionDialog('reject');
-  }
-
-  protected requestReopen(): void {
-    this.openActionDialog('reopen');
-  }
-
-  protected closeActionDialog(): void {
-    this.confirmDialogOpen.set(false);
-    this.pendingAction.set(null);
-  }
-
-  protected async confirmAction(): Promise<void> {
-    const action = this.pendingAction();
-
-    this.confirmDialogOpen.set(false);
-    this.pendingAction.set(null);
-
-    if (action === 'recommend') {
-      await this.recommend();
-      return;
-    }
-
-    if (action === 'reject') {
-      await this.reject();
-      return;
-    }
-
-    if (action === 'reopen') {
-      await this.reopen();
-    }
   }
 
   protected setStatusFilter(value: string): void {
@@ -401,35 +301,5 @@ export class HrWorkspaceComponent {
     } catch {
       return;
     }
-  }
-
-  private async runAction(
-    action: () => Promise<Expense | undefined>,
-    successTitle: string,
-    successMessage: string,
-  ): Promise<void> {
-    this.actionInFlight.set(true);
-
-    try {
-      await action();
-      this.toastService.showSuccess(successTitle, successMessage);
-    } catch {
-      this.toastService.showError(
-        'Action failed',
-        this.actionError() ?? 'The workflow action could not be completed.',
-      );
-      return;
-    } finally {
-      this.actionInFlight.set(false);
-    }
-  }
-
-  private openActionDialog(action: PendingQueueAction): void {
-    if (!this.selectedExpense() || !this.currentUser() || this.actionInFlight()) {
-      return;
-    }
-
-    this.pendingAction.set(action);
-    this.confirmDialogOpen.set(true);
   }
 }

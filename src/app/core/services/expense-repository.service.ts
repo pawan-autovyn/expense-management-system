@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
@@ -25,11 +25,9 @@ import { DirectoryService } from './directory.service';
 export class ExpenseRepositoryService {
   private readonly http = inject(HttpClient, { optional: true });
   private readonly expensesStore = signal<Expense[]>(this.restoreExpenses());
-  private readonly mutationErrorStore = signal<string | null>(null);
   private readonly directoryService = inject(DirectoryService);
 
   readonly expenses = this.expensesStore.asReadonly();
-  readonly mutationError = this.mutationErrorStore.asReadonly();
   readonly totalExpenseCount = computed(() => this.expenses().length);
 
   async loadExpenses(): Promise<Expense[]> {
@@ -81,17 +79,7 @@ export class ExpenseRepositoryService {
     );
   }
 
-  async approveExpense(
-    expenseId: string,
-    reviewer: User,
-    note: string,
-  ): Promise<Expense | undefined> {
-    this.mutationErrorStore.set(null);
-
-    if (this.http) {
-      return this.syncAction(expenseId, reviewer.role === Role.Admin ? 'approve' : 'recommend', note);
-    }
-
+  approveExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
     const expense = this.getExpenseById(expenseId);
 
     if (!expense || [ExpenseStatus.Draft, ExpenseStatus.Cancelled].includes(expense.status)) {
@@ -136,59 +124,50 @@ export class ExpenseRepositoryService {
     return expense;
   }
 
-  async rejectExpense(
-    expenseId: string,
-    reviewer: User,
-    note: string,
-  ): Promise<Expense | undefined> {
-    this.mutationErrorStore.set(null);
+  rejectExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
+    const updatedExpense = this.updateExpenseStatus(
+      expenseId,
+      ExpenseStatus.Rejected,
+      reviewer,
+      note,
+      'danger',
+    );
+    this.syncAction(expenseId, 'reject', note);
 
-    if (this.http) {
-      return this.syncAction(expenseId, 'reject', note);
-    }
-
-    return this.updateExpenseStatus(expenseId, ExpenseStatus.Rejected, reviewer, note, 'danger');
+    return updatedExpense;
   }
 
-  async reopenExpense(
-    expenseId: string,
-    reviewer: User,
-    note: string,
-  ): Promise<Expense | undefined> {
-    this.mutationErrorStore.set(null);
+  reopenExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
+    const updatedExpense = this.updateExpenseStatus(
+      expenseId,
+      ExpenseStatus.Reopened,
+      reviewer,
+      note,
+      'warning',
+    );
+    this.syncAction(expenseId, 'reopen', note);
 
-    if (this.http) {
-      return this.syncAction(expenseId, 'reopen', note);
-    }
-
-    return this.updateExpenseStatus(expenseId, ExpenseStatus.Reopened, reviewer, note, 'warning');
+    return updatedExpense;
   }
 
-  async cancelExpense(
-    expenseId: string,
-    reviewer: User,
-    note: string,
-  ): Promise<Expense | undefined> {
-    this.mutationErrorStore.set(null);
+  cancelExpense(expenseId: string, reviewer: User, note: string): Expense | undefined {
+    const updatedExpense = this.updateExpenseStatus(
+      expenseId,
+      ExpenseStatus.Cancelled,
+      reviewer,
+      note,
+      'danger',
+    );
+    this.syncAction(expenseId, 'cancel', note);
 
-    if (this.http) {
-      return this.syncAction(expenseId, 'cancel', note);
-    }
-
-    return this.updateExpenseStatus(expenseId, ExpenseStatus.Cancelled, reviewer, note, 'danger');
+    return updatedExpense;
   }
 
-  async createExpense(
+  createExpense(
     value: ExpenseFormValue,
     manager: User,
     mode: ExpenseStatus.Draft | ExpenseStatus.Submitted,
-  ): Promise<Expense> {
-    this.mutationErrorStore.set(null);
-
-    if (this.http) {
-      return this.syncCreateExpense(value, mode);
-    }
-
+  ): Expense {
     const nextStatus = computeExpenseStatus(
       value.amount,
       value.categoryId,
@@ -232,21 +211,16 @@ export class ExpenseRepositoryService {
 
     this.expensesStore.update((expenses) => [expense, ...expenses]);
     this.persist();
+    this.syncCreateExpense(expense.id, value, mode);
 
     return expense;
   }
 
-  async updateDraft(
+  updateDraft(
     expenseId: string,
     value: ExpenseFormValue,
     mode: ExpenseStatus.Draft | ExpenseStatus.Submitted,
-  ): Promise<Expense | undefined> {
-    this.mutationErrorStore.set(null);
-
-    if (this.http) {
-      return this.syncUpdateDraft(expenseId, value, mode);
-    }
-
+  ): Expense | undefined {
     const categories = this.directoryService.categories();
     let updatedExpense: Expense | undefined;
 
@@ -292,21 +266,12 @@ export class ExpenseRepositoryService {
     );
 
     this.persist();
+    this.syncUpdateDraft(expenseId, value, mode);
 
     return updatedExpense;
   }
 
   async deleteDraft(expenseId: string): Promise<void> {
-    this.mutationErrorStore.set(null);
-
-    if (this.http) {
-      await this.syncDeleteDraft(expenseId);
-      this.expensesStore.update((expenses) => expenses.filter((expense) => expense.id !== expenseId));
-      this.persist();
-
-      return;
-    }
-
     this.expensesStore.update((expenses) =>
       expenses.filter(
         (expense) =>
@@ -451,11 +416,12 @@ export class ExpenseRepositoryService {
   }
 
   private async syncCreateExpense(
+    temporaryId: string,
     value: ExpenseFormValue,
     mode: ExpenseStatus.Draft | ExpenseStatus.Submitted,
-  ): Promise<Expense> {
+  ): Promise<void> {
     if (!this.http) {
-      throw new Error('HTTP client unavailable.');
+      return;
     }
 
     try {
@@ -465,12 +431,9 @@ export class ExpenseRepositoryService {
           mode,
         }),
       );
-      this.replaceExpense(createdExpense.id, createdExpense);
-
-      return createdExpense;
-    } catch (error) {
-      this.handleMutationError(error, 'Unable to create the expense right now.');
-      throw error;
+      this.replaceExpense(temporaryId, createdExpense);
+    } catch {
+      this.persist();
     }
   }
 
@@ -478,9 +441,9 @@ export class ExpenseRepositoryService {
     expenseId: string,
     action: 'recommend' | 'approve' | 'reject' | 'reopen' | 'cancel',
     note: string,
-  ): Promise<Expense | undefined> {
+  ): Promise<void> {
     if (!this.http) {
-      return this.getExpenseById(expenseId);
+      return;
     }
 
     try {
@@ -490,11 +453,8 @@ export class ExpenseRepositoryService {
         }),
       );
       this.replaceExpense(expenseId, updatedExpense);
-
-      return updatedExpense;
-    } catch (error) {
-      this.handleMutationError(error, 'Unable to update the approval workflow right now.');
-      throw error;
+    } catch {
+      this.persist();
     }
   }
 
@@ -502,9 +462,9 @@ export class ExpenseRepositoryService {
     expenseId: string,
     value: ExpenseFormValue,
     mode: ExpenseStatus.Draft | ExpenseStatus.Submitted,
-  ): Promise<Expense | undefined> {
+  ): Promise<void> {
     if (!this.http) {
-      return this.getExpenseById(expenseId);
+      return;
     }
 
     try {
@@ -515,11 +475,8 @@ export class ExpenseRepositoryService {
         }),
       );
       this.replaceExpense(expenseId, updatedExpense);
-
-      return updatedExpense;
-    } catch (error) {
-      this.handleMutationError(error, 'Unable to save the expense changes right now.');
-      throw error;
+    } catch {
+      this.persist();
     }
   }
 
@@ -532,30 +489,9 @@ export class ExpenseRepositoryService {
       await firstValueFrom(
         this.http.delete<Expense>(`${API_CONFIG.baseUrl}/expenses/${expenseId}`),
       );
-    } catch (error) {
-      this.handleMutationError(error, 'Unable to delete the draft right now.');
-      throw error;
+    } catch {
+      this.persist();
     }
-  }
-
-  private handleMutationError(error: unknown, fallbackMessage: string): void {
-    if (error instanceof HttpErrorResponse) {
-      const apiMessage = error.error?.message;
-
-      if (typeof apiMessage === 'string' && apiMessage.trim()) {
-        this.mutationErrorStore.set(apiMessage);
-
-        return;
-      }
-    }
-
-    if (error instanceof Error && error.message.trim()) {
-      this.mutationErrorStore.set(error.message);
-
-      return;
-    }
-
-    this.mutationErrorStore.set(fallbackMessage);
   }
 
   private replaceExpense(expenseId: string, expense: Expense): void {

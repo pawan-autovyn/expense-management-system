@@ -19,8 +19,6 @@ describe('ReceiptPreviewModalComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
-    expect(fixture.nativeElement.classList.contains('receipt-preview-modal--open')).toBeFalse();
-    expect(fixture.nativeElement.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('renders the preview and emits close requests', () => {
@@ -39,8 +37,6 @@ describe('ReceiptPreviewModalComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('receipt.svg');
     expect(fixture.nativeElement.textContent).toContain('SVG document');
     expect(fixture.nativeElement.textContent).toContain('Open original');
-    expect(fixture.nativeElement.classList.contains('receipt-preview-modal--open')).toBeTrue();
-    expect(fixture.nativeElement.getAttribute('aria-hidden')).toBeNull();
 
     fixture.nativeElement.querySelector('.overlay-backdrop')?.click();
 

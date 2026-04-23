@@ -25,8 +25,6 @@ describe('TopbarComponent', () => {
       providers: [
         provideRouter([
           { path: 'admin/dashboard', component: EmptyRouteComponent },
-          { path: 'admin/expenses', component: EmptyRouteComponent },
-          { path: 'admin/notifications', component: EmptyRouteComponent },
           { path: 'admin/profile', component: EmptyRouteComponent },
         ]),
         AuthService,
@@ -44,6 +42,7 @@ describe('TopbarComponent', () => {
 
   it('shows the current page context and handles logout', () => {
     const profileButton = fixture.nativeElement.querySelector('.topbar__profile') as HTMLElement;
+    const logoutButton = fixture.nativeElement.querySelector('.topbar__logout') as HTMLElement;
     const content = fixture.nativeElement as HTMLElement;
     const navigateSpy = spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
 
@@ -53,20 +52,12 @@ describe('TopbarComponent', () => {
 
     profileButton?.click();
     expect(navigateSpy).toHaveBeenCalledWith('/admin/profile');
-  });
 
-  it('opens a notification target route from the bell panel', async () => {
-    const navigateSpy = spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true) as never);
-    const component = fixture.componentInstance as TopbarComponent & {
-      notifications: () => Array<{ id: string }>;
-      openNotification: (notification: { id: string }) => Promise<void>;
-    };
-    const notification = component.notifications()[0];
+    spyOn(authService, 'signOut').and.callThrough();
+    logoutButton?.click();
+    fixture.detectChanges();
 
-    expect(notification).toBeTruthy();
-
-    await component.openNotification(notification);
-
-    expect(navigateSpy).toHaveBeenCalledWith('/admin/approval');
+    expect(authService.signOut).toHaveBeenCalled();
+    expect(navigateSpy).toHaveBeenCalledWith('/login');
   });
 });

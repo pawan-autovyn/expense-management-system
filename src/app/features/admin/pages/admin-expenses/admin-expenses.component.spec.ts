@@ -1,40 +1,36 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 
 import { DirectoryService } from '../../../../core/services/directory.service';
-import { ExpenseDialogService } from '../../../../core/services/expense-dialog.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
 import { AdminExpensesComponent } from './admin-expenses.component';
 
 describe('AdminExpensesComponent', () => {
   let fixture: ComponentFixture<AdminExpensesComponent>;
   let component: AdminExpensesComponent & {
-    rows: () => { id: string; budget: string; expenseCode: string }[];
-    actions: { id: string }[];
+    rows: () => { id: string; budget: string; receiptUrl?: string }[];
+    selectedReceipt: (() => { id: string } | null) & {
+      set: (value: { id: string } | null) => void;
+    };
     budgetFilter: { set: (value: string) => void };
     handleAction: (event: { actionId: string; row: unknown }) => void;
     patchFilter: (key: string, value: string) => void;
     managerUsers: () => { role: string }[];
     budgetMap: () => Map<string, string>;
   };
-  let expenseDialogService: ExpenseDialogService;
+  let router: Router;
 
   beforeEach(async () => {
     localStorage.clear();
 
     await TestBed.configureTestingModule({
       imports: [AdminExpensesComponent],
-      providers: [
-        provideRouter([]),
-        DirectoryService,
-        ExpenseDialogService,
-        ExpenseRepositoryService,
-      ],
+      providers: [provideRouter([]), DirectoryService, ExpenseRepositoryService],
     }).compileComponents();
 
-    expenseDialogService = TestBed.inject(ExpenseDialogService);
     fixture = TestBed.createComponent(AdminExpensesComponent);
     component = fixture.componentInstance as typeof component;
+    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
@@ -45,28 +41,31 @@ describe('AdminExpensesComponent', () => {
     expect(component.rows()[0].budget.length).toBeGreaterThan(0);
   });
 
-  it('filters rows and opens the shared workspace dialog for view actions', () => {
+  it('filters rows and handles actions', () => {
+    const navigateSpy = spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
     const firstRow = component.rows()[0];
+    const receiptRow = component.rows().find((row) => row.receiptUrl);
 
     component.budgetFilter.set('Over Budget');
     expect(component.rows().every((row) => row.budget === 'Over Budget')).toBeTrue();
 
     component.budgetFilter.set('all');
     component.patchFilter('searchTerm', 'tea');
-    component.handleAction({ actionId: 'view', row: firstRow });
 
-    expect(expenseDialogService.dialogRequest()).toEqual(
-      jasmine.objectContaining({
-        expenseId: firstRow.id,
-        mode: 'view',
-        source: 'admin',
-        expenseCode: firstRow.expenseCode,
-        budgetLabel: firstRow.budget,
-      }),
-    );
+    component.handleAction({ actionId: 'view', row: firstRow });
+    const selectedRow = receiptRow ?? firstRow;
+
+    component.handleAction({ actionId: 'receipt', row: selectedRow });
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/admin/expenses', firstRow.id]);
+    expect(component.selectedReceipt()).toBeTruthy();
   });
 
-  it('removes the bill action from the admin expense register', () => {
-    expect(component.actions.map((action) => action.id)).not.toContain('receipt');
+  it('clears the receipt preview when the selected row has no attachment', () => {
+    const rowWithoutReceipt = { id: 'missing-row', receiptUrl: undefined };
+
+    component.handleAction({ actionId: 'receipt', row: rowWithoutReceipt });
+
+    expect(component.selectedReceipt()).toBeNull();
   });
 });

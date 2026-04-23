@@ -12,43 +12,6 @@
   width: min(100%, 22rem);
 }
 
-.budget-update-banner {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.9rem;
-  align-items: center;
-  padding: 1rem 1.1rem;
-}
-
-.budget-update-banner__icon {
-  display: grid;
-  place-items: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  border-radius: 14px;
-  background: rgba(45, 95, 159, 0.1);
-  color: var(--primary);
-}
-
-.budget-update-banner__copy {
-  min-width: 0;
-}
-
-.budget-update-banner__copy strong,
-.budget-update-banner__copy p {
-  overflow-wrap: anywhere;
-}
-
-.budget-update-banner__copy p,
-.budget-update-banner__date {
-  color: var(--text-muted);
-}
-
-.budget-update-banner__date {
-  font-size: var(--font-size-sm);
-  text-align: right;
-}
-
 .budget-library__item div {
   min-width: 0;
 }
@@ -69,14 +32,5 @@
 
   .section-heading app-search-input {
     width: 100%;
-  }
-
-  .budget-update-banner {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .budget-update-banner__date {
-    grid-column: 2;
-    text-align: left;
   }
 }

@@ -20,8 +20,6 @@ describe('ConfirmDialogComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
-    expect(fixture.nativeElement.classList.contains('confirm-dialog--open')).toBeFalse();
-    expect(fixture.nativeElement.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('renders the dialog and emits cancel and confirm events', () => {
@@ -40,8 +38,6 @@ describe('ConfirmDialogComponent', () => {
     fixture.nativeElement.querySelector('.button--danger')?.click();
 
     expect(fixture.nativeElement.textContent).toContain('Remove expense');
-    expect(fixture.nativeElement.classList.contains('confirm-dialog--open')).toBeTrue();
-    expect(fixture.nativeElement.getAttribute('aria-hidden')).toBeNull();
     expect(cancelled).toEqual([1]);
     expect(confirmed).toEqual([1]);
   });

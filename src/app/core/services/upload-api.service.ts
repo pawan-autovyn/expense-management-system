@@ -1,9 +1,15 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { Attachment } from '../../models/app.models';
 import { API_CONFIG } from '../constants/api.constants';
+
+interface UploadUrlResponse {
+  key: string;
+  fileUrl: string;
+  uploadUrl: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -13,31 +19,39 @@ export class UploadApiService {
 
   async uploadReceipt(file: File): Promise<Attachment> {
     try {
-      const formData = new FormData();
-
-      formData.append('file', file, file.name);
-
-      return await firstValueFrom(
-        this.http.post<Attachment>(`${API_CONFIG.baseUrl}/uploads/receipts`, formData),
+      const upload = await firstValueFrom(
+        this.http.post<UploadUrlResponse>(`${API_CONFIG.baseUrl}/uploads/receipts/presign`, {
+          fileName: file.name,
+          contentType: file.type || 'application/octet-stream',
+        }),
       );
-    } catch (error) {
-      throw new Error(this.resolveUploadError(error));
-    }
-  }
 
-  private resolveUploadError(error: unknown): string {
-    if (error instanceof HttpErrorResponse) {
-      const apiMessage = error.error?.message;
+      const response = await fetch(upload.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type || 'application/octet-stream',
+        },
+        body: file,
+      });
 
-      if (typeof apiMessage === 'string' && apiMessage.trim()) {
-        return apiMessage;
+      if (!response.ok) {
+        throw new Error('Upload failed');
       }
-    }
 
-    if (error instanceof Error && error.message.trim()) {
-      return error.message;
+      return {
+        id: `att-${Date.now()}`,
+        key: upload.key,
+        name: file.name,
+        url: upload.fileUrl,
+        mimeType: file.type || 'application/octet-stream',
+      };
+    } catch {
+      return {
+        id: `att-${Date.now()}`,
+        name: file.name,
+        url: URL.createObjectURL(file),
+        mimeType: file.type || 'application/octet-stream',
+      };
     }
-
-    return 'Receipt upload failed. Please try again.';
   }
 }

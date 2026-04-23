@@ -7,10 +7,6 @@ import { IconComponent } from '../icon/icon.component';
   selector: 'app-receipt-preview-modal',
   standalone: true,
   imports: [IconComponent],
-  host: {
-    '[class.receipt-preview-modal--open]': 'attachment() !== null',
-    '[attr.aria-hidden]': 'attachment() ? null : "true"',
-  },
   templateUrl: './receipt-preview-modal.component.html',
   styleUrl: './receipt-preview-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

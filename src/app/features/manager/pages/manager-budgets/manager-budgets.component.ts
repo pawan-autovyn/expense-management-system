@@ -1,5 +1,5 @@
-import { DatePipe, CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
@@ -7,10 +7,7 @@ import { AnalyticsApiService } from '../../../../core/services/analytics-api.ser
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { NotificationService } from '../../../../core/services/notification.service';
-import { Role } from '../../../../models/app.models';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { SearchInputComponent } from '../../../../shared/components/search-input/search-input.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { buildCategoryBudgetViews } from '../../../../shared/utils/expense.utils';
@@ -18,14 +15,7 @@ import { buildCategoryBudgetViews } from '../../../../shared/utils/expense.utils
 @Component({
   selector: 'app-manager-budgets',
   standalone: true,
-  imports: [
-    CurrencyPipe,
-    DatePipe,
-    EmptyStateComponent,
-    IconComponent,
-    SearchInputComponent,
-    StatusBadgeComponent,
-  ],
+  imports: [CurrencyPipe, EmptyStateComponent, SearchInputComponent, StatusBadgeComponent],
   templateUrl: './manager-budgets.component.html',
   styleUrl: './manager-budgets.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,7 +25,6 @@ export class ManagerBudgetsComponent {
   private readonly authService = inject(AuthService);
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
-  private readonly notificationService = inject(NotificationService);
   protected readonly searchTerm = signal('');
   private readonly apiCategoryViews = signal<
     Array<{
@@ -86,14 +75,6 @@ export class ManagerBudgetsComponent {
         .includes(query),
     );
   });
-  protected readonly latestBudgetNotification = computed(
-    () =>
-      this.notificationService
-        .getNotificationsForRole(Role.OperationManager)
-        .find((notification) =>
-          `${notification.title} ${notification.message}`.toLowerCase().includes('budget'),
-        ) ?? null,
-  );
 
   private async loadBudgets(): Promise<void> {
     try {

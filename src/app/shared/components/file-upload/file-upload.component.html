@@ -7,10 +7,6 @@
   </span>
 </label>
 
-@if (uploadError()) {
-  <p class="upload-error" role="alert">{{ uploadError() }}</p>
-}
-
 @if (existingAttachment()) {
   <div class="upload-preview">
     <img [src]="existingAttachment()!.url" [alt]="existingAttachment()!.name" />

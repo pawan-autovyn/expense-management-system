@@ -4,10 +4,10 @@
       <thead>
         <tr>
           @for (column of columns(); track column.key) {
-            <th [class.data-table__cell--nowrap]="column.noWrap">{{ column.label }}</th>
+            <th>{{ column.label }}</th>
           }
           @if (actions().length) {
-            <th class="table-actions-heading">Actions</th>
+            <th class="table-actions">Actions</th>
           }
         </tr>
       </thead>
@@ -15,7 +15,7 @@
         @for (row of rows(); track rowTrackBy()(row)) {
           <tr>
             @for (column of columns(); track column.key) {
-              <td [class.data-table__cell--nowrap]="column.noWrap">
+              <td>
                 @switch (column.type ?? 'text') {
                   @case ('currency') {
                     {{ resolveCell(row, column) | currency: 'INR' : 'symbol' : '1.0-0' }}
@@ -33,21 +33,19 @@
               </td>
             }
             @if (actions().length) {
-              <td class="table-actions-cell">
-                <div class="table-actions-group">
-                  @for (action of actions(); track action.id) {
-                    @if (!action.visible || action.visible(row)) {
-                      <button
-                        type="button"
-                        class="table-action-button"
-                        [attr.aria-label]="action.label"
-                        (click)="$event.stopPropagation(); actionTriggered.emit({ actionId: action.id, row })"
-                      >
-                        <app-icon [name]="action.icon" [size]="16" />
-                      </button>
-                    }
+              <td class="table-actions">
+                @for (action of actions(); track action.id) {
+                  @if (!action.visible || action.visible(row)) {
+                    <button
+                      type="button"
+                      class="table-action-button"
+                      [attr.aria-label]="action.label"
+                      (click)="actionTriggered.emit({ actionId: action.id, row })"
+                    >
+                      <app-icon [name]="action.icon" [size]="16" />
+                    </button>
                   }
-                </div>
+                }
               </td>
             }
           </tr>

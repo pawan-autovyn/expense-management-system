@@ -12,7 +12,6 @@ describe('Operation Manager routes', () => {
       'my-expenses/:id',
       'expenses/:id',
       'budget',
-      'notifications',
       'profile',
     ]);
 

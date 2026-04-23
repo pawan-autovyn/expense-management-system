@@ -108,6 +108,8 @@ export class AuthService {
     this.accessTokenStore.set(null);
     this.sessionBootstrapped = false;
     localStorage.removeItem(STORAGE_KEYS.session);
+    localStorage.removeItem(STORAGE_KEYS.expenses);
+    localStorage.removeItem(STORAGE_KEYS.notifications);
   }
 
   hasRole(allowedRoles: Role[]): boolean {
