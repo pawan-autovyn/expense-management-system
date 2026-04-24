@@ -97,6 +97,22 @@
   word-break: break-word;
 }
 
+.audit-table__row {
+  cursor: pointer;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.audit-table__row:hover,
+.audit-table__row:focus-visible {
+  background: rgba(45, 95, 159, 0.06);
+  outline: none;
+}
+
+.audit-table__row--active {
+  background: rgba(45, 95, 159, 0.09);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
 .audit-table__time {
   width: 150px;
 }

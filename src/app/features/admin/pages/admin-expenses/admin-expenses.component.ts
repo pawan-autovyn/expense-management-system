@@ -1,19 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 
 import { DirectoryService } from '../../../../core/services/directory.service';
+import { ExpenseDialogService } from '../../../../core/services/expense-dialog.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
 import { DataTableComponent, TableAction, TableColumn } from '../../../../shared/components/data-table/data-table.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
-import { ReceiptPreviewModalComponent } from '../../../../shared/components/receipt-preview-modal/receipt-preview-modal.component';
 import {
   DEFAULT_EXPENSE_FILTERS,
   buildCategoryBudgetViews,
   filterExpenses,
 } from '../../../../shared/utils/expense.utils';
 import { buildCsvContent, downloadCsv } from '../../../../shared/utils/export.utils';
-import { Expense, ExpenseFilters } from '../../../../models/app.models';
+import { ExpenseFilters } from '../../../../models/app.models';
 
 interface ExpenseRow {
   id: string;
@@ -25,24 +24,22 @@ interface ExpenseRow {
   date: string;
   status: string;
   budget: string;
-  receiptUrl?: string;
 }
 
 @Component({
   selector: 'app-admin-expenses',
   standalone: true,
-  imports: [FormsModule, DataTableComponent, IconComponent, ReceiptPreviewModalComponent],
+  imports: [FormsModule, DataTableComponent, IconComponent],
   templateUrl: './admin-expenses.component.html',
   styleUrl: './admin-expenses.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminExpensesComponent {
   protected readonly directoryService = inject(DirectoryService);
+  private readonly expenseDialogService = inject(ExpenseDialogService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
-  private readonly router = inject(Router);
   protected readonly isRefreshing = signal(false);
   protected readonly filters = signal({ ...DEFAULT_EXPENSE_FILTERS });
-  protected readonly selectedReceipt = signal<Expense['receipt'] | null>(null);
   protected readonly budgetFilter = signal('all');
   protected readonly managerUsers = computed(() =>
     this.directoryService.users().filter((user) => user.role !== 'admin'),
@@ -67,30 +64,23 @@ export class AdminExpensesComponent {
         date: expense.date,
         status: expense.status,
         budget: this.budgetMap().get(expense.categoryId) ?? 'Within Budget',
-        receiptUrl: expense.receipt?.url,
       }))
       .filter((row) => this.budgetFilter() === 'all' || row.budget === this.budgetFilter()),
   );
 
   protected readonly columns: TableColumn[] = [
-    { key: 'expenseCode', label: 'ID' },
+    { key: 'expenseCode', label: 'ID', noWrap: true },
     { key: 'title', label: 'Title' },
     { key: 'category', label: 'Category' },
-    { key: 'amount', label: 'Amount', type: 'currency' },
-    { key: 'date', label: 'Date', type: 'date' },
+    { key: 'amount', label: 'Amount', type: 'currency', noWrap: true },
+    { key: 'date', label: 'Date', type: 'date', noWrap: true },
     { key: 'manager', label: 'Manager' },
-    { key: 'status', label: 'Status', type: 'badge' },
-    { key: 'budget', label: 'Budget', type: 'badge' },
+    { key: 'status', label: 'Status', type: 'badge', noWrap: true },
+    { key: 'budget', label: 'Budget', type: 'badge', noWrap: true },
   ];
 
   protected readonly actions: TableAction[] = [
     { id: 'view', label: 'View', icon: 'eye' },
-    {
-      id: 'receipt',
-      label: 'Receipt',
-      icon: 'receipt',
-      visible: (row) => Boolean((row as Record<string, unknown>)['receiptUrl']),
-    },
   ];
 
   protected readonly trackById = (row: unknown) => String((row as Record<string, unknown>)['id']);
@@ -102,14 +92,17 @@ export class AdminExpensesComponent {
   protected handleAction(event: { actionId: string; row: unknown }): void {
     const row = event.row as unknown as ExpenseRow;
 
-    if (event.actionId === 'view') {
-      void this.router.navigate(['/admin/expenses', row.id]);
-
+    if (event.actionId !== 'view') {
       return;
     }
 
-    const record = this.expenseRepository.getExpenseById(row.id);
-    this.selectedReceipt.set(record?.receipt ?? null);
+    this.expenseDialogService.openExpenseDialog({
+      expenseId: row.id,
+      mode: 'view',
+      source: 'admin',
+      expenseCode: row.expenseCode,
+      budgetLabel: row.budget,
+    });
   }
 
   protected patchFilter(key: keyof ExpenseFilters, value: string): void {

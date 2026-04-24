@@ -15,7 +15,7 @@
 
 .timeline-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: var(--space-3);
   align-items: start;
   padding-bottom: var(--space-4);
@@ -50,11 +50,30 @@
   background: var(--danger);
 }
 
+.timeline-item__content {
+  min-width: 0;
+}
+
+.timeline-item__content strong,
+.timeline-item__content p {
+  overflow-wrap: anywhere;
+}
+
+.timeline-item__content strong {
+  display: block;
+}
+
 .timeline-item p,
-.timeline-item time {
+.timeline-item__time {
   color: var(--text-secondary);
   font-size: var(--font-size-label);
   line-height: var(--line-height-body);
+}
+
+.timeline-item__time {
+  justify-self: end;
+  text-align: right;
+  white-space: nowrap;
 }
 
 @media (max-width: 639px) {
@@ -62,7 +81,10 @@
     grid-template-columns: auto 1fr;
   }
 
-  .timeline-item time {
+  .timeline-item__time {
     grid-column: 2;
+    justify-self: start;
+    text-align: left;
+    white-space: normal;
   }
 }

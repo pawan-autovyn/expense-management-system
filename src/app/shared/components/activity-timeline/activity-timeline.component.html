@@ -10,11 +10,11 @@
     @for (item of items(); track item.id) {
       <article class="timeline-item">
         <span class="timeline-item__dot" [ngClass]="'timeline-item__dot--' + item.tone"></span>
-        <div>
+        <div class="timeline-item__content">
           <strong>{{ item.title }}</strong>
           <p>{{ item.description }}</p>
         </div>
-        <time>{{ item.date | date: 'MMM d, h:mm a' }}</time>
+        <time class="timeline-item__time">{{ item.date | date: 'MMM d, h:mm a' }}</time>
       </article>
     }
   </div>

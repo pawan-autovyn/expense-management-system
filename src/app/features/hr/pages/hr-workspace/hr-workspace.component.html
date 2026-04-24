@@ -146,6 +146,10 @@
         </p>
       }
 
+      @if (actionError()) {
+        <p class="hr-workspace__error-banner" role="alert">{{ actionError() }}</p>
+      }
+
       <div class="queue-layout">
         <div class="queue-layout__table">
           <table>
@@ -164,8 +168,11 @@
                 <tr
                   class="queue-row"
                   [class.queue-row--active]="selectedExpenseId() === expense.id"
-                (click)="selectExpense(expense)"
-              >
+                  tabindex="0"
+                  (click)="selectExpense(expense)"
+                  (keydown.enter)="selectExpense(expense)"
+                  (keydown.space)="selectExpense(expense); $event.preventDefault()"
+                >
                   <td>{{ expenseEmployee(expense) }}</td>
                   <td>{{ expense.title }}</td>
                   <td>{{ directoryService.getCategoryById(expense.categoryId)?.name ?? 'Category' }}</td>
@@ -223,6 +230,16 @@
                 <textarea [ngModel]="reviewNote()" (ngModelChange)="reviewNote.set($event)"></textarea>
               </section>
 
+              <section class="detail-card detail-card--action">
+                <div>
+                  <p class="detail-card__label">Next step</p>
+                  <strong>Recommendation actions with confirmation</strong>
+                </div>
+                <p class="muted">
+                  Forward to admin, reopen for correction, or reject with a clear note. A confirmation dialog will appear before the workflow updates.
+                </p>
+              </section>
+
               @if (expense.receipt) {
                 <section class="detail-card detail-card--receipt">
                   <p class="detail-card__label">Bill preview</p>
@@ -234,11 +251,30 @@
                 <button type="button" class="button button--ghost" (click)="openExpenseDetails(expense)">
                   View Full Expense
                 </button>
-                <button type="button" class="button button--primary" (click)="recommend()">
-                  Recommend &amp; Forward
+                <button
+                  type="button"
+                  class="button button--primary"
+                  [disabled]="actionInFlight() || !hasSelection()"
+                  (click)="requestRecommend()"
+                >
+                  {{ actionInFlight() ? 'Forwarding...' : 'Recommend & Forward' }}
                 </button>
-                <button type="button" class="button button--secondary" (click)="reopen()">Reopen</button>
-                <button type="button" class="button button--danger" (click)="reject()">Reject</button>
+                <button
+                  type="button"
+                  class="button button--secondary"
+                  [disabled]="actionInFlight() || !hasSelection()"
+                  (click)="requestReopen()"
+                >
+                  Reopen
+                </button>
+                <button
+                  type="button"
+                  class="button button--danger"
+                  [disabled]="actionInFlight() || !hasSelection()"
+                  (click)="requestReject()"
+                >
+                  Reject
+                </button>
               </div>
             </div>
           } @else {
@@ -247,6 +283,14 @@
         </aside>
       </div>
     </section>
+
+    <app-confirm-dialog
+      [open]="confirmDialogOpen()"
+      [title]="pendingActionTitle()"
+      [message]="pendingActionMessage()"
+      (confirmed)="confirmAction()"
+      (cancelled)="closeActionDialog()"
+    />
   }
 
   @if (isReportPage()) {

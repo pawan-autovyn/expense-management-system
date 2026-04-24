@@ -114,9 +114,9 @@ export class ManagerProfileComponent {
   }
 
   protected totalBudget(): number {
-    const locationName = this.currentUser()?.location ?? '';
-    const locationId = this.directoryService.getLocationByName(locationName)?.id ?? '';
-
-    return locationId ? this.directoryService.getTotalBudgetForLocation(locationId) : 0;
+    return this.directoryService.categories().reduce(
+      (total, category) => total + category.monthlyBudget,
+      0,
+    );
   }
 }

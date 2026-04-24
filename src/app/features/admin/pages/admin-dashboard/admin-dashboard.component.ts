@@ -7,7 +7,11 @@ import { firstValueFrom } from 'rxjs';
 import { AdminDashboardResponse, AnalyticsApiService } from '../../../../core/services/analytics-api.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
-import { buildCategoryBudgetViews, buildManagerSpendSummary } from '../../../../shared/utils/expense.utils';
+import {
+  buildCategoryBudgetViews,
+  buildManagerSpendSummary,
+  calculateCommittedSpend,
+} from '../../../../shared/utils/expense.utils';
 import { ActivityTimelineComponent, TimelineItem } from '../../../../shared/components/activity-timeline/activity-timeline.component';
 import { DonutChartComponent } from '../../../../shared/components/donut-chart/donut-chart.component';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
@@ -74,9 +78,7 @@ export class AdminDashboardComponent {
   protected readonly remainingBudget = computed(
     () => this.dashboardData()?.remainingBudget ?? Math.max(
       this.allocatedBudget() -
-        this.visibleExpenses()
-          .filter((expense) => expense.status !== ExpenseStatus.Rejected)
-          .reduce((total, expense) => total + expense.amount, 0),
+        calculateCommittedSpend(this.visibleExpenses()),
       0,
     ),
   );

@@ -1,13 +1,14 @@
     <section class="section-heading section-heading--page">
       <div>
         <p class="eyebrow">My Expenses</p>
-        <h1>Personal submissions, drafts, and bill history</h1>
+        <h1>Personal submissions and expense history</h1>
       </div>
     </section>
 
     <app-expense-filter-bar
       [filters]="filters()"
       [categories]="directoryService.categories()"
+      [statuses]="visibleStatuses"
       (filtersChange)="updateFilters($event)"
     />
 
@@ -16,7 +17,7 @@
       <div class="page-toolbar__actions">
         <button type="button" class="button button--secondary" (click)="exportVisibleRows()">
           <app-icon name="download" [size]="16" />
-          <span>Export CSV</span>
+          <span>Download CSV</span>
         </button>
       </div>
     </div>
@@ -45,15 +46,3 @@
         </button>
       </div>
     </div>
-
-    <app-confirm-dialog
-      [open]="deleteDialogOpen()"
-      message="Delete this draft expense from the current workspace?"
-      (cancelled)="deleteDialogOpen.set(false)"
-      (confirmed)="deleteDraft()"
-    />
-
-    <app-receipt-preview-modal
-      [attachment]="selectedReceipt() ?? null"
-      (closeRequested)="selectedReceipt.set(null)"
-    />

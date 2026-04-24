@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { ApprovalStage, Attachment, ExpenseStatus, Role } from '../../../../models/app.models';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import { ReceiptPreviewModalComponent } from '../../../../shared/components/receipt-preview-modal/receipt-preview-modal.component';
@@ -38,12 +39,15 @@ export class AdminApprovalsComponent {
   private readonly authService = inject(AuthService);
   private readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
+  private readonly toastService = inject(ToastService);
   protected reviewNote = 'Reviewed after verifying the request and budget coverage.';
   protected readonly isRefreshing = signal(false);
+  protected readonly actionInFlight = signal(false);
   protected readonly selectedId = signal<string | null>(null);
   protected readonly selectedReceipt = signal<Attachment | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly selectedTab = signal<ApprovalTabValue>('l2');
+  protected readonly actionError = this.expenseRepository.mutationError;
 
   protected readonly approvalRows = computed<ApprovalRow[]>(() =>
     this.expenseRepository
@@ -152,8 +156,11 @@ export class AdminApprovalsComponent {
       return;
     }
 
-    this.expenseRepository.approveExpense(expense.id, reviewer, this.reviewNote);
-    await this.refreshApprovalQueue();
+    await this.runAction(
+      () => this.expenseRepository.approveExpense(expense.id, reviewer, this.reviewNote),
+      'Expense approved',
+      'The requester will now see the final approval update.',
+    );
   }
 
   protected async reject(): Promise<void> {
@@ -164,8 +171,11 @@ export class AdminApprovalsComponent {
       return;
     }
 
-    this.expenseRepository.rejectExpense(expense.id, reviewer, this.reviewNote);
-    await this.refreshApprovalQueue();
+    await this.runAction(
+      () => this.expenseRepository.rejectExpense(expense.id, reviewer, this.reviewNote),
+      'Expense rejected',
+      'The requester has been notified about the rejection.',
+    );
   }
 
   protected async reopen(): Promise<void> {
@@ -176,12 +186,15 @@ export class AdminApprovalsComponent {
       return;
     }
 
-    this.expenseRepository.reopenExpense(
-      expense.id,
-      reviewer,
-      'Expense has been moved back into the review stream for reassessment.',
+    await this.runAction(() =>
+      this.expenseRepository.reopenExpense(
+        expense.id,
+        reviewer,
+        'Expense has been moved back into the review stream for reassessment.',
+      ),
+      'Expense reopened',
+      'The bill was returned for requester action.',
     );
-    await this.refreshApprovalQueue();
   }
 
   protected exportVisibleRows(): void {
@@ -264,5 +277,26 @@ export class AdminApprovalsComponent {
     }
 
     return `Pending ${level}`;
+  }
+
+  private async runAction(
+    action: () => Promise<unknown>,
+    successTitle: string,
+    successMessage: string,
+  ): Promise<void> {
+    this.actionInFlight.set(true);
+
+    try {
+      await action();
+      this.toastService.showSuccess(successTitle, successMessage);
+    } catch {
+      this.toastService.showError(
+        'Action failed',
+        this.actionError() ?? 'The approval action could not be completed.',
+      );
+      return;
+    } finally {
+      this.actionInFlight.set(false);
+    }
   }
 }

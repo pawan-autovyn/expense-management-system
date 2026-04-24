@@ -38,7 +38,7 @@ describe('ExpenseRepositoryService', () => {
     expect(invalid.service.expenses().length).toBeGreaterThan(0);
   });
 
-  it('creates, updates, and deletes draft expenses', () => {
+  it('creates, updates, and deletes draft expenses', async () => {
     const { service, directoryService } = createService();
     const manager = directoryService.getDefaultUserByRole(Role.OperationManager);
     const sharedForm = {
@@ -55,8 +55,8 @@ describe('ExpenseRepositoryService', () => {
 
     spyOn(Date, 'now').and.callFake(() => now++);
 
-    const draft = service.createExpense(sharedForm, manager, ExpenseStatus.Draft);
-    const draftUpdate = service.updateDraft(
+    const draft = await service.createExpense(sharedForm, manager, ExpenseStatus.Draft);
+    const draftUpdate = await service.updateDraft(
       draft.id,
       {
         ...sharedForm,
@@ -64,7 +64,7 @@ describe('ExpenseRepositoryService', () => {
       },
       ExpenseStatus.Draft,
     );
-    const submittedDraft = service.createExpense(
+    const submittedDraft = await service.createExpense(
       {
         ...sharedForm,
         title: 'Pantry top up submitted',
@@ -73,7 +73,7 @@ describe('ExpenseRepositoryService', () => {
       manager,
       ExpenseStatus.Draft,
     );
-    const convertedDraft = service.updateDraft(
+    const convertedDraft = await service.updateDraft(
       submittedDraft.id,
       {
         ...sharedForm,
@@ -83,7 +83,7 @@ describe('ExpenseRepositoryService', () => {
       },
       ExpenseStatus.Submitted,
     );
-    const removableDraft = service.createExpense(
+    const removableDraft = await service.createExpense(
       {
         ...sharedForm,
         title: 'Draft to remove',
@@ -99,9 +99,11 @@ describe('ExpenseRepositoryService', () => {
     expect(draftUpdate?.approvalStage).toBe(ApprovalStage.OperationManager);
     expect(convertedDraft?.status).toBe(ExpenseStatus.Submitted);
     expect(convertedDraft?.approvalStage).toBe(ApprovalStage.OperationManager);
-    expect(service.updateDraft('missing-id', sharedForm, ExpenseStatus.Submitted)).toBeUndefined();
+    await expectAsync(
+      service.updateDraft('missing-id', sharedForm, ExpenseStatus.Submitted),
+    ).toBeResolvedTo(undefined);
 
-    service.deleteDraft(removableDraft.id);
+    await service.deleteDraft(removableDraft.id);
 
     expect(service.getExpenseById(removableDraft.id)).toBeUndefined();
 
@@ -113,12 +115,12 @@ describe('ExpenseRepositoryService', () => {
     expect(receipt.mimeType).toBe('image/*');
   });
 
-  it('approves, rejects, and reopens expenses', () => {
+  it('approves, rejects, and reopens expenses', async () => {
     const { service, directoryService } = createService();
     const manager = directoryService.getDefaultUserByRole(Role.OperationManager);
     const recommender = directoryService.getDefaultUserByRole(Role.Recommender);
     const admin = directoryService.getDefaultUserByRole(Role.Admin);
-    const submittedExpense = service.createExpense(
+    const submittedExpense = await service.createExpense(
       {
         title: 'Approval flow expense',
         categoryId: 'laptop',
@@ -133,24 +135,24 @@ describe('ExpenseRepositoryService', () => {
       ExpenseStatus.Submitted,
     );
 
-    expect(service.approveExpense(submittedExpense.id, recommender, 'Looks good')?.status).toBe(
+    expect((await service.approveExpense(submittedExpense.id, recommender, 'Looks good'))?.status).toBe(
       ExpenseStatus.Recommended,
     );
     expect(
-      service.approveExpense(submittedExpense.id, recommender, 'Looks good')?.approvalStage,
+      (await service.approveExpense(submittedExpense.id, recommender, 'Looks good'))?.approvalStage,
     ).toBe(
       ApprovalStage.Recommender,
     );
-    expect(service.approveExpense(submittedExpense.id, admin, 'Looks good')?.status).toBe(
+    expect((await service.approveExpense(submittedExpense.id, admin, 'Looks good'))?.status).toBe(
       ExpenseStatus.Approved,
     );
-    expect(service.approveExpense(submittedExpense.id, recommender, 'Final attempt')?.status).toBe(
+    expect((await service.approveExpense(submittedExpense.id, recommender, 'Final attempt'))?.status).toBe(
       ExpenseStatus.Approved,
     );
-    expect(service.rejectExpense(submittedExpense.id, admin, 'Needs more detail')?.status).toBe(
+    expect((await service.rejectExpense(submittedExpense.id, admin, 'Needs more detail'))?.status).toBe(
       ExpenseStatus.Rejected,
     );
-    expect(service.reopenExpense(submittedExpense.id, admin, 'Re-opened for review')?.status).toBe(
+    expect((await service.reopenExpense(submittedExpense.id, admin, 'Re-opened for review'))?.status).toBe(
       ExpenseStatus.Reopened,
     );
     expect(service.getExpensesForManager('usr-mgr-1').length).toBeGreaterThan(0);
@@ -162,7 +164,7 @@ describe('ExpenseRepositoryService', () => {
     expect(service.getExpenseById('missing-id')).toBeUndefined();
   });
 
-  it('restores valid stored expenses and persists submitted requests', () => {
+  it('restores valid stored expenses and persists submitted requests', async () => {
     const storedExpenses = [
       {
         id: 'stored-draft',
@@ -185,7 +187,7 @@ describe('ExpenseRepositoryService', () => {
 
     const { service, directoryService } = createService();
     const manager = directoryService.getDefaultUserByRole(Role.OperationManager);
-    const submitted = service.createExpense(
+    const submitted = await service.createExpense(
       {
         title: 'Submitted pantry top up',
         categoryId: 'tea-pantry',
@@ -199,7 +201,7 @@ describe('ExpenseRepositoryService', () => {
       manager,
       ExpenseStatus.Submitted,
     );
-    const updated = service.updateDraft(
+    const updated = await service.updateDraft(
       'stored-draft',
       {
         title: 'Stored draft updated',

@@ -67,6 +67,7 @@ export class AdminAuditTrailComponent {
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
   protected readonly filters = signal<AuditFilters>({ ...DEFAULT_FILTERS });
+  protected readonly selectedExpenseId = signal<string | null>(null);
   protected readonly page = signal(1);
   protected readonly pageSize = 6;
   private readonly apiAuditEntries = signal<AuditEntryView[]>([]);
@@ -77,14 +78,16 @@ export class AdminAuditTrailComponent {
   }
 
   protected readonly auditEntries = computed<AuditEntryView[]>(() => {
-    if (this.apiAuditEntries().length > 0) {
-      return this.apiAuditEntries();
-    }
-
-    return this.expenseRepository
+    const repositoryEntries = this.expenseRepository
       .expenses()
       .flatMap((expense, expenseIndex) => this.mapExpenseAuditEntries(expense, expenseIndex))
       .sort((left, right) => right.date.localeCompare(left.date));
+
+    if (repositoryEntries.length > 0) {
+      return repositoryEntries;
+    }
+
+    return this.apiAuditEntries();
   });
 
   protected readonly visibleEntries = computed(() =>
@@ -180,8 +183,32 @@ export class AdminAuditTrailComponent {
     ];
   });
 
+  protected readonly focusedEntries = computed(() => {
+    const selectedExpenseId = this.selectedExpenseId();
+
+    if (!selectedExpenseId) {
+      return this.visibleEntries();
+    }
+
+    const matchingEntries = this.visibleEntries().filter(
+      (entry) => entry.expenseId === selectedExpenseId,
+    );
+
+    return matchingEntries.length ? matchingEntries : this.visibleEntries();
+  });
+
+  protected readonly focusedExpense = computed(() => {
+    const selectedExpenseId = this.selectedExpenseId();
+
+    if (!selectedExpenseId) {
+      return null;
+    }
+
+    return this.visibleEntries().find((entry) => entry.expenseId === selectedExpenseId) ?? null;
+  });
+
   protected readonly timelineItems = computed<TimelineItem[]>(() =>
-    this.visibleEntries().slice(0, 5).map((entry) => ({
+    this.focusedEntries().slice(0, 5).map((entry) => ({
       id: entry.id,
       title: entry.action,
       description: `${entry.expenseCode} • ${entry.userName} • ${entry.note}`,
@@ -189,6 +216,20 @@ export class AdminAuditTrailComponent {
       tone: entry.tone,
     })),
   );
+
+  protected readonly timelineTitle = computed(() =>
+    this.focusedExpense() ? 'Recent activity stream' : 'Recent activity stream',
+  );
+
+  protected readonly timelineSubtitle = computed(() => {
+    const focusedExpense = this.focusedExpense();
+
+    if (!focusedExpense) {
+      return 'Latest approvals, submissions, and user notes';
+    }
+
+    return `Tracking ${focusedExpense.expenseCode} - ${focusedExpense.title}`;
+  });
 
   protected readonly actionFilters: { label: string; value: AuditActionGroup }[] = [
     { label: 'All actions', value: 'all' },
@@ -226,7 +267,14 @@ export class AdminAuditTrailComponent {
 
   protected resetFilters(): void {
     this.filters.set({ ...DEFAULT_FILTERS });
+    this.selectedExpenseId.set(null);
     this.page.set(1);
+  }
+
+  protected selectExpense(expenseId: string): void {
+    this.selectedExpenseId.update((currentExpenseId) =>
+      currentExpenseId === expenseId ? null : expenseId,
+    );
   }
 
   protected previousPage(): void {

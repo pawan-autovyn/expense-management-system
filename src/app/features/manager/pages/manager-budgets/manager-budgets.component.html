@@ -10,6 +10,21 @@
       />
     </section>
 
+    @if (latestBudgetNotification(); as budgetNotification) {
+      <section class="glass-card budget-update-banner">
+        <div class="budget-update-banner__icon">
+          <app-icon name="wallet" [size]="18" />
+        </div>
+        <div class="budget-update-banner__copy">
+          <strong>{{ budgetNotification.title }}</strong>
+          <p>{{ budgetNotification.message }}</p>
+        </div>
+        <span class="budget-update-banner__date">
+          {{ budgetNotification.date | date: 'MMM d, h:mm a' }}
+        </span>
+      </section>
+    }
+
     <section class="card-grid">
       @if (visibleCategoryViews().length) {
         @for (category of visibleCategoryViews(); track category.category.id) {

@@ -11,24 +11,92 @@
   </div>
 
   <div class="topbar__right">
-    <span class="topbar__role">{{ roleLabel() }}</span>
+    <!-- <span class="topbar__role">{{ roleLabel() }}</span> -->
 
-    <div class="topbar__user">
-      <div class="topbar__avatar" aria-hidden="true">{{ initials() }}</div>
-      <div class="topbar__user-copy">
-        <strong>{{ currentUser()?.name ?? 'Guest' }}</strong>
-        <span>{{ currentUser()?.department ?? 'Session' }}</span>
-      </div>
+    <div class="topbar__notifications" (click)="stopEvent($event)">
+      <button
+        type="button"
+        class="topbar__bell icon-button"
+        [class.topbar__bell--active]="notificationPanelOpen()"
+        (click)="toggleNotifications()"
+        aria-label="Toggle notifications"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="notificationPanelOpen()"
+      >
+        <app-icon name="bell" [size]="18" />
+        @if (unreadCount()) {
+          <span class="topbar__notification-count">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+        }
+      </button>
+
+      @if (notificationPanelOpen()) {
+        <section class="topbar__notification-panel glass-card" role="dialog" aria-modal="false">
+          <div class="topbar__notification-header">
+            <div>
+              <strong style="white-space: nowrap;">Notifications</strong>
+              <p>{{ unreadCount() }} unread</p>
+            </div>
+
+            <div class="topbar__notification-actions">
+              <button type="button" class="icon-button" [disabled]="!unreadCount()" (click)="markAllAsRead()">
+                Mark all read
+              </button>
+              @if (getNotificationRoute(); as route) {
+                <button type="button" class="icon-button" (click)="openNotificationsPage()">Open page</button>
+              }
+            </div>
+          </div>
+
+          <div class="topbar__notification-list">
+            @for (notification of notifications(); track notification.id) {
+              <button
+                type="button"
+                class="topbar__notification-item"
+                [ngClass]="{ 'is-unread': !notification.read }"
+                (click)="openNotification(notification)"
+              >
+                <div class="topbar__notification-copy">
+                  <strong>{{ notification.title }}</strong>
+                  <p>{{ notification.message }}</p>
+                  <div class="topbar__notification-meta">
+                    <span>{{ notification.date | date: 'MMM d, h:mm a' }}</span>
+                    <span class="topbar__notification-link">{{ getNotificationActionLabel(notification) }}</span>
+                  </div>
+                </div>
+
+                @if (!notification.read) {
+                  <span class="topbar__notification-dot" aria-hidden="true"></span>
+                }
+              </button>
+            } @empty {
+              <div class="topbar__notification-empty">
+                <strong>No notifications yet</strong>
+                <p>New approvals, recommendations, and bill updates will show here.</p>
+              </div>
+            }
+          </div>
+        </section>
+      }
     </div>
 
-    <button type="button" class="topbar__profile icon-button" (click)="openProfile()">
-      <app-icon name="user-circle" [size]="18" />
-      <span>Profile</span>
-    </button>
+    <div class="topbar__identity">
+      <div class="topbar__user">
+        <div class="topbar__avatar" aria-hidden="true">{{ initials() }}</div>
+        <div class="topbar__user-copy">
+          <strong>{{ currentUser()?.name ?? 'Guest' }}</strong>
+          <span>{{ currentUser()?.department ?? 'Session' }}</span>
+        </div>
+      </div>
 
-    <button type="button" class="topbar__logout icon-button" (click)="logout()">
+      <button type="button" class="topbar__profile icon-button" (click)="openProfile()">
+        <app-icon name="user-circle" [size]="18" />
+        <span>Profile</span>
+      </button>
+    </div>
+
+    <!-- <button type="button" class="topbar__logout icon-button" (click)="logout()">
       <app-icon name="logout" [size]="18" />
       <span>Logout</span>
-    </button>
+    </button> -->
   </div>
 </header>

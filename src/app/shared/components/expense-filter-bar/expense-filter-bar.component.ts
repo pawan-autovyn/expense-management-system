@@ -18,7 +18,7 @@ export class ExpenseFilterBarComponent {
   readonly managers = input<User[]>([]);
   readonly showManagerFilter = input(false);
   readonly filtersChange = output<ExpenseFilters>();
-  protected readonly statuses = input([
+  readonly statuses = input([
     'Draft',
     'Submitted',
     'Recommended',
