@@ -1,19 +1,21 @@
 @if (open()) {
-  <div
-    class="overlay-backdrop"
-    tabindex="0"
-    (click)="cancelled.emit()"
-    (keydown.enter)="cancelled.emit()"
-  ></div>
-  <section class="overlay-panel glass-card" role="dialog" aria-modal="true">
-    <div class="overlay-panel__copy">
-      <p class="eyebrow">{{ title() }}</p>
-      <h3>{{ message() }}</h3>
-      <p class="overlay-panel__hint">This action will permanently remove the selected record.</p>
-    </div>
-    <div class="overlay-panel__actions">
-      <button type="button" class="button button--ghost" (click)="cancelled.emit()">Cancel</button>
-      <button type="button" class="button button--danger" (click)="confirmed.emit()">Confirm</button>
-    </div>
-  </section>
+  <div class="confirm-dialog-layer">
+    <button
+      type="button"
+      class="overlay-backdrop"
+      aria-label="Close dialog"
+      (click)="cancelled.emit()"
+    ></button>
+    <section class="overlay-panel" role="dialog" aria-modal="true">
+      <div class="overlay-panel__copy">
+        <p class="eyebrow">{{ title() }}</p>
+        <h3>{{ message() }}</h3>
+        <p class="overlay-panel__hint">{{ hint() }}</p>
+      </div>
+      <div class="overlay-panel__actions">
+        <button type="button" class="button button--ghost" (click)="cancelled.emit()">{{ cancelLabel() }}</button>
+        <button type="button" class="button button--danger" (click)="confirmed.emit()">{{ confirmLabel() }}</button>
+      </div>
+    </section>
+  </div>
 }

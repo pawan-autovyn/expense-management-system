@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmationDialogService } from '../../core/services/confirmation-dialog.service';
 import { ExpenseDialogService } from '../../core/services/expense-dialog.service';
 import { Role } from '../../models/app.models';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -30,11 +31,14 @@ import { ToastCenterComponent } from '../../shared/components/toast-center/toast
 })
 export class AppShellComponent {
   private readonly authService = inject(AuthService);
+  protected readonly confirmationDialogService = inject(ConfirmationDialogService);
   protected readonly expenseDialogService = inject(ExpenseDialogService);
   protected readonly hasWorkspaceOverlay = computed(
     () =>
       Boolean(
-        this.expenseDialogService.dialogRequest() || this.expenseDialogService.deleteDialogOpen(),
+        this.expenseDialogService.dialogRequest() ||
+          this.expenseDialogService.deleteDialogOpen() ||
+          this.confirmationDialogService.open(),
       ),
   );
   protected readonly quickActionRoute = computed(() => {

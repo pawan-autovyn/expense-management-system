@@ -283,14 +283,6 @@
         </aside>
       </div>
     </section>
-
-    <app-confirm-dialog
-      [open]="confirmDialogOpen()"
-      [title]="pendingActionTitle()"
-      [message]="pendingActionMessage()"
-      (confirmed)="confirmAction()"
-      (cancelled)="closeActionDialog()"
-    />
   }
 
   @if (isReportPage()) {

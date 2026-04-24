@@ -6,11 +6,11 @@ import { firstValueFrom } from 'rxjs';
 
 import { AnalyticsApiService, RecommenderWorkspaceResponse } from '../../../../core/services/analytics-api.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { ConfirmationDialogService } from '../../../../core/services/confirmation-dialog.service';
 import { DirectoryService } from '../../../../core/services/directory.service';
 import { ExpenseRepositoryService } from '../../../../core/services/expense-repository.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { Expense, ExpenseStatus, Role } from '../../../../models/app.models';
-import { ConfirmDialogComponent } from '../../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { LineChartComponent } from '../../../../shared/components/line-chart/line-chart.component';
 import { SearchInputComponent } from '../../../../shared/components/search-input/search-input.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
@@ -32,7 +32,6 @@ type PendingQueueAction = 'recommend' | 'reject' | 'reopen';
     DatePipe,
     NgClass,
     FormsModule,
-    ConfirmDialogComponent,
     LineChartComponent,
     SearchInputComponent,
     StatusBadgeComponent,
@@ -46,6 +45,7 @@ export class HrWorkspaceComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly confirmationDialogService = inject(ConfirmationDialogService);
   private readonly toastService = inject(ToastService);
   protected readonly directoryService = inject(DirectoryService);
   private readonly expenseRepository = inject(ExpenseRepositoryService);
@@ -54,8 +54,6 @@ export class HrWorkspaceComponent {
   protected readonly Role = Role;
   protected readonly reviewNote = signal('Reviewed in the recommendation queue with policy and bill check.');
   protected readonly actionInFlight = signal(false);
-  protected readonly confirmDialogOpen = signal(false);
-  protected readonly pendingAction = signal<PendingQueueAction | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly statusFilter = signal<'all' | ExpenseStatus>('all');
   protected readonly categoryFilter = signal('all');
@@ -152,43 +150,6 @@ export class HrWorkspaceComponent {
   );
 
   protected readonly trendData = computed(() => this.workspaceData()?.trendData ?? []);
-  protected readonly pendingActionTitle = computed(() => {
-    const action = this.pendingAction();
-
-    if (action === 'recommend') {
-      return 'Confirm recommendation';
-    }
-
-    if (action === 'reject') {
-      return 'Confirm rejection';
-    }
-
-    if (action === 'reopen') {
-      return 'Confirm reopen';
-    }
-
-    return 'Confirm workflow action';
-  });
-  protected readonly pendingActionMessage = computed(() => {
-    const expense = this.selectedExpense();
-
-    if (!expense) {
-      return 'Choose an expense before continuing.';
-    }
-
-    const employee = this.expenseEmployee(expense);
-
-    switch (this.pendingAction()) {
-      case 'recommend':
-        return `Forward ${expense.title} from ${employee} to admin for final approval?`;
-      case 'reject':
-        return `Reject ${expense.title} for ${employee} and notify the requester right away?`;
-      case 'reopen':
-        return `Send ${expense.title} back to ${employee} so the requester can update and resubmit it?`;
-      default:
-        return 'Confirm the selected workflow action.';
-    }
-  });
 
   constructor() {
     void this.directoryService.loadUsers();
@@ -271,32 +232,6 @@ export class HrWorkspaceComponent {
 
   protected requestReopen(): void {
     this.openActionDialog('reopen');
-  }
-
-  protected closeActionDialog(): void {
-    this.confirmDialogOpen.set(false);
-    this.pendingAction.set(null);
-  }
-
-  protected async confirmAction(): Promise<void> {
-    const action = this.pendingAction();
-
-    this.confirmDialogOpen.set(false);
-    this.pendingAction.set(null);
-
-    if (action === 'recommend') {
-      await this.recommend();
-      return;
-    }
-
-    if (action === 'reject') {
-      await this.reject();
-      return;
-    }
-
-    if (action === 'reopen') {
-      await this.reopen();
-    }
   }
 
   protected setStatusFilter(value: string): void {
@@ -425,11 +360,61 @@ export class HrWorkspaceComponent {
   }
 
   private openActionDialog(action: PendingQueueAction): void {
-    if (!this.selectedExpense() || !this.currentUser() || this.actionInFlight()) {
+    const expense = this.selectedExpense();
+
+    if (!expense || !this.currentUser() || this.actionInFlight()) {
       return;
     }
 
-    this.pendingAction.set(action);
-    this.confirmDialogOpen.set(true);
+    const employee = this.expenseEmployee(expense);
+
+    this.confirmationDialogService.show({
+      title: this.pendingActionTitle(action),
+      message: this.pendingActionMessage(action, expense.title, employee),
+      hint: 'This will update the approval workflow immediately while keeping the recommendation screen behind the popup.',
+      confirmLabel: 'Yes, continue',
+      cancelLabel: 'Cancel',
+      onConfirm: async () => {
+        if (action === 'recommend') {
+          await this.recommend();
+          return;
+        }
+
+        if (action === 'reject') {
+          await this.reject();
+          return;
+        }
+
+        await this.reopen();
+      },
+    });
+  }
+
+  private pendingActionTitle(action: PendingQueueAction): string {
+    if (action === 'recommend') {
+      return 'Confirm recommendation';
+    }
+
+    if (action === 'reject') {
+      return 'Confirm rejection';
+    }
+
+    return 'Confirm reopen';
+  }
+
+  private pendingActionMessage(
+    action: PendingQueueAction,
+    expenseTitle: string,
+    employee: string,
+  ): string {
+    if (action === 'recommend') {
+      return `Forward ${expenseTitle} from ${employee} to admin for final approval?`;
+    }
+
+    if (action === 'reject') {
+      return `Reject ${expenseTitle} for ${employee} and notify the requester right away?`;
+    }
+
+    return `Send ${expenseTitle} back to ${employee} so the requester can update and resubmit it?`;
   }
 }

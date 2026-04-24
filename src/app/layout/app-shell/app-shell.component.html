@@ -23,7 +23,19 @@
         [open]="expenseDialogService.deleteDialogOpen()"
         title="Delete expense"
         [message]="expenseDialogService.deleteDialogMessage()"
+        hint="This action will permanently remove the selected record."
+        confirmLabel="Delete"
         (cancelled)="expenseDialogService.cancelDelete()"
         (confirmed)="expenseDialogService.confirmDelete()"
+      />
+      <app-confirm-dialog
+        [open]="confirmationDialogService.open()"
+        [title]="confirmationDialogService.request()?.title ?? 'Confirm action'"
+        [message]="confirmationDialogService.request()?.message ?? 'Confirm the selected action.'"
+        [hint]="confirmationDialogService.request()?.hint ?? 'Please confirm before continuing.'"
+        [confirmLabel]="confirmationDialogService.request()?.confirmLabel ?? 'Confirm'"
+        [cancelLabel]="confirmationDialogService.request()?.cancelLabel ?? 'Cancel'"
+        (cancelled)="confirmationDialogService.cancel()"
+        (confirmed)="confirmationDialogService.confirm()"
       />
     </div>

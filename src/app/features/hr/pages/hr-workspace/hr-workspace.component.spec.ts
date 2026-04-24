@@ -56,23 +56,25 @@ describe('HrWorkspaceComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('select').length).toBeGreaterThanOrEqual(2);
   });
 
-  it('recommends the selected expense and updates the approval workflow', () => {
+  it('recommends the selected expense and updates the approval workflow', async () => {
     const candidate =
       (component as any).queueExpenses().find((expense: { status: ExpenseStatus }) =>
         expense.status === ExpenseStatus.Submitted,
       ) ?? (component as any).queueExpenses()[0];
+    const recommendSpy = spyOn(expenseRepository, 'approveExpense').and.resolveTo(candidate as never);
 
     (component as any).selectExpense(candidate);
     (component as any).reviewNote.set('Looks clean and policy compliant.');
-    (component as any).recommend();
+    await (component as any).recommend();
 
-    expect(expenseRepository.getExpenseById(candidate.id)?.status).toBe(ExpenseStatus.Recommended);
-    expect(expenseRepository.getExpenseById(candidate.id)?.auditTrail[0]?.action).toContain(
-      'Recommended by recommender',
+    expect(recommendSpy).toHaveBeenCalledWith(
+      candidate.id,
+      jasmine.objectContaining({ role: Role.Recommender }),
+      'Looks clean and policy compliant.',
     );
   });
 
-  it('rejects the selected expense and keeps the queue resilient for empty filters', () => {
+  it('rejects the selected expense and keeps the queue resilient for empty filters', async () => {
     (component as any).searchTerm.set('definitely-not-present');
     fixture.detectChanges();
 
@@ -83,11 +85,16 @@ describe('HrWorkspaceComponent', () => {
     fixture.detectChanges();
 
     const candidate = (component as any).queueExpenses()[0];
+    const rejectSpy = spyOn(expenseRepository, 'rejectExpense').and.resolveTo(candidate as never);
 
     (component as any).selectExpense(candidate);
-    (component as any).reject();
+    await (component as any).reject();
 
-    expect(expenseRepository.getExpenseById(candidate.id)?.status).toBe(ExpenseStatus.Rejected);
+    expect(rejectSpy).toHaveBeenCalledWith(
+      candidate.id,
+      jasmine.objectContaining({ role: Role.Recommender }),
+      jasmine.any(String),
+    );
   });
 
   it('shows date range controls on the dashboard and hides the text search box', async () => {

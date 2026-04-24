@@ -15,6 +15,9 @@ export class ConfirmDialogComponent {
   readonly open = input(false);
   readonly title = input('Confirm action');
   readonly message = input.required<string>();
+  readonly hint = input('Please confirm before continuing.');
+  readonly confirmLabel = input('Confirm');
+  readonly cancelLabel = input('Cancel');
   readonly confirmed = output<void>();
   readonly cancelled = output<void>();
 }
